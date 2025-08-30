@@ -1,6 +1,6 @@
 // module/apps/dh-actor-hud.mjs
 
-const BOTTOM_OFFSET = 85; // px
+const BOTTOM_OFFSET = 110; // px
 
 function placeAtBottom(appEl) {
   if (!appEl?.getBoundingClientRect) return;
@@ -68,32 +68,31 @@ function setWingsState(rootEl, state /* "open" | "closed" */) {
   const ring      = rootEl.querySelector(".dhud-ring");
   if (!shell || !leftWing || !rightWing || !ring) return;
 
-  // 1) capture current ring center (viewport coords)
+  // 1) captura centro do ring antes
   const pre = ring.getBoundingClientRect();
   const cxPre = pre.left + pre.width / 2;
 
-  // 2) flip the state (this changes layout width)
+  // 2) aplica estado
   shell.setAttribute("data-wings", state);
 
-  // Accessibility: wings inert when closed
+  // acessibilidade
   const closed = state === "closed";
   leftWing.toggleAttribute("inert", closed);
   rightWing.toggleAttribute("inert", closed);
   if (closed) shell.setAttribute("data-open", "");
 
-  // 3) after layout settles, compensate app.left so core stays put
+  // 3) compensa deslocamento p/ manter core ancorado
   requestAnimationFrame(() => {
     const post = ring.getBoundingClientRect();
     const cxPost = post.left + post.width / 2;
     const dx = cxPost - cxPre;
     if (Math.abs(dx) > 0.5) {
-      const app = rootEl; // Application element
+      const app = rootEl;
       const currentLeft = parseFloat(app.style.left || "0");
       app.style.left = `${currentLeft - dx}px`;
     }
   });
 }
-
 
 /** Toggler mínimo: abre/fecha um painel por vez; acordeões são nativos (<details>) */
 function attachDHUDToggles(root) {
@@ -160,44 +159,50 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     const root = this.element;
     if (!root) return;
 
-    // keep your existing bits…
+    // Make roll targets feel clickable
     root.querySelectorAll(".dhud-roll").forEach(el => {
       el.style.cursor = "pointer";
       el.setAttribute("aria-pressed", "false");
     });
+
+    // Tabs/panels toggler
     attachDHUDToggles(root);
 
-    // default: wings CLOSED (core only)
+    // Ensure wings default CLOSED before showing anything
     if (!this._wingsInit) {
       const shell = root.querySelector(".dhud");
-      if (shell) setWingsState(root, "closed");
+      if (shell && !shell.hasAttribute("data-wings")) {
+        shell.setAttribute("data-wings", "closed");
+      }
       this._wingsInit = true;
     }
 
-    // position the HUD above the bottom (do this after Foundry finishes layout)
-    if (!this._placedOnce) {
+    // First boot: hide, place at bottom, then reveal (prevents flicker/teleport)
+    if (!this._booted) {
+      root.classList.add("is-booting");
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          placeAtBottom(root);
-          this._placedOnce = true;
+          placeAtBottom(root);              // anchors 110px from bottom
+          root.classList.remove("is-booting");
+          this._booted = true;
         });
       });
+      // Keep bottom anchor on resize (unless dragging)
       this._onResize = () => { if (!this._isDragging) placeAtBottom(root); };
       window.addEventListener("resize", this._onResize);
     }
 
-    // ring drag
+    // Drag by the ring (function should implement the didMove safeguard)
     if (!this._dragHooked) {
       enableDragByRing(root, this);
       this._dragHooked = true;
     }
 
-    // toggle wings by CLICKING THE RING
+    // Toggle wings by clicking the ring (ignore click right after a drag)
     const ring = root.querySelector(".dhud-ring");
     if (ring && !this._ringToggleHooked) {
       ring.style.cursor = "pointer";
       ring.addEventListener("click", () => {
-        // só ignore se houve arrasto muito recente
         if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
         const shell = root.querySelector(".dhud");
         const open = shell?.getAttribute("data-wings") !== "open";
@@ -205,7 +210,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       });
       this._ringToggleHooked = true;
     }
-
   }
+
 
 }
