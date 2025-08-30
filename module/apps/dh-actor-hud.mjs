@@ -65,18 +65,35 @@ function setWingsState(rootEl, state /* "open" | "closed" */) {
   const shell = rootEl.querySelector(".dhud");
   const leftWing  = rootEl.querySelector(".dhud-wing--left");
   const rightWing = rootEl.querySelector(".dhud-wing--right");
-  if (!shell || !leftWing || !rightWing) return;
+  const ring      = rootEl.querySelector(".dhud-ring");
+  if (!shell || !leftWing || !rightWing || !ring) return;
 
+  // 1) capture current ring center (viewport coords)
+  const pre = ring.getBoundingClientRect();
+  const cxPre = pre.left + pre.width / 2;
+
+  // 2) flip the state (this changes layout width)
   shell.setAttribute("data-wings", state);
 
-  // Accessibility & focus: when closed, take wings out of the tab order
+  // Accessibility: wings inert when closed
   const closed = state === "closed";
   leftWing.toggleAttribute("inert", closed);
   rightWing.toggleAttribute("inert", closed);
-
-  // If closing, also collapse any open panel
   if (closed) shell.setAttribute("data-open", "");
+
+  // 3) after layout settles, compensate app.left so core stays put
+  requestAnimationFrame(() => {
+    const post = ring.getBoundingClientRect();
+    const cxPost = post.left + post.width / 2;
+    const dx = cxPost - cxPre;
+    if (Math.abs(dx) > 0.5) {
+      const app = rootEl; // Application element
+      const currentLeft = parseFloat(app.style.left || "0");
+      app.style.left = `${currentLeft - dx}px`;
+    }
+  });
 }
+
 
 /** Toggler mínimo: abre/fecha um painel por vez; acordeões são nativos (<details>) */
 function attachDHUDToggles(root) {

@@ -314,15 +314,23 @@
   will-change: transform, opacity;
 }
 
+/* Hide any open panel while wings are retracted */
+.dhud--layout[data-wings="closed"] .dhud-panel {
+  display: none !important;
+}
+
 /* Default state = CLOSED (you'll set it via JS on first render) */
 .dhud--layout[data-wings="closed"] { grid-template-columns: 0 auto 0; }
-.dhud--layout[data-wings="closed"] .dhud-wing--left  {
-  opacity: 0; transform: translateX(-28px); pointer-events: none;
-}
-.dhud--layout[data-wings="closed"] .dhud-wing--right {
-  opacity: 0; transform: translateX( 28px); pointer-events: none;
-}
-.dhud--layout[data-wings="open"] .dhud-wing { opacity: 1; transform: none; pointer-events: auto; }
+.dhud--layout[data-wings="closed"] .dhud-wing--left  { opacity:0; transform:translateX(-28px); pointer-events:none; }
+.dhud--layout[data-wings="closed"] .dhud-wing--right { opacity:0; transform:translateX( 28px); pointer-events:none; }
+.dhud--layout[data-wings="open"] .dhud-wing { opacity:1; transform:none; pointer-events:auto; }
+
+/* Make sure stacking order is: wings > core */
+.dhud--layout { position: relative; }
+
+.dhud-core  { position: relative; z-index: 10; }
+.dhud-wing  { position: relative; z-index: 30; }  /* wings above core */
+.dhud-panel { position: absolute; z-index: 40; }  /* panels above everything in the HUD */
 
 
 /* ===== Responsivo ===== */
