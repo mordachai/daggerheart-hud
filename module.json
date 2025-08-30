@@ -1,0 +1,14 @@
+{
+  "id": "daggerheart-hud",
+  "title": "Daggerheart HUD",
+  "description": "Daggerheart HUD module for the Daggerheart system in Foundry VTT.",
+  "version": "0.4.0",
+  "compatibility": { "minimum": "13", "verified": "13" },
+  "authors": [{ "name": "Gus" }],
+  "esmodules": ["module/daggerheart-hud.mjs"],
+  "styles": ["styles/dh-hud.css"],
+  "dependencies": [{ "name": "daggerheart", "type": "system" }],
+  "url": "https://github.com/mordachai/daggerheart-hud",
+  "manifest": "https://raw.githubusercontent.com/mordachai/daggerheart-hud/main/module.json",
+  "download": "https://github.com/mordachai/daggerheart-hud/releases/latest/download/daggerheart-hud.zip"
+}

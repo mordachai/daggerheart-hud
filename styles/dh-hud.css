@@ -1,0 +1,333 @@
+/* ===== THEME (aprox. Daggerheart) ===== */
+:root {
+  --dh-bg: #15131b;
+  --dh-surface: #1f1b2a;
+  --dh-panel: #2b2536;
+  --dh-border: #3b3248;
+  --dh-text: #f5f5f7;
+  --dh-muted: #c9c3d7;
+  --dh-accent: #f2c24b;      /* gold chips */
+  --dh-accent-ink: #2b220a;
+}
+
+/* ===== Remove “janela” e clipping do Application V2 ===== */
+.daggerheart-hud.window-app,
+.daggerheart-hud.application {
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  overflow: visible !important;      /* evita cortar popovers */
+}
+.daggerheart-hud .window-header { display: none !important; }
+.daggerheart-hud .window-content {
+  background: transparent !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+.daggerheart-hud .window-resizable-handle { display: none !important; }
+
+/* ===== Layout shell ===== */
+.dhud { color: var(--dh-text); }
+.dhud--layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: .75rem;
+}
+
+/* ===== Wings ===== */
+.dhud-wing { position: relative; display: flex; gap: .5rem; align-items: center; }
+.dhud-wing--left  { justify-content: flex-end; }
+.dhud-wing--right { justify-content: flex-start; }
+
+.dhud-tab {
+  position: relative;
+  padding: .38rem .9rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  border: 2px solid var(--dh-border);
+  border-radius: 6px;
+  background: var(--dh-surface);
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,.06);
+  cursor: pointer;
+  user-select: none;
+}
+.dhud-tab:hover { border-color: var(--dh-accent); }
+
+/* Panels (popover above tab) */
+.dhud-tabwrap { position: relative; }
+.dhud-panel {
+  --panel-w: 320px;
+  position: absolute;
+  left: 0; right: auto;
+  bottom: calc(100% + .5rem);
+  width: var(--panel-w);
+  max-height: 300px; overflow: auto;
+  background: var(--dh-panel);
+  border: 2px solid var(--dh-border);
+  border-radius: 12px;
+  padding: .6rem .7rem;
+  box-shadow: 0 14px 36px rgba(0,0,0,.5);
+  display: none;
+  z-index: 500;                /* sobre o app */
+}
+.dhud-tabwrap--right .dhud-panel { left: auto; right: 0; }
+.dhud-panel header { font-weight: 900; margin-bottom: .5rem; }
+
+/* Open-state controlado por [data-open] no root */
+.dhud[data-open="traits"]    #panel-traits,
+.dhud[data-open="ancestry"]  #panel-ancestry,
+.dhud[data-open="inventory"] #panel-inventory,
+.dhud[data-open="domains"]   #panel-domains,
+.dhud[data-open="class"]     #panel-class,
+.dhud[data-open="subclass"]  #panel-subclass { display: block; }
+
+/* ===== Accordion (itens dos painéis) ===== */
+.dhud-acc { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+
+.acc details {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.acc summary {
+  display: grid;
+  grid-template-columns: 24px 1fr auto auto;
+  align-items: center;
+  gap: .5rem;
+  padding: .45rem .55rem;
+  cursor: pointer;
+  list-style: none;
+}
+.acc summary::-webkit-details-marker { display: none; }
+
+.acc .icon  { width: 22px; height: 22px; border-radius: 4px; object-fit: cover; }
+.acc .title { font-weight: 700; }
+.acc .qty   { font-weight: 700; opacity: .9; margin-right: .4rem; }
+.acc .chat  { color: var(--dh-accent); margin-right: .1rem; }
+
+.acc .acc-body {
+  padding: .45rem .55rem .6rem;
+  font-size: .95rem;
+  color: var(--dh-muted);
+  background: rgba(0,0,0,.15);
+}
+
+/* ===== Core (anel central e círculos laterais) ===== */
+.dhud-core {
+  /* tamanhos principais */
+  --circle-d: 110px;
+  --side-d: 75px;
+  --pip: 12px;
+
+  /* spacing e fórmulas */
+  --core-gap: .05rem;     /* deve espelhar o 'gap' do grid */
+  --overlap: 8px;         /* move side-circles para dentro/fora */
+  --badge-inset: 8px;     /* aproxima/afasta os badges do anel */
+
+  /* offsets de HP/Stress (ajuste só aqui) */
+  --hp-top: -6px;
+  --hp-left: 34px;
+  --stress-top: -6px;
+  --stress-right: 34px;
+
+  display: grid;
+  grid-template-columns: var(--side-d) var(--circle-d) var(--side-d);
+  align-items: center;
+  justify-items: center;
+  gap: var(--core-gap);
+  position: relative;
+}
+
+/* ordem entre wrappers (resolve stacking contexts com transform) */
+.dhud-core__leftcircle,
+.dhud-core__rightcircle { position: relative; z-index: 1; }
+.dhud-core__center      { position: relative; z-index: 2; }  /* ring acima */
+
+/* Side circles com ícone do item */
+.dhud-circle {
+  width: var(--side-d);
+  height: var(--side-d);
+  border: 3px solid var(--dh-border);
+  border-radius: 999px;
+  background: var(--dh-surface);
+  display: grid;
+  place-items: center;
+  position: relative;
+  z-index: 1;               /* armas no fundo (dentro do wrapper) */
+  pointer-events: auto;
+}
+.dhud-roll { cursor: pointer; }
+.dhud-roll:hover { border-color: var(--dh-accent); }
+.dhud-circle .item-icon {
+  width: 70%; height: 70%;
+  object-fit: cover;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+  border: none;
+}
+
+/* aproximação dos círculos laterais */
+.dhud-core__leftcircle  { transform: translateX(var(--overlap)); }
+.dhud-core__rightcircle { transform: translateX(calc(-1 * var(--overlap))); }
+
+/* Anel central */
+.dhud-core__center {
+  /* wrapper do centro NÃO intercepta mouse; reativamos só onde precisa */
+  pointer-events: none;
+
+  display: grid;
+  grid-template-areas:
+    "ring"
+    "th";
+  align-items: center;
+  justify-items: center;
+  row-gap: .25rem;
+}
+
+.dhud-ring {
+  grid-area: ring;
+  position: relative;
+  width: var(--circle-d); height: var(--circle-d);
+  border: 6px solid var(--dh-border);
+  border-radius: 999px;
+  display: grid; place-items: center;
+  background: var(--dh-surface);
+  z-index: 2;
+  pointer-events: auto; 
+  cursor: grab;
+}
+.dhud-ring:active { cursor: grabbing; }
+
+.dhud-portrait {
+  width: calc(var(--circle-d) - 28px);
+  height: calc(var(--circle-d) - 28px);
+  border-radius: 999px; overflow: hidden;
+  border: 3px solid var(--dh-border); 
+  pointer-events: auto; 
+}
+.dhud-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Hope pips */
+.dhud-pips {
+  position: absolute; top: -12px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: .3rem;
+}
+.dhud-pips .pip {
+  width: var(--pip); height: var(--pip);
+  border: 2px solid var(--dh-border); border-radius: 999px;
+  background: var(--dh-accent);
+}
+
+/* HP / Stress (absolutos; clicáveis para futuros +/-) */
+.dhud-count {
+  position: absolute;
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: auto;   /* reativado para botões futuros */
+}
+.dhud-count--hp {
+  top: var(--hp-top);
+  left: var(--hp-left);
+  text-align: left;
+}
+.dhud-count--stress {
+  top: var(--stress-top);
+  right: var(--stress-right);
+  text-align: right;
+}
+
+/* Thresholds: | MINOR | nA | MAJOR | nB | SEVERE |  */
+.dhud-thresholds {
+  grid-area: th;
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .25rem;
+  pointer-events: none;
+}
+.dhud-thresholds .chip {
+  background: var(--dh-accent);
+  color: var(--dh-accent-ink);
+  padding: .12rem .5rem;
+  border-radius: 8px;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+.dhud-thresholds .val {
+  padding: .1rem .45rem;
+  border: 1px solid var(--dh-border);
+  border-radius: 8px;
+  background: var(--dh-surface);
+  color: var(--dh-text);
+  font-weight: 800;
+  min-width: 2.2ch;
+  text-align: center;
+}
+
+/* Badges “nichados” entre armas e anel (irmãos dentro de .dhud-core) */
+.dhud-badge {
+  position: absolute;
+  top: 50%;
+  transform: translateY(0%);
+  z-index: 3;               /* acima do ring e dos círculos */
+  pointer-events: none;     /* trocar para auto quando quiser clique */
+  width: 40px; height: 40px;
+  /* background: var(--dh-surface);
+  border: 2px solid var(--dh-border);
+  border-radius: 12px; */
+  display: grid; place-items: center;
+  font-weight: 800; font-size: .8rem;
+}
+/* left = side + gap + (±) ajustado */
+.dhud-badge--left {
+  left: calc(var(--side-d) + var(--core-gap) - 20px + var(--badge-inset));
+  background-image: url("/modules/daggerheart-hud/ui/shield.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+.dhud-badge--right {
+  left: calc(var(--side-d) + var(--core-gap) + var(--circle-d) - 20px - var(--badge-inset));
+  background-image: url("/modules/daggerheart-hud/ui/armor.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* ---- Wings open/close animation ---- */
+.dhud--layout {
+  --wing-shift: 28px;                       /* slide distance */
+  --wing-duration: 220ms;
+  --wing-ease: cubic-bezier(.2,.8,.2,1);
+}
+
+/* transition for both wings */
+.dhud-wing {
+  transition:
+    transform var(--wing-duration) var(--wing-ease),
+    opacity   var(--wing-duration) var(--wing-ease);
+  will-change: transform, opacity;
+}
+
+/* Default state = CLOSED (you'll set it via JS on first render) */
+.dhud--layout[data-wings="closed"] { grid-template-columns: 0 auto 0; }
+.dhud--layout[data-wings="closed"] .dhud-wing--left  {
+  opacity: 0; transform: translateX(-28px); pointer-events: none;
+}
+.dhud--layout[data-wings="closed"] .dhud-wing--right {
+  opacity: 0; transform: translateX( 28px); pointer-events: none;
+}
+.dhud--layout[data-wings="open"] .dhud-wing { opacity: 1; transform: none; pointer-events: auto; }
+
+
+/* ===== Responsivo ===== */
+@media (max-width: 980px) {
+  /* opcional: reduza levemente em telas menores */
+  .dhud-core { --circle-d: 100px; --side-d: 68px; }
+  .dhud-panel { --panel-w: 280px; }
+}
