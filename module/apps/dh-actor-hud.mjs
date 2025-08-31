@@ -1,6 +1,8 @@
 // module/apps/dh-actor-hud.mjs
 
 import { L, Lpath, Ltrait } from "../helpers/i18n.mjs";
+import { sendItemToChat } from "../helpers/chat-utils.mjs";
+
 
 const BOTTOM_OFFSET = 110; // px
 
@@ -174,25 +176,175 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     // Canonical system root (guarded)
     const sys = actor?.system ?? {};
 
-    // === PRIMARY WEAPON (type:"weapon"; prefer equipped) ===
+    // === PRIMARY WEAPON (only equipped & NOT secondary); else Unarmed ===
     let primaryWeapon = null;
     {
       const items = this.actor?.items ?? [];
       const weapons = items.filter(i => i.type === "weapon");
-      const equipped = weapons.filter(w => w.system?.equipped === true);
-      const list = equipped.length ? equipped : weapons;
 
-      // Prefer one that exposes an "attack" action if present; else first
-      const pick = list.find(w => w.system?.attack) ?? list[0] ?? null;
+      // Only consider EQUIPPED weapons that are NOT marked as secondary
+      const equippedNonSecondary = weapons.filter(w => w.system?.equipped === true && w.system?.secondary !== true);
+
+      const pick = equippedNonSecondary[0] ?? null;
 
       if (pick) {
         primaryWeapon = {
           id: pick.id,
           name: pick.name,
-          img: pick.img || "icons/svg/sword.svg"
+          img: pick.img || "icons/svg/sword.svg",
+          isUnarmed: false
         };
       }
     }
+
+    // If none, show Unarmed from actor.system.attack
+    if (!primaryWeapon) {
+      const un = sys.attack;
+      if (un) {
+        const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
+        primaryWeapon = {
+          id: null,
+          name: locName,
+          img: un.img || "icons/skills/melee/unarmed-punch-fist-yellow-red.webp",
+          isUnarmed: true
+        };
+      }
+    }
+
+    // === SECONDARY WEAPON (prefer equipped marked secondary; else other equipped != primary; else Unarmed) ===
+    let secondaryWeapon = null;
+    {
+      const items = this.actor?.items ?? [];
+      const weaponsAll = items.filter(i => i.type === "weapon");
+      const equipped   = weaponsAll.filter(w => w.system?.equipped === true);
+
+      const primaryId = primaryWeapon?.isUnarmed ? null : primaryWeapon?.id ?? null;
+
+      // 1) prefer an equipped weapon explicitly flagged as secondary
+      // 2) else any other equipped weapon that's not the primary
+      const pick =
+        equipped.find(w => w.system?.secondary === true) ??
+        equipped.find(w => w.id !== primaryId) ??
+        null;
+
+      if (pick) {
+        secondaryWeapon = {
+          id: pick.id,
+          name: pick.name,
+          img: pick.img || "icons/svg/shield.svg",
+          isUnarmed: false
+        };
+      }
+    }
+
+    // If none, fall back to Unarmed
+    if (!secondaryWeapon) {
+      const un = sys.attack;
+      if (un) {
+        const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
+        secondaryWeapon = {
+          id: null,
+          name: locName,
+          img: un.img || "icons/skills/melee/unarmed-punch-fist-yellow-red.webp",
+          isUnarmed: true
+        };
+      }
+    }
+
+    // === ANCESTRY / COMMUNITY FEATURES (correct filter: system.originItemType) ===
+    const ancestryFeatures = [];
+    const communityFeatures = [];
+
+    for (const it of (this.actor?.items ?? [])) {
+      if (it.type !== "feature") continue;
+
+      const origin = it.system?.originItemType; // "ancestry" | "community" | "class" | "subclass" | etc.
+      if (origin !== "ancestry" && origin !== "community") continue;
+
+      const entry = {
+        id: it.id,
+        name: it.name,
+        img: it.img || "icons/svg/aura.svg",
+        description: it.system?.description ?? "",
+        // An action hint if present; many features are passive, so this may be unused at click time
+        actionPath: (()=>{
+          const sys = it.system ?? {};
+          // system.actions is an object keyed by id in this system; pick the first action if any
+          if (sys.actions && typeof sys.actions === "object") {
+            const first = Object.values(sys.actions)[0];
+            if (first?.systemPath) return first.systemPath; // commonly "actions"
+          }
+          return "use"; // safe generic fallback
+        })()
+      };
+
+      if (origin === "ancestry") ancestryFeatures.push(entry);
+      else communityFeatures.push(entry);
+    }
+
+    // === CLASS / SUBCLASS FEATURES (originItemType) with TIER GATING FOR SUBCLASS ===
+    const classFeatures = [];
+    const subclassFeatures = [];
+
+    // 1) Determine allowed subclass identifiers from the actor's subclass featureState
+    //    featureState: 1 = foundation, 2 = specialization, 3 = mastery
+    const subclasses = (this.actor?.items ?? []).filter(i => i.type === "subclass");
+    let subclassTier = 0;
+    for (const sc of subclasses) {
+      const t = Number(sc.system?.featureState ?? 0);
+      if (t > subclassTier) subclassTier = t; // in case of multiclass, allow the highest
+    }
+
+    const allowedSubclassIds = new Set();
+    if (subclassTier >= 1) allowedSubclassIds.add("foundation");
+    if (subclassTier >= 2) allowedSubclassIds.add("specialization");
+    if (subclassTier >= 3) allowedSubclassIds.add("mastery");
+
+    // 2) Collect features, gating subclass ones by identifier
+    for (const it of (this.actor?.items ?? [])) {
+      if (it.type !== "feature") continue;
+      const origin = it.system?.originItemType; // "class" | "subclass" | ancestry | community | etc.
+
+      if (origin === "class") {
+        classFeatures.push({
+          id: it.id,
+          name: it.name,
+          img: it.img || "icons/svg/aura.svg",
+          description: it.system?.description ?? "",
+          actionPath: (() => {
+            const s = it.system ?? {};
+            if (s.actions && typeof s.actions === "object") {
+              const first = Object.values(s.actions)[0];
+              if (first?.systemPath) return first.systemPath;
+            }
+            return "use";
+          })()
+        });
+        continue;
+      }
+
+      if (origin === "subclass") {
+        const ident = (it.system?.identifier || "").toString().toLowerCase();
+        if (!allowedSubclassIds.has(ident)) continue; // GATE BY TIER
+
+        subclassFeatures.push({
+          id: it.id,
+          name: it.name,
+          img: it.img || "icons/svg/aura.svg",
+          description: it.system?.description ?? "",
+          actionPath: (() => {
+            const s = it.system ?? {};
+            if (s.actions && typeof s.actions === "object") {
+              const first = Object.values(s.actions)[0];
+              if (first?.systemPath) return first.systemPath;
+            }
+            return "use";
+          })()
+        });
+      }
+    }
+
+
 
     // === RESOURCES (exact system paths) ===
     const hitPoints = {
@@ -275,9 +427,28 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       traits: sys.traits,
       proficiency, evasion, armorScore: sys.armorScore,
       damageThresholds: sys.damageThresholds,
-      resistance: sys.resistance
+      resistance: sys.resistance,
+      ancestry: ancestryFeatures.map(f => f.name),
+      community: communityFeatures.map(f => f.name),
+      subclassTier,
+      allowed: Array.from(allowedSubclassIds),
+      shownSubclass: subclassFeatures.map(f => `${f.name}`),
       }
     });
+
+    // === PARENT ITEMS: ancestry / community / class / subclass (for header captions) ===
+    const byType = (t) => (this.actor?.items ?? []).find(i => i.type === t) ?? null;
+
+    const ancestryItem  = byType("ancestry");
+    const communityItem = byType("community");
+    const classItem     = byType("class");
+    const subclassItem  = byType("subclass");
+
+    const ancestryInfo  = ancestryItem  ? { id: ancestryItem.id,  name: ancestryItem.name,  img: ancestryItem.img  } : null;
+    const communityInfo = communityItem ? { id: communityItem.id, name: communityItem.name, img: communityItem.img } : null;
+    const classInfo     = classItem     ? { id: classItem.id,     name: classItem.name,     img: classItem.img     } : null;
+    const subclassInfo  = subclassItem  ? { id: subclassItem.id,  name: subclassItem.name,  img: subclassItem.img  } : null;
+
 
     // Return everything your HBS references today (+ a few future-safe keys)
     return {
@@ -301,7 +472,10 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       resistance,
 
       // weapons
-      primaryWeapon
+      primaryWeapon,
+      secondaryWeapon,
+      ancestryFeatures, communityFeatures, classFeatures, subclassFeatures,
+      ancestryInfo, communityInfo, classInfo, subclassInfo     
     };
   }
 
@@ -361,12 +535,22 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       ring.style.cursor = "pointer";
       ring.addEventListener("click", () => {
         if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
+
         const shell = root.querySelector(".dhud");
-        const open = shell?.getAttribute("data-wings") !== "open";
-        setWingsState(root, open ? "open" : "closed");
+        const willOpen = shell?.getAttribute("data-wings") !== "open";
+
+        setWingsState(root, willOpen ? "open" : "closed");
+        // keep internal state in sync (used by layout restore, etc.)
+        this._wingsState = willOpen ? "open" : "closed";
       });
+
+      // mark hooked
       this._ringToggleHooked = true;
-    }   
+
+      // initialize internal state from current DOM
+      const shell = root.querySelector(".dhud");
+      this._wingsState = shell?.getAttribute("data-wings") || "closed";
+    }
 
     // --- Traits: icon rolls immediately; only the title toggles <details>
     if (!this._traitRollHooked) {
@@ -407,51 +591,57 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       this._traitRollHooked = true;
     }
 
-    // --- Primary Weapon roll: click the left circle (instant system roll)
+    // --- Primary Weapon roll: click the left circle (item or unarmed)
     if (!this._primaryWeaponHooked) {
       const btn = this.element.querySelector("[data-action='roll-primary']");
       if (btn) {
         btn.addEventListener("click", async (ev) => {
-          // ignore accidental click right after dragging
           if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
 
           const actor = this.actor;
           if (!actor) return;
 
-          // Try to resolve the weapon from the DOM first, then heuristics
-          const idFromDom = btn.dataset.itemId;
-          let item = idFromDom ? actor.items.get(idFromDom) : null;
-          if (!item) {
-            const weapons = actor.items.filter(i => i.type === "weapon");
-            const equipped = weapons.filter(w => w.system?.equipped === true);
-            const list = equipped.length ? equipped : weapons;
-            item = (list.find(w => w.system?.attack) ?? list[0]) ?? null;
-          }
-          if (!item) {
-            ui.notifications?.warn("No primary weapon found");
-            return;
-          }
+          const isUnarmed = btn.dataset.unarmed === "true";
+          const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
 
           try {
-            // Prefer explicit item action hooks if the system exposes them
-            if (typeof item.rollAction === "function") {
-              await item.rollAction("attack"); // opens the system’s attack dialog/card
-              return;
-            }
-            if (typeof item.use === "function") {
-              await item.use({ action: "attack" });
-              return;
-            }
-            // System-level executor (namespaced in some Foundryborne builds)
-            const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
-            if (Action?.execute) {
-              await Action.execute({ source: item, actionPath: "attack" });
+            if (isUnarmed) {
+              // Unarmed: execute the actor-level "attack" action so the system builds the full chat card
+              if (Action?.execute) {
+                await Action.execute({ source: actor, actionPath: "attack" });
+                return;
+              }
+              // Fallback if executor not exposed: open the actor sheet to the Actions tab
+              actor.sheet?.render(true, { focus: true });
+              ui.notifications?.info("Open the Unarmed Attack and click Attack");
               return;
             }
 
-            // Fallback: open the weapon sheet so the user can click its Attack button
+            // Weapon item: resolve by dataset or re-pick
+            const idFromDom = btn.dataset.itemId;
+            let item = idFromDom ? actor.items.get(idFromDom) : null;
+            if (!item) {
+              // re-pick: ONLY equipped & NOT secondary
+              const weapons = actor.items.filter(i => i.type === "weapon");
+              const equippedNonSecondary = weapons.filter(w => w.system?.equipped === true && w.system?.secondary !== true);
+              item = equippedNonSecondary[0] ?? null;
+
+            }
+            if (!item) {
+              ui.notifications?.warn("No primary weapon found");
+              return;
+            }
+
+            // Prefer item action methods if provided by the system
+            if (typeof item.rollAction === "function") { await item.rollAction("attack"); return; }
+            if (typeof item.use       === "function") { await item.use({ action: "attack" }); return; }
+
+            // Or a system-level executor
+            if (Action?.execute) { await Action.execute({ source: item, actionPath: "attack" }); return; }
+
+            // Last resort: open the weapon sheet
             item.sheet?.render(true, { focus: true });
-            ui.notifications?.info("Opened weapon; click its Attack");
+            ui.notifications?.info("Open the weapon and click Attack");
           } catch (err) {
             console.error("[DHUD] Primary weapon roll failed", err);
             ui.notifications?.error("Weapon roll failed (see console)");
@@ -461,6 +651,201 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       this._primaryWeaponHooked = true;
     }
 
+    // --- Secondary Weapon roll: click the right circle (item or unarmed)
+    if (!this._secondaryWeaponHooked) {
+      const btn = this.element.querySelector("[data-action='roll-secondary']");
+      if (btn) {
+        btn.addEventListener("click", async (ev) => {
+          if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
+
+          const actor = this.actor;
+          if (!actor) return;
+
+          const isUnarmed = btn.dataset.unarmed === "true";
+          const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
+
+          try {
+            if (isUnarmed) {
+              // Use actor-level unarmed attack so the system builds the full card flow
+              if (Action?.execute) {
+                await Action.execute({ source: actor, actionPath: "attack" });
+                return;
+              }
+              actor.sheet?.render(true, { focus: true });
+              ui.notifications?.info("Open the Unarmed Attack and click Attack");
+              return;
+            }
+
+            // Resolve secondary item by dataset or re-pick from equipped†secondary
+            const idFromDom = btn.dataset.itemId;
+            let item = idFromDom ? actor.items.get(idFromDom) : null;
+            if (!item) {
+            const weaponsAll = actor.items.filter(i => i.type === "weapon");
+            const equipped   = weaponsAll.filter(w => w.system?.equipped === true);
+
+            const primaryId = this.element.querySelector("[data-action='roll-primary']")?.dataset?.itemId ?? null;
+
+            // 1) prefer an equipped weapon flagged secondary
+            // 2) else any other equipped weapon that's not the primary
+            item =
+              equipped.find(w => w.system?.secondary === true) ??
+              equipped.find(w => w.id && w.id !== primaryId) ??
+              null;
+
+            }
+            if (!item) { ui.notifications?.warn("No secondary weapon found"); return; }
+
+            // Same action order as primary
+            if (typeof item.rollAction === "function") { await item.rollAction("attack"); return; }
+            if (typeof item.use       === "function") { await item.use({ action: "attack" }); return; }
+            if (Action?.execute) { await Action.execute({ source: item, actionPath: "attack" }); return; }
+
+            item.sheet?.render(true, { focus: true });
+            ui.notifications?.info("Open the weapon and click Attack");
+          } catch (err) {
+            console.error("[DHUD] Secondary weapon roll failed", err);
+            ui.notifications?.error("Weapon roll failed (see console)");
+          }
+        }, true);
+      }
+      this._secondaryWeaponHooked = true;
+    }
+
+    // --- ANCESTRY/COMMUNITY: icon executes; title toggles; chat bubble sends to chat
+    if (!this._ancestryHooked) {
+      const panel = this.element.querySelector(".dhud-panel--ancestry");
+      if (panel) {
+        const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+
+        // prevent <summary> toggle when clicking the icon or chat icon
+        panel.querySelectorAll("summary .icon, summary .chat").forEach(el => {
+          if (el._dhudBlockToggle) return;
+          el.addEventListener("click", stop, true);
+          el.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter" || ev.key === " ") stop(ev);
+          }, true);
+          el._dhudBlockToggle = true;
+        });
+
+        // execute feature on icon click
+        panel.addEventListener("click", async (ev) => {
+          const execBtn = ev.target.closest("[data-action='item-exec']");
+          if (!execBtn) return;
+          stop(ev);
+
+          const actor = this.actor;
+          const itemId = execBtn.dataset.itemId;
+          const actionPath = execBtn.dataset.actionpath || "use";
+          const item = actor?.items.get(itemId);
+          if (!item) return;
+
+          const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
+
+          try {
+            if (typeof item.rollAction === "function") {
+              await item.rollAction(actionPath);
+              return;
+            }
+            if (typeof item.use === "function") {
+              await item.use({ action: actionPath });
+              return;
+            }
+            if (Action?.execute) {
+              await Action.execute({ source: item, actionPath });
+              return;
+            }
+            // fallback: open the item so user can click whatever the sheet provides
+            item.sheet?.render(true, { focus: true });
+          } catch (err) {
+            console.error("[DHUD] Ancestry feature exec failed", err);
+            ui.notifications?.error("Feature execution failed (see console)");
+          }
+        }, true);
+
+        // send to chat on bubble click
+        panel.addEventListener("click", async (ev) => {
+          const chatBtn = ev.target.closest("[data-action='to-chat']");
+          if (!chatBtn) return;
+          stop(ev);
+
+          const actor = this.actor;
+          const item = actor?.items.get(chatBtn.dataset.itemId);
+          if (!item) return;
+
+          try {
+            await sendItemToChat(item, actor);
+          } catch (err) {
+            console.error("[DHUD] Ancestry to-chat failed (after fallbacks)", err);
+            ui.notifications?.error("Failed to send to chat (see console)");
+          }
+        }, true);
+
+      }
+      this._ancestryHooked = true;
+    }
+
+    // --- CLASS/SUBCLASS: icon executes; title toggles; chat bubble sends to chat
+    if (!this._classHooked) {
+      const panel = this.element.querySelector(".dhud-panel--class");
+      if (panel) {
+        const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+
+        // prevent <summary> toggle when clicking the icon or chat icon
+        panel.querySelectorAll("summary .icon, summary .chat").forEach(el => {
+          if (el._dhudBlockToggle) return;
+          el.addEventListener("click", stop, true);
+          el.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter" || ev.key === " ") stop(ev);
+          }, true);
+          el._dhudBlockToggle = true;
+        });
+
+        // execute feature on icon click
+        panel.addEventListener("click", async (ev) => {
+          const execBtn = ev.target.closest("[data-action='item-exec']");
+          if (!execBtn) return;
+          stop(ev);
+
+          const actor = this.actor;
+          const itemId = execBtn.dataset.itemId;
+          const actionPath = execBtn.dataset.actionpath || "use";
+          const item = actor?.items.get(itemId);
+          if (!item) return;
+
+          const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
+
+          try {
+            if (typeof item.rollAction === "function") { await item.rollAction(actionPath); return; }
+            if (typeof item.use       === "function") { await item.use({ action: actionPath }); return; }
+            if (Action?.execute) { await Action.execute({ source: item, actionPath }); return; }
+            item.sheet?.render(true, { focus: true });
+          } catch (err) {
+            console.error("[DHUD] Class feature exec failed", err);
+            ui.notifications?.error("Feature execution failed (see console)");
+          }
+        }, true);
+
+        // send to chat on bubble click
+        panel.addEventListener("click", async (ev) => {
+          const chatBtn = ev.target.closest("[data-action='to-chat']");
+          if (!chatBtn) return;
+          stop(ev);
+
+          const actor = this.actor;
+          const item = actor?.items.get(chatBtn.dataset.itemId);
+          if (!item) return;
+
+          try {
+            await sendItemToChat(item, actor);
+          } catch (err) {
+            console.error("[DHUD] Class to-chat failed (after fallbacks)", err);
+            ui.notifications?.error("Failed to send to chat (see console)");
+          }
+        }, true);
+
+      }
+      this._classHooked = true;
+    }
 
   }
 

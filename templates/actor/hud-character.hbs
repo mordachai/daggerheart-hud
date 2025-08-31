@@ -38,30 +38,75 @@
     {{!-- ANCESTRY --}}
     <div class="dhud-tabwrap">
       <div class="dhud-tab" role="button" tabindex="0"
-           data-tab="ancestry" aria-controls="panel-ancestry" aria-expanded="false">ANCESTRY</div>
-      <div id="panel-ancestry" class="dhud-panel dhud-panel--ancestry" data-panel="ancestry" role="dialog" aria-label="Ancestry">
-        <header>Ancestry</header>
+          data-tab="ancestry" aria-controls="panel-ancestry" aria-expanded="false">{{l "TYPES.Item.ancestry"}}</div>
+
+      <div id="panel-ancestry" class="dhud-panel dhud-panel--ancestry" data-panel="ancestry" role="dialog" aria-label="{{l "TYPES.Item.ancestry"}}">
+        <header>
+          {{l "TYPES.Item.ancestry"}}{{#if ancestryInfo}}:
+          <span class="dhud-header-item">{{ancestryInfo.name}}</span>{{/if}}
+        </header>
         <ul class="dhud-acc">
+          {{#each ancestryFeatures}}
           <li class="acc">
             <details>
               <summary>
-                <img class="icon" src="icons/svg/aura.svg" alt="">
-                <span class="title">Heritage Feature</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
+                <img class="icon"
+                    src="{{img}}"
+                    alt=""
+                    role="button"
+                    tabindex="0"
+                    data-action="item-exec"
+                    data-item-id="{{id}}"
+                    data-actionpath="{{actionPath}}"
+                    title="{{name}}">
+                <span class="title">{{name}}</span>
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
               </summary>
-              <div class="acc-body">Feature description…</div>
+              <div class="acc-body">{{{description}}}</div>
             </details>
           </li>
+          {{else}}
+          <li class="acc">Empty</li>
+          {{/each}}
+        </ul>
+
+        <header>
+          {{l "TYPES.Item.community"}}{{#if communityInfo}}:
+          <span class="dhud-header-item">{{communityInfo.name}}</span>{{/if}}
+        </header>
+        <ul class="dhud-acc">
+          {{#each communityFeatures}}
           <li class="acc">
             <details>
               <summary>
-                <img class="icon" src="icons/svg/aura.svg" alt="">
-                <span class="title">Cultural Gift</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
+                <img class="icon"
+                    src="{{img}}"
+                    alt=""
+                    role="button"
+                    tabindex="0"
+                    data-action="item-exec"
+                    data-item-id="{{id}}"
+                    data-actionpath="{{actionPath}}"
+                    title="{{name}}">
+                <span class="title">{{name}}</span>
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
               </summary>
-              <div class="acc-body">Gift description…</div>
+              <div class="acc-body">{{{description}}}</div>
             </details>
           </li>
+          {{else}}
+          <li class="acc">Empty</li>
+          {{/each}}
         </ul>
       </div>
     </div>
@@ -118,7 +163,10 @@
           role="button"
           tabindex="0"
           data-action="roll-primary"
-          {{#if primaryWeapon}}data-item-id="{{primaryWeapon.id}}"{{/if}}
+          {{#if primaryWeapon}}
+            {{#if primaryWeapon.id}}data-item-id="{{primaryWeapon.id}}"{{/if}}
+            data-unarmed="{{#if primaryWeapon.isUnarmed}}true{{else}}false{{/if}}"
+          {{/if}}
           title="{{#if primaryWeapon}}{{primaryWeapon.name}}{{else}}Primary Weapon{{/if}}">
         {{#if primaryWeapon}}
           <img class="item-icon" src="{{primaryWeapon.img}}" alt="{{primaryWeapon.name}}">
@@ -127,7 +175,7 @@
         {{/if}}
       </div>
     </div>
-    
+
     <div class="dhud-core__center">
       <div class="dhud-count dhud-count--hp">
         <div class="label">HP</div>
@@ -162,9 +210,20 @@
     </div>
 
     <div class="dhud-core__rightcircle">
-      <div class="dhud-circle dhud-roll" role="button" tabindex="0" data-action="roll-secondary" title="Secondary Weapon">
-        {{!-- placeholder de ícone do item --}}
-        <img class="item-icon" src="icons/svg/ice-shield.svg" alt="">
+      <div class="dhud-circle dhud-roll"
+          role="button"
+          tabindex="0"
+          data-action="roll-secondary"
+          {{#if secondaryWeapon}}
+            {{#if secondaryWeapon.id}}data-item-id="{{secondaryWeapon.id}}"{{/if}}
+            data-unarmed="{{#if secondaryWeapon.isUnarmed}}true{{else}}false{{/if}}"
+          {{/if}}
+          title="{{#if secondaryWeapon}}{{secondaryWeapon.name}}{{else}}Secondary Weapon{{/if}}">
+        {{#if secondaryWeapon}}
+          <img class="item-icon" src="{{secondaryWeapon.img}}" alt="{{secondaryWeapon.name}}">
+        {{else}}
+          <img class="item-icon" src="icons/svg/shield.svg" alt="No weapon">
+        {{/if}}
       </div>
     </div>
 
@@ -175,7 +234,7 @@
   {{!-- =============== RIGHT WING (menus) =============== --}}
   <div class="dhud-wing dhud-wing--right">
     {{!-- CLASS --}}
-    <div class="dhud-tabwrap dhud-tabwrap--right">
+    {{!-- <div class="dhud-tabwrap dhud-tabwrap--right">
       <div class="dhud-tab" role="button" tabindex="0"
            data-tab="class" aria-controls="panel-class" aria-expanded="false">CLASS</div>
       <div id="panel-class" class="dhud-panel dhud-panel--class" data-panel="class" role="dialog" aria-label="Class">
@@ -203,10 +262,10 @@
           </li>
         </ul>
       </div>
-    </div>
+    </div> --}}
 
     {{!-- SUBCLASS --}}
-    <div class="dhud-tabwrap dhud-tabwrap--right">
+    {{!-- <div class="dhud-tabwrap dhud-tabwrap--right">
       <div class="dhud-tab" role="button" tabindex="0"
            data-tab="subclass" aria-controls="panel-subclass" aria-expanded="false">SUBCLASS</div>
       <div id="panel-subclass" class="dhud-panel dhud-panel--subclass" data-panel="subclass" role="dialog" aria-label="Subclass">
@@ -224,7 +283,84 @@
           </li>
         </ul>
       </div>
+    </div> --}}
+
+    {{!-- CLASS --}}
+    <div class="dhud-tabwrap dhud-tabwrap--right">
+      <div class="dhud-tab" role="button" tabindex="0"
+          data-tab="class" aria-controls="panel-class" aria-expanded="false">{{l "TYPES.Item.class"}}</div>
+
+      <div id="panel-class" class="dhud-panel dhud-panel--class" data-panel="class" role="dialog" aria-label="{{l "TYPES.Item.class"}}">
+        <header>
+          {{l "TYPES.Item.class"}}{{#if classInfo}}:
+          <span class="dhud-header-item">{{classInfo.name}}</span>{{/if}}
+        </header>
+        <ul class="dhud-acc">
+          {{#each classFeatures}}
+          <li class="acc">
+            <details>
+              <summary>
+                <img class="icon"
+                    src="{{img}}"
+                    alt=""
+                    role="button"
+                    tabindex="0"
+                    data-action="item-exec"
+                    data-item-id="{{id}}"
+                    data-actionpath="{{actionPath}}"
+                    title="{{name}}">
+                <span class="title">{{name}}</span>
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+              </summary>
+              <div class="acc-body">{{{description}}}</div>
+            </details>
+          </li>
+          {{else}}
+          <li class="acc">Empty</li>
+          {{/each}}
+        </ul>
+
+        <header>
+          {{l "TYPES.Item.subclass"}}{{#if subclassInfo}}:
+          <span class="dhud-header-item">{{subclassInfo.name}}</span>{{/if}}
+        </header>
+        <ul class="dhud-acc">
+          {{#each subclassFeatures}}
+          <li class="acc">
+            <details>
+              <summary>
+                <img class="icon"
+                    src="{{img}}"
+                    alt=""
+                    role="button"
+                    tabindex="0"
+                    data-action="item-exec"
+                    data-item-id="{{id}}"
+                    data-actionpath="{{actionPath}}"
+                    title="{{name}}">
+                <span class="title">{{name}}</span>
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+              </summary>
+              <div class="acc-body">{{{description}}}</div>
+            </details>
+          </li>
+          {{else}}
+          <li class="acc">Empty</li>
+          {{/each}}
+        </ul>
+      </div>
     </div>
+
 
     {{!-- DOMAINS --}}
     <div class="dhud-tabwrap dhud-tabwrap--right">
