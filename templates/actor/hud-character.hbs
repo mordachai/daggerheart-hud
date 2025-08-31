@@ -114,46 +114,80 @@
     {{!-- INVENTORY --}}
     <div class="dhud-tabwrap">
       <div class="dhud-tab" role="button" tabindex="0"
-           data-tab="inventory" aria-controls="panel-inventory" aria-expanded="false">INVENTORY</div>
-      <div id="panel-inventory" class="dhud-panel dhud-panel--inventory" data-panel="inventory" role="dialog" aria-label="Inventory">
-        <header>Inventory</header>
+          data-tab="inventory" aria-controls="panel-inventory" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.inventory"}}</div>
+
+      <div id="panel-inventory" class="dhud-panel dhud-panel--inventory" data-panel="inventory" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.inventory"}}">
+        <header>{{l "TYPES.Item.consumable"}}</header>
         <ul class="dhud-acc">
+          {{#each invConsumables}}
           <li class="acc">
             <details>
               <summary>
-                <img class="icon" src="icons/svg/aura.svg" alt="">
-                <span class="title">Rope</span>
-                <span class="qty">x1</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
+                <img class="icon"
+                    src="{{img}}"
+                    alt=""
+                    role="button"
+                    tabindex="0"
+                    data-action="item-exec"
+                    data-item-id="{{id}}"
+                    data-actionpath="{{actionPath}}"
+                    title="{{name}}">
+                <span class="title">{{name}}</span>
+                {{#if qty}}<span class="qty">x{{qty}}</span>{{/if}}
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
               </summary>
-              <div class="acc-body">A sturdy rope. Useful for climbing.</div>
+              {{#if description}}
+              <div class="acc-body">{{{description}}}</div>
+              {{/if}}
             </details>
           </li>
-          <li class="acc">
-            <details>
-              <summary>
-                <img class="icon" src="icons/svg/fire.svg" alt="">
-                <span class="title">Torch</span>
-                <span class="qty">x2</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
-              </summary>
-              <div class="acc-body">A simple torch for light.</div>
-            </details>
-          </li>
-          <li class="acc">
-            <details>
-              <summary>
-                <img class="icon" src="icons/svg/ice-shield.svg" alt="">
-                <span class="title">Letter from a lover</span>
-                <span class="qty">x1</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
-              </summary>
-              <div class="acc-body">A cherished letter with personal notes.</div>
-            </details>
-          </li>
+          {{else}}
+          <li class="acc">Empty</li>
+          {{/each}}
         </ul>
+
+        <header>{{l "TYPES.Item.loot"}}</header>
+        <ul class="dhud-acc">
+          {{#each invLoot}}
+          <li class="acc">
+            <details>
+              <summary>
+                <img class="icon"
+                    src="{{img}}"
+                    alt=""
+                    role="button"
+                    tabindex="0"
+                    data-action="item-exec"
+                    data-item-id="{{id}}"
+                    title="{{name}}">
+                <span class="title">{{name}}</span>
+                {{#if qty}}<span class="qty">x{{qty}}</span>{{/if}}
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+              </summary>
+              {{#if description}}
+              <div class="acc-body">{{{description}}}</div>
+              {{/if}}
+            </details>
+          </li>
+          {{else}}
+          <li class="acc">Empty</li>
+          {{/each}}
+        </ul>
+
+        {{!-- Weapons, Armors come later (order note: after Loot) --}}
       </div>
     </div>
+
   </div>
 
   {{!-- =============== CORE (center ring) =============== --}}
@@ -234,58 +268,6 @@
   {{!-- =============== RIGHT WING (menus) =============== --}}
   <div class="dhud-wing dhud-wing--right">
     {{!-- CLASS --}}
-    {{!-- <div class="dhud-tabwrap dhud-tabwrap--right">
-      <div class="dhud-tab" role="button" tabindex="0"
-           data-tab="class" aria-controls="panel-class" aria-expanded="false">CLASS</div>
-      <div id="panel-class" class="dhud-panel dhud-panel--class" data-panel="class" role="dialog" aria-label="Class">
-        <header>Class</header>
-        <ul class="dhud-acc">
-          <li class="acc">
-            <details>
-              <summary>
-                <img class="icon" src="icons/svg/aura.svg" alt="">
-                <span class="title">Class Feature A</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
-              </summary>
-              <div class="acc-body">Feature text…</div>
-            </details>
-          </li>
-          <li class="acc">
-            <details>
-              <summary>
-                <img class="icon" src="icons/svg/aura.svg" alt="">
-                <span class="title">Class Feature B</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
-              </summary>
-              <div class="acc-body">Another feature description…</div>
-            </details>
-          </li>
-        </ul>
-      </div>
-    </div> --}}
-
-    {{!-- SUBCLASS --}}
-    {{!-- <div class="dhud-tabwrap dhud-tabwrap--right">
-      <div class="dhud-tab" role="button" tabindex="0"
-           data-tab="subclass" aria-controls="panel-subclass" aria-expanded="false">SUBCLASS</div>
-      <div id="panel-subclass" class="dhud-panel dhud-panel--subclass" data-panel="subclass" role="dialog" aria-label="Subclass">
-        <header>Subclass</header>
-        <ul class="dhud-acc">
-          <li class="acc">
-            <details>
-              <summary>
-                <img class="icon" src="icons/svg/aura.svg" alt="">
-                <span class="title">Subclass Feature A</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
-              </summary>
-              <div class="acc-body">Feature text…</div>
-            </details>
-          </li>
-        </ul>
-      </div>
-    </div> --}}
-
-    {{!-- CLASS --}}
     <div class="dhud-tabwrap dhud-tabwrap--right">
       <div class="dhud-tab" role="button" tabindex="0"
           data-tab="class" aria-controls="panel-class" aria-expanded="false">{{l "TYPES.Item.class"}}</div>
@@ -361,36 +343,124 @@
       </div>
     </div>
 
+  {{!-- DOMAINS / LOADOUT --}}
+  <div class="dhud-tabwrap dhud-tabwrap--right">
+    <div class="dhud-tab" role="button" tabindex="0"
+        data-tab="loadout" aria-controls="panel-loadout" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Domain.plural"}}</div>
 
-    {{!-- DOMAINS --}}
-    <div class="dhud-tabwrap dhud-tabwrap--right">
-      <div class="dhud-tab" role="button" tabindex="0"
-           data-tab="domains" aria-controls="panel-domains" aria-expanded="false">DOMAINS</div>
-      <div id="panel-domains" class="dhud-panel dhud-panel--domains" data-panel="domains" role="dialog" aria-label="Domains">
-        <header>Domains</header>
-        <ul class="dhud-acc">
-          <li class="acc">
-            <details>
-              <summary>
-                <img class="icon" src="icons/svg/aura.svg" alt="">
-                <span class="title">Battle Ritual</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
-              </summary>
-              <div class="acc-body">Ritual description…</div>
-            </details>
-          </li>
-          <li class="acc">
-            <details>
-              <summary>
-                <img class="icon" src="icons/svg/aura.svg" alt="">
-                <span class="title">Courage</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
-              </summary>
-              <div class="acc-body">Card description…</div>
-            </details>
-          </li>
-        </ul>
-      </div>
+    <div id="panel-loadout" class="dhud-panel dhud-panel--domains" data-panel="loadout" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.loadout"}}">
+      <header>
+      {{l "DAGGERHEART.GENERAL.Tabs.loadout"}}
+      {{#if domainsHeader}}:
+        <span class="dhud-domains-header" {{#if domainsHeaderTitle}}title="{{domainsHeaderTitle}}"{{/if}}>
+          {{domainsHeader}}
+        </span>
+      {{/if}}
+      </header>
+      <ul class="dhud-acc">
+        {{#each domainLoadout}}
+        <li class="acc">
+          <details>
+            <summary>
+              <img class="icon"
+                  src="{{img}}"
+                  alt=""
+                  role="button"
+                  tabindex="0"
+                  data-action="item-exec"
+                  data-item-id="{{id}}"
+                  data-actionpath="{{actionPath}}"
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+
+              <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
+
+              {{!-- move to vault --}}
+              <i class="fas fa-arrow-down move"
+                role="button"
+                tabindex="0"
+                data-action="to-vault"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToVault'}}"></i>
+
+              {{!-- send to chat --}}
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.SendToChat'}}"></i>
+            </summary>
+
+            <div class="acc-body">
+              <p><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
+                <strong>Domain</strong>: {{domain}}</p>
+              {{{description}}}
+            </div>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">{{l "DAGGERHEART.UI.NoneFound"}}</li>
+        {{/each}}
+      </ul>
     </div>
+  </div>
+
+  {{!-- VAULT (separate tab) --}}
+  <div class="dhud-tabwrap dhud-tabwrap--right">
+    <div class="dhud-tab" role="button" tabindex="0"
+        data-tab="vault" aria-controls="panel-vault" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.vault"}}</div>
+
+    <div id="panel-vault" class="dhud-panel dhud-panel--vault" data-panel="vault" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.vault"}}">
+      <header>{{l "DAGGERHEART.GENERAL.Tabs.vault"}}</header>
+      <ul class="dhud-acc">
+        {{#each domainVault}}
+        <li class="acc">
+          <details>
+            <summary>
+              <img class="icon"
+                  src="{{img}}"
+                  alt=""
+                  role="button"
+                  tabindex="0"
+                  data-action="item-exec"
+                  data-item-id="{{id}}"
+                  data-actionpath="{{actionPath}}"
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+
+              <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
+
+              {{!-- move to loadout --}}
+              <i class="fas fa-arrow-up move"
+                role="button"
+                tabindex="0"
+                data-action="to-loadout"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToLoadout'}}"></i>
+
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.SendToChat'}}"></i>
+            </summary>
+
+            <div class="acc-body">
+              <p><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
+                <strong>Domain</strong>: {{domain}}</p>
+              {{{description}}}
+            </div>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc"></li>
+        {{/each}}
+      </ul>
+    </div>
+  </div>
+
+
   </div>
 </section>

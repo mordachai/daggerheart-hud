@@ -76,7 +76,13 @@
   z-index: 500;                /* sobre o app */
 }
 .dhud-tabwrap--right .dhud-panel { left: auto; right: 0; }
-.dhud-panel header { font-weight: 900; margin-bottom: .5rem; }
+.dhud-panel header {
+  font-weight: 900;
+  margin-bottom: .5rem;
+  margin: 10px 5px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--dh-accent);
+}
 
 /* Open-state controlado por [data-open] no root */
 .dhud[data-open="traits"]    #panel-traits,
@@ -84,38 +90,50 @@
 .dhud[data-open="inventory"] #panel-inventory,
 .dhud[data-open="domains"]   #panel-domains,
 .dhud[data-open="class"]     #panel-class,
-.dhud[data-open="subclass"]  #panel-subclass { display: block; }
+.dhud[data-open="loadout"]   #panel-loadout,
+.dhud[data-open="vault"]     #panel-vault { display: block; }
 
 /* ===== Accordion (itens dos painéis) ===== */
 .dhud-acc { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
 
-.acc details {
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.acc summary {
-  display: grid;
-  grid-template-columns: 24px 1fr auto auto;
+/* Keep each accordion row on a single line and push controls to the right */
+.dhud-acc summary {
+  display: flex;
   align-items: center;
-  gap: .5rem;
-  padding: .45rem .55rem;
-  cursor: pointer;
-  list-style: none;
+  gap: 0.5rem;
+  flex-wrap: nowrap;   
+  padding: 4px 8px;
+  border: 1px solid var(--dh-border);
+  border-radius: 4px;
 }
-.acc summary::-webkit-details-marker { display: none; }
 
-.acc .icon  { width: 22px; height: 22px; border-radius: 4px; object-fit: cover; }
-.acc .title { font-weight: 700; }
-.acc .qty   { font-weight: 700; opacity: .9; margin-right: .4rem; }
-.acc .chat  { color: var(--dh-accent); margin-right: .1rem; }
+/* Icon stays fixed size */
+.dhud-acc summary .icon {
+  width: 20px; height: 20px;
+  flex: 0 0 auto;
+}
 
-.acc .acc-body {
-  padding: .45rem .55rem .6rem;
-  font-size: .95rem;
-  color: var(--dh-muted);
-  background: rgba(0,0,0,.15);
+/* Title takes remaining space, truncates with ellipsis if too long */
+.dhud-acc summary .title {
+  flex: 1 1 auto;
+  min-width: 0; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Small chips stay inline and non-wrapping */
+.dhud-acc summary .qty,
+.dhud-acc summary .recall {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Action icons on the far right */
+.dhud-acc summary .move,
+.dhud-acc summary .chat {
+  flex: 0 0 auto;
+  margin-left: 0.4rem;
 }
 
 /* ===== Core (anel central e círculos laterais) ===== */
@@ -126,9 +144,9 @@
   --pip: 12px;
 
   /* spacing e fórmulas */
-  --core-gap: .05rem;     /* deve espelhar o 'gap' do grid */
-  --overlap: 8px;         /* move side-circles para dentro/fora */
-  --badge-inset: 8px;     /* aproxima/afasta os badges do anel */
+  --core-gap: .05rem; 
+  --overlap: 8px;   
+  --badge-inset: 8px; 
 
   /* offsets de HP/Stress (ajuste só aqui) */
   --hp-top: -6px;
@@ -159,7 +177,7 @@
   display: grid;
   place-items: center;
   position: relative;
-  z-index: 1;               /* armas no fundo (dentro do wrapper) */
+  z-index: 1;          
   pointer-events: auto;
 }
 .dhud-roll { cursor: pointer; }
@@ -178,7 +196,7 @@
 
 /* Anel central */
 .dhud-core__center {
-  /* wrapper do centro NÃO intercepta mouse; reativamos só onde precisa */
+
   pointer-events: none;
 
   display: grid;
@@ -225,8 +243,8 @@
   width: var(--pip); height: var(--pip);
   border: 2px solid var(--dh-border);
   border-radius: 999px;
-  background: transparent;          /* ← was var(--dh-accent) */
-  opacity: 0.7;                     /* optional: make empty a bit lighter */
+  background: transparent;
+  opacity: 0.7;  
   transition: background .15s, border-color .15s, opacity .15s;
 }
 
@@ -241,7 +259,7 @@
   position: absolute;
   white-space: nowrap;
   text-align: center;
-  pointer-events: auto;   /* reativado para botões futuros */
+  pointer-events: auto; 
 }
 .dhud-count--hp {
   top: var(--hp-top);
@@ -254,7 +272,7 @@
   text-align: right;
 }
 
-/* Thresholds: | MINOR | nA | MAJOR | nB | SEVERE |  */
+/* Thresholds:  */
 .dhud-thresholds {
   grid-area: th;
   grid-column: 1 / -1;
@@ -284,21 +302,18 @@
   text-align: center;
 }
 
-/* Badges “nichados” entre armas e anel (irmãos dentro de .dhud-core) */
+/* Badges  */
 .dhud-badge {
   position: absolute;
   top: 50%;
   transform: translateY(0%);
-  z-index: 3;               /* acima do ring e dos círculos */
-  pointer-events: none;     /* trocar para auto quando quiser clique */
+  z-index: 3;          
+  pointer-events: none;   
   width: 40px; height: 40px;
-  /* background: var(--dh-surface);
-  border: 2px solid var(--dh-border);
-  border-radius: 12px; */
   display: grid; place-items: center;
   font-weight: 800; font-size: .8rem;
 }
-/* left = side + gap + (±) ajustado */
+
 .dhud-badge--left {
   left: calc(var(--side-d) + var(--core-gap) - 20px + var(--badge-inset));
   background-image: url("/modules/daggerheart-hud/ui/shield.svg");

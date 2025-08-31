@@ -344,6 +344,33 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     }
 
+    // === Actor Domains (header label, localized) ===
+    const rawDomains = Array.isArray(sys.domains) ? sys.domains : [];
+    const domainsHeader = rawDomains
+      .map(d => String(d).trim())
+      .filter(Boolean)
+      .map(key => {
+        // Try i18n label: DAGGERHEART.GENERAL.Domain.<key>.label
+        const i18nKey = `DAGGERHEART.GENERAL.Domain.${key}.label`;
+        const loc = game.i18n?.localize?.(i18nKey);
+        if (loc && loc !== i18nKey) return loc; // localized OK
+        // Fallback: TitleCase the raw key
+        return key.charAt(0).toUpperCase() + key.slice(1);
+      })
+      .join(" & ") || null;
+
+    // (optional) if you want a tooltip with the concatenated descriptions:
+    const domainsHeaderTitle = rawDomains
+      .map(key => {
+        const dKey = String(key).trim();
+        const name = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.label`);
+        const desc = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.description`);
+        return (name && desc) ? `${name}: ${desc}` : null;
+      })
+      .filter(Boolean)
+      .join("\n") || "";
+
+
 
 
     // === RESOURCES (exact system paths) ===
@@ -413,6 +440,71 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     };
 
+    // === INVENTORY (for now: Consumables, Loot) ===
+    const invConsumables = [];
+    const invLoot        = [];
+
+    for (const it of (this.actor?.items ?? [])) {
+      if (it.type !== "consumable" && it.type !== "loot") continue;
+
+      const s = it.system ?? {};
+      const entry = {
+        id: it.id,
+        type: it.type,                       // "consumable" | "loot"
+        name: it.name,
+        img: it.img || "icons/svg/aura.svg",
+        qty: Number(s.quantity ?? 1),
+        description: s.description ?? "",
+        // action hint (some consumables can be "used")
+        actionPath: (() => {
+          if (it.type !== "consumable") return "";       // loot usually has no action
+          const sys = it.system ?? {};
+          if (sys.actionPath) return sys.actionPath;     // if system stores it plainly
+          if (sys.actions && typeof sys.actions === "object") {
+            const first = Object.values(sys.actions)[0];
+            return first?.systemPath || "use";
+          }
+          return "use";
+        })()
+      };
+
+      if (it.type === "consumable") invConsumables.push(entry);
+      if (it.type === "loot")       invLoot.push(entry);
+    }
+
+    // === DOMAIN CARDS (Loadout vs Vault) ===
+    // type: "domainCard"; system.inVault: boolean; system.domain: "blade" | "bone" | ...
+    const domainLoadout = [];
+    const domainVault   = [];
+
+    for (const it of (this.actor?.items ?? [])) {
+      if (it.type !== "domainCard") continue;
+
+      const s = it.system ?? {};
+      const entry = {
+        id: it.id,
+        name: it.name,
+        img: it.img || "icons/svg/aura.svg",
+        description: s.description ?? "",
+        recallCost: Number(s.recallCost ?? 0),
+        domain: (s.domain ?? "").toString(),   // e.g., "blade", "bone", "midnight"
+        inVault: !!s.inVault,
+        // If the system exposes actions, pick the first path; domain cards often have none
+        actionPath: (() => {
+          if (s.actionPath) return s.actionPath;
+          if (s.actions && typeof s.actions === "object") {
+            const first = Object.values(s.actions)[0];
+            return first?.systemPath || "use";
+          }
+          return "use";
+        })()
+      };
+
+      (entry.inVault ? domainVault : domainLoadout).push(entry);
+    }
+
+
+
     
 
     // Debug (feel free to keep while wiring more keys)
@@ -475,7 +567,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       primaryWeapon,
       secondaryWeapon,
       ancestryFeatures, communityFeatures, classFeatures, subclassFeatures,
-      ancestryInfo, communityInfo, classInfo, subclassInfo     
+      ancestryInfo, communityInfo, classInfo, subclassInfo,
+      invConsumables, invLoot,
+      domainLoadout, domainVault,domainsHeader, domainsHeaderTitle  
     };
   }
 
@@ -845,6 +939,181 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
       }
       this._classHooked = true;
+    }
+
+    // --- INVENTORY (Consumables, Loot): icon executes (consumables), title toggles, chat posts
+    if (!this._inventoryHooked) {
+      const panel = this.element.querySelector(".dhud-panel--inventory");
+      if (panel) {
+        const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+
+        // stop <summary> toggle on icon/chat
+        panel.querySelectorAll("summary .icon, summary .chat").forEach(el => {
+          if (el._dhudBlockToggle) return;
+          el.addEventListener("click", stop, true);
+          el.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter" || ev.key === " ") stop(ev);
+          }, true);
+          el._dhudBlockToggle = true;
+        });
+
+        // optional import-level helper
+        const _sendToChat = (typeof sendItemToChat === "function")
+          ? sendItemToChat
+          : async (item, actor) => {
+              const speaker = ChatMessage.getSpeaker({ actor });
+              try {
+                if (typeof item.displayCard === "function") { await item.displayCard({ speaker }); return; }
+              } catch {}
+              try {
+                if (typeof item.toChat === "function") { await item.toChat.call(item, { speaker }); return; }
+              } catch {}
+              try {
+                if (Item?.prototype?.toChat) { await Item.prototype.toChat.call(item, { speaker }); return; }
+              } catch {}
+              const content = `<h3>${foundry.utils.escapeHTML(item.name)}</h3>${item.system?.description ?? ""}`;
+              await ChatMessage.create({ speaker, content });
+            };
+
+        // execute on icon
+        panel.addEventListener("click", async (ev) => {
+          const execBtn = ev.target.closest("[data-action='item-exec']");
+          if (!execBtn) return;
+          stop(ev);
+
+          const actor = this.actor;
+          const itemId = execBtn.dataset.itemId;
+          const actionPath = execBtn.dataset.actionpath || "";
+          const item = actor?.items.get(itemId);
+          if (!item) return;
+
+          // Consumables: try to "use"; Loot: open sheet (no real action)
+          try {
+            if (item.type === "consumable") {
+              const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
+              if (typeof item.rollAction === "function") { await item.rollAction(actionPath || "use"); return; }
+              if (typeof item.use       === "function") { await item.use({ action: actionPath || "use" }); return; }
+              if (Action?.execute) { await Action.execute({ source: item, actionPath: actionPath || "use" }); return; }
+            }
+
+            // default: just open the item
+            item.sheet?.render(true, { focus: true });
+          } catch (err) {
+            console.error("[DHUD] Inventory item exec failed", err);
+            ui.notifications?.error("Item action failed (see console)");
+          }
+        }, true);
+
+        // send to chat
+        panel.addEventListener("click", async (ev) => {
+          const chatBtn = ev.target.closest("[data-action='to-chat']");
+          if (!chatBtn) return;
+          stop(ev);
+
+          const actor = this.actor;
+          const item = actor?.items.get(chatBtn.dataset.itemId);
+          if (!item) return;
+
+          try {
+            await _sendToChat(item, actor);
+          } catch (err) {
+            console.error("[DHUD] Inventory to-chat failed (after fallbacks)", err);
+            ui.notifications?.error("Failed to send to chat (see console)");
+          }
+        }, true);
+      }
+      this._inventoryHooked = true;
+    }
+
+    // --- DOMAINS / LOADOUT + VAULT
+    if (!this._domainsHooked) {
+      const panels = this.element.querySelectorAll(".dhud-panel--domains, .dhud-panel--vault");
+      panels.forEach((panel) => {
+        const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+
+        // prevent <summary> toggle on icon/chat/move
+        panel.querySelectorAll("summary .icon, summary .chat, summary .move").forEach(el => {
+          if (el._dhudBlockToggle) return;
+          el.addEventListener("click", stop, true);
+          el.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter" || ev.key === " ") stop(ev);
+          }, true);
+          el._dhudBlockToggle = true;
+        });
+
+        // EXECUTE on icon
+        panel.addEventListener("click", async (ev) => {
+          const btn = ev.target.closest("[data-action='item-exec']");
+          if (!btn) return;
+          stop(ev);
+
+          const actor = this.actor;
+          const item  = actor?.items.get(btn.dataset.itemId);
+          if (!item) return;
+
+          const actionPath = btn.dataset.actionpath || "use";
+          const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
+
+          try {
+            if (typeof item.rollAction === "function") { await item.rollAction(actionPath); return; }
+            if (typeof item.use       === "function") { await item.use({ action: actionPath }); return; }
+            if (Action?.execute) { await Action.execute({ source: item, actionPath }); return; }
+            item.sheet?.render(true, { focus: true });
+          } catch (err) {
+            console.error("[DHUD] Domain exec failed", err);
+            ui.notifications?.error("Domain action failed (see console)");
+          }
+        }, true);
+
+        // MOVE: to vault / to loadout
+        panel.addEventListener("click", async (ev) => {
+          const mv = ev.target.closest("[data-action='to-vault'],[data-action='to-loadout']");
+          if (!mv) return;
+          stop(ev);
+
+          const actor = this.actor;
+          const item  = actor?.items.get(mv.dataset.itemId);
+          if (!item) return;
+
+          const toVault = mv.dataset.action === "to-vault";
+          try {
+            await item.update({ "system.inVault": toVault });
+            // your update hooks will re-render; layout snapshot restores position/wings
+          } catch (err) {
+            console.error("[DHUD] Domain move failed", err);
+            ui.notifications?.error("Failed to move domain card");
+          }
+        }, true);
+
+        // SEND TO CHAT
+        panel.addEventListener("click", async (ev) => {
+          const chatBtn = ev.target.closest("[data-action='to-chat']");
+          if (!chatBtn) return;
+          stop(ev);
+
+          const actor = this.actor;
+          const item  = actor?.items.get(chatBtn.dataset.itemId);
+          if (!item) return;
+
+          try {
+            if (typeof sendItemToChat === "function") {
+              await sendItemToChat(item, actor);
+            } else {
+              const speaker = ChatMessage.getSpeaker({ actor });
+              try { if (typeof item.displayCard === "function") return void (await item.displayCard({ speaker })); } catch {}
+              try { if (typeof item.toChat       === "function") return void (await item.toChat.call(item, { speaker })); } catch {}
+              try { if (Item?.prototype?.toChat) return void (await Item.prototype.toChat.call(item, { speaker })); } catch {}
+              const content = `<h3>${foundry.utils.escapeHTML(item.name)}</h3>${item.system?.description ?? ""}`;
+              await ChatMessage.create({ speaker, content });
+            }
+          } catch (err) {
+            console.error("[DHUD] Domain to-chat failed", err);
+            ui.notifications?.error("Failed to send to chat (see console)");
+          }
+        }, true);
+      });
+
+      this._domainsHooked = true;
     }
 
   }
