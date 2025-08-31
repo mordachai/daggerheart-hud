@@ -4,40 +4,33 @@
     {{!-- TRAITS --}}
     <div class="dhud-tabwrap">
       <div class="dhud-tab" role="button" tabindex="0"
-           data-tab="traits" aria-controls="panel-traits" aria-expanded="false">TRAITS</div>
+           data-tab="traits" aria-controls="panel-traits" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Trait.plural"}}</div>
       <div id="panel-traits" class="dhud-panel dhud-panel--traits" data-panel="traits" role="dialog" aria-label="Traits">
-        <header>Traits</header>
+      <header>{{l "DAGGERHEART.GENERAL.Trait.plural"}}</header>
         <ul class="dhud-acc">
+          {{#each traits}}
           <li class="acc">
             <details>
               <summary>
-                <img class="icon" src="icons/svg/d20-black.svg" alt="">
-                <span class="title">Agility</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
+                <img
+                  class="icon dhud-roll"
+                  src="icons/svg/d20-black.svg"
+                  alt=""
+                  role="button"
+                  tabindex="0"
+                  data-action="roll-trait"
+                  data-trait="{{key}}"
+                  title="Roll {{name}}"
+                >
+                <span class="title">{{name}}</span>
+                <span class="value">{{value}}</span>
               </summary>
-              <div class="acc-body">Short description of Agility or rules text.</div>
+              <div class="acc-body">{{description}}</div>
             </details>
           </li>
-          <li class="acc">
-            <details>
-              <summary>
-                <img class="icon" src="icons/svg/d20-black.svg" alt="">
-                <span class="title">Strength</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
-              </summary>
-              <div class="acc-body">Short description of Strength.</div>
-            </details>
-          </li>
-          <li class="acc">
-            <details>
-              <summary>
-                <img class="icon" src="icons/svg/d20-black.svg" alt="">
-                <span class="title">Instinct</span>
-                <i class="far fa-comment chat" title="Send to chat"></i>
-              </summary>
-              <div class="acc-body">Short description of Instinct.</div>
-            </details>
-          </li>
+          {{else}}
+          <li class="acc">No traits found</li>
+          {{/each}}
         </ul>
       </div>
     </div>
@@ -121,40 +114,49 @@
   {{!-- =============== CORE (center ring) =============== --}}
   <div class="dhud-core">
     <div class="dhud-core__leftcircle">
-      <div class="dhud-circle dhud-roll" role="button" tabindex="0" data-action="roll-primary" title="Primary Weapon">
-        {{!-- placeholder de ícone do item --}}
-        <img class="item-icon" src="icons/svg/fire.svg" alt="">
+      <div class="dhud-circle dhud-roll"
+          role="button"
+          tabindex="0"
+          data-action="roll-primary"
+          {{#if primaryWeapon}}data-item-id="{{primaryWeapon.id}}"{{/if}}
+          title="{{#if primaryWeapon}}{{primaryWeapon.name}}{{else}}Primary Weapon{{/if}}">
+        {{#if primaryWeapon}}
+          <img class="item-icon" src="{{primaryWeapon.img}}" alt="{{primaryWeapon.name}}">
+        {{else}}
+          <img class="item-icon" src="icons/svg/sword.svg" alt="No weapon">
+        {{/if}}
       </div>
     </div>
-
+    
     <div class="dhud-core__center">
       <div class="dhud-count dhud-count--hp">
         <div class="label">HP</div>
-        <div class="value" data-bind="hp">0/6</div>
+        <div class="value" data-bind="hp">{{hitPoints.value}}/{{hitPoints.max}}</div>
       </div>
 
       <div class="dhud-ring">
         <div class="dhud-pips" aria-label="Hope">
-          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
-          <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+          {{#each hopePips}}
+            <span class="pip {{#if this.filled}}filled{{/if}}"></span>
+          {{/each}}
         </div>
-        <div class="dhud-portrait">
-          <img src="icons/svg/mystery-man.svg" alt="Portrait">
+        <div class="dhud-portrait" title="{{actorName}}">
+          <img src="{{portrait}}" alt="{{actorName}}">
         </div>
         {{!-- <div class="dhud-ring__label">Hope</div> --}}
       </div>
 
       <div class="dhud-count dhud-count--stress">
         <div class="label">Stress</div>
-        <div class="value" data-bind="stress">0/6</div>
+        <div class="value" data-bind="stress">{{stress.value}}/{{stress.max}}</div>
       </div>
 
       {{!-- Thresholds: | MINOR | nA | MAJOR | nB | SEVERE | --}}
       <div class="dhud-thresholds" aria-label="Damage thresholds">
         <span class="chip">MINOR</span>
-        <span class="val">nA</span>
+        <span class="val">{{thresholds.major}}</span>
         <span class="chip">MAJOR</span>
-        <span class="val">nB</span>
+        <span class="val">{{thresholds.severe}}</span>
         <span class="chip">SEVERE</span>
       </div>
     </div>
@@ -166,8 +168,8 @@
       </div>
     </div>
 
-    <div class="dhud-badge dhud-badge--left" title="Evasion">10</div>
-    <div class="dhud-badge dhud-badge--right" title="Armor">0/4</div>
+    <div class="dhud-badge dhud-badge--left" title="Evasion">{{evasion}}</div>
+    <div class="dhud-badge dhud-badge--right" title="Armor">{{armor.max}}</div>
   </div>
 
   {{!-- =============== RIGHT WING (menus) =============== --}}

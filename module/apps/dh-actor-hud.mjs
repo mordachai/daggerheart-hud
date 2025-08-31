@@ -1,5 +1,7 @@
 // module/apps/dh-actor-hud.mjs
 
+import { L, Lpath, Ltrait } from "../helpers/i18n.mjs";
+
 const BOTTOM_OFFSET = 110; // px
 
 function placeAtBottom(appEl) {
@@ -147,17 +149,172 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
   constructor({ actor, token } = {}, options = {}) {
     super(options);
+    console.debug("[DHUD] ctor", {
+      actorId: actor?.id, actorName: actor?.name, tokenId: token?.id
+    });
     this.actor = actor ?? null;
     this.token = token ?? actor?.getActiveTokens()?.[0]?.document ?? null;
   }
 
-  async getData() {
-    return { actorName: this.actor?.name ?? "Daggerheart" }; // placeholders por enquanto
+
+  async _prepareContext(_options) {
+    const actor = this.actor ?? null;
+
+    // Fallbacks
+    let actorName = "—";
+    let portrait  = "icons/svg/mystery-man.svg";
+
+    if (actor) {
+      actorName = actor.name ?? "—";
+      // Prefer the actor portrait; fall back to the prototype token’s texture if empty
+      const protoSrc = actor?.prototypeToken?.texture?.src;
+      portrait = (actor.img && actor.img.trim()) ? actor.img : (protoSrc || portrait);
+    }
+
+    // Canonical system root (guarded)
+    const sys = actor?.system ?? {};
+
+    // === PRIMARY WEAPON (type:"weapon"; prefer equipped) ===
+    let primaryWeapon = null;
+    {
+      const items = this.actor?.items ?? [];
+      const weapons = items.filter(i => i.type === "weapon");
+      const equipped = weapons.filter(w => w.system?.equipped === true);
+      const list = equipped.length ? equipped : weapons;
+
+      // Prefer one that exposes an "attack" action if present; else first
+      const pick = list.find(w => w.system?.attack) ?? list[0] ?? null;
+
+      if (pick) {
+        primaryWeapon = {
+          id: pick.id,
+          name: pick.name,
+          img: pick.img || "icons/svg/sword.svg"
+        };
+      }
+    }
+
+    // === RESOURCES (exact system paths) ===
+    const hitPoints = {
+      // system.resources.hitPoints.{value,max,isReversed}
+      value: sys.resources?.hitPoints?.value ?? 0,
+      max:   sys.resources?.hitPoints?.max   ?? 0,
+      isReversed: !!sys.resources?.hitPoints?.isReversed
+    };
+
+    const stress = {
+      // system.resources.stress.{value,max,isReversed}
+      value: sys.resources?.stress?.value ?? 0,
+      max:   sys.resources?.stress?.max   ?? 0,
+      isReversed: !!sys.resources?.stress?.isReversed
+    };
+
+    // === HOPE ===
+    const rawValue = sys.resources?.hope?.value ?? 0;
+    const rawMax   = sys.resources?.hope?.max   ?? 0;
+    const hopeMax  = Math.max(0, Number(rawMax));
+    const hopeValue= Math.min(hopeMax, Math.max(0, Number(rawValue)));
+
+    const hopePips = Array.from({ length: hopeMax }, (_, i) => ({
+      filled: i < hopeValue
+    }));
+
+    // === TRAITS (ordered + localized via i18n helper) ===
+    const TRAIT_ORDER = ["agility","strength","finesse","instinct","presence","knowledge"];
+
+    const traits = TRAIT_ORDER.map(key => {
+      const value = Number(sys.traits?.[key]?.value ?? 0);
+      const loc = Ltrait(key); // { name, verbs[], description }
+      return {
+        key,
+        name: loc.name,           // e.g., "Agility"
+        value,                    // e.g., 2
+        description: loc.description // e.g., "Sprint, Leap, Maneuver"
+      };
+    });
+
+    // === PROFICIENCY / DEFENSES ===
+    const proficiency = sys.proficiency ?? 0;   // system.proficiency
+    const evasion     = sys.evasion     ?? 0;   // system.evasion
+    const armor = {
+      max:   sys.armorScore ?? 0,               // no max in system; mirror value so UI shows X/X
+      marks: 0
+    };
+
+    // === DAMAGE THRESHOLDS ===
+    const thresholds = {
+      major:  sys.damageThresholds?.major  ?? 0,
+      severe: sys.damageThresholds?.severe ?? 0
+    };
+
+    // === RESISTANCE ===
+    const resistance = {
+      physical: {
+        resistance: !!sys.resistance?.physical?.resistance,
+        immunity:   !!sys.resistance?.physical?.immunity,
+        reduction:  sys.resistance?.physical?.reduction ?? 0
+      },
+      magical: {
+        resistance: !!sys.resistance?.magical?.resistance,
+        immunity:   !!sys.resistance?.magical?.immunity,
+        reduction:  sys.resistance?.magical?.reduction ?? 0
+      }
+    };
+
+    
+
+    // Debug (feel free to keep while wiring more keys)
+    console.debug("[DHUD] _prepareContext (wired)", {
+      actorId: actor?.id,
+      actorName,
+      portrait,
+      hope: { value: hopeValue, max: hopeMax },
+      hopePipsLen: hopePips.length,
+      paths: {
+      resources: sys.resources,
+      traits: sys.traits,
+      proficiency, evasion, armorScore: sys.armorScore,
+      damageThresholds: sys.damageThresholds,
+      resistance: sys.resistance
+      }
+    });
+
+    // Return everything your HBS references today (+ a few future-safe keys)
+    return {
+      actorName,
+      portrait,
+
+      // resources
+      hitPoints,
+      stress,
+      hope: { value: hopeValue, max: hopeMax },
+      hopePips,
+
+      // defenses & scores
+      evasion,
+      armor,
+      thresholds,
+      proficiency,
+
+      // traits & resistances (even if HBS doesn’t show yet, ready to use)
+      traits,
+      resistance,
+
+      // weapons
+      primaryWeapon
+    };
   }
 
   async _onRender() {
     const root = this.element;
     if (!root) return;
+
+    const imgEl = root.querySelector(".dhud-portrait img");
+    console.debug("[DHUD] _onRender: portrait img element", {
+      found: !!imgEl,
+      src: imgEl?.getAttribute("src"),
+      alt: imgEl?.getAttribute("alt")
+    });
 
     // Make roll targets feel clickable
     root.querySelectorAll(".dhud-roll").forEach(el => {
@@ -209,7 +366,102 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         setWingsState(root, open ? "open" : "closed");
       });
       this._ringToggleHooked = true;
+    }   
+
+    // --- Traits: icon rolls immediately; only the title toggles <details>
+    if (!this._traitRollHooked) {
+      const panel = this.element.querySelector(".dhud-panel--traits");
+      if (panel) {
+        // Helper: stop <summary> default toggle
+        const stopToggle = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+
+        // 1) Icon + value should NOT toggle the <details>
+        panel.querySelectorAll("summary .icon, summary .value").forEach(el => {
+          if (el._dhudBlockToggle) return;
+          el.addEventListener("click",     stopToggle, true);   // capture to beat summary
+          el.addEventListener("pointerup", stopToggle, true);
+          el.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter" || ev.key === " ") stopToggle(ev);
+          }, true);
+          el._dhudBlockToggle = true;
+        });
+
+        // 2) Clicking the icon rolls immediately (no second click in chat)
+        panel.querySelectorAll("[data-action='roll-trait']").forEach(btn => {
+          if (btn._dhudRollBound) return;
+
+          const rollNow = () => {
+            if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
+            const traitKey = btn.dataset.trait;
+            ui.chat?.processMessage?.(`/dr trait=${traitKey}`);
+          };
+
+          btn.addEventListener("click", (ev) => { stopToggle(ev); rollNow(); }, true);
+          btn.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter" || ev.key === " ") { stopToggle(ev); rollNow(); }
+          }, true);
+
+          btn._dhudRollBound = true;
+        });
+      }
+      this._traitRollHooked = true;
     }
+
+    // --- Primary Weapon roll: click the left circle (instant system roll)
+    if (!this._primaryWeaponHooked) {
+      const btn = this.element.querySelector("[data-action='roll-primary']");
+      if (btn) {
+        btn.addEventListener("click", async (ev) => {
+          // ignore accidental click right after dragging
+          if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
+
+          const actor = this.actor;
+          if (!actor) return;
+
+          // Try to resolve the weapon from the DOM first, then heuristics
+          const idFromDom = btn.dataset.itemId;
+          let item = idFromDom ? actor.items.get(idFromDom) : null;
+          if (!item) {
+            const weapons = actor.items.filter(i => i.type === "weapon");
+            const equipped = weapons.filter(w => w.system?.equipped === true);
+            const list = equipped.length ? equipped : weapons;
+            item = (list.find(w => w.system?.attack) ?? list[0]) ?? null;
+          }
+          if (!item) {
+            ui.notifications?.warn("No primary weapon found");
+            return;
+          }
+
+          try {
+            // Prefer explicit item action hooks if the system exposes them
+            if (typeof item.rollAction === "function") {
+              await item.rollAction("attack"); // opens the system’s attack dialog/card
+              return;
+            }
+            if (typeof item.use === "function") {
+              await item.use({ action: "attack" });
+              return;
+            }
+            // System-level executor (namespaced in some Foundryborne builds)
+            const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
+            if (Action?.execute) {
+              await Action.execute({ source: item, actionPath: "attack" });
+              return;
+            }
+
+            // Fallback: open the weapon sheet so the user can click its Attack button
+            item.sheet?.render(true, { focus: true });
+            ui.notifications?.info("Opened weapon; click its Attack");
+          } catch (err) {
+            console.error("[DHUD] Primary weapon roll failed", err);
+            ui.notifications?.error("Weapon roll failed (see console)");
+          }
+        }, true);
+      }
+      this._primaryWeaponHooked = true;
+    }
+
+
   }
 
 

@@ -1,5 +1,7 @@
 // module/daggerheart-hud.mjs
 import { DaggerheartActorHUD } from "./apps/dh-actor-hud.mjs";
+import { registerDHUDHelpers } from "./helpers/handlebars-helpers.mjs";
+
 
 const TEMPLATE_PATHS = [
   "modules/daggerheart-hud/templates/actor/hud-character.hbs"
@@ -7,10 +9,14 @@ const TEMPLATE_PATHS = [
 
 export const DHUD = { ID: "daggerheart-hud", templates: TEMPLATE_PATHS };
 
+// Hooks.once("init", () => {
+//   console.log(`${DHUD.ID} | init`);
+//   // helpers básicos
+//   Handlebars.registerHelper("signed", (n) => (n >= 0 ? `+${n}` : `${n}`));
+// });
+
 Hooks.once("init", () => {
-  console.log(`${DHUD.ID} | init`);
-  // helpers básicos
-  Handlebars.registerHelper("signed", (n) => (n >= 0 ? `+${n}` : `${n}`));
+  registerDHUDHelpers();
 });
 
 Hooks.once("ready", async () => {
