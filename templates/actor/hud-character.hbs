@@ -211,8 +211,8 @@
     </div>
 
     <div class="dhud-core__center">
-      <div class="dhud-count dhud-count--hp">
-        <div class="label">HP</div>
+      <div class="dhud-count dhud-count--hp" title="{{l 'DAGGERHEART.GENERAL.HitPoints.plural'}}">
+        <div class="label"><i class="fa-solid fa-heart"></i></div>
         <div class="value" data-bind="hp">{{hitPoints.value}}/{{hitPoints.max}}</div>
       </div>
 
@@ -230,8 +230,8 @@
         </div>
       </div>
 
-      <div class="dhud-count dhud-count--stress">
-        <div class="label">Stress</div>
+      <div class="dhud-count dhud-count--stress" title="{{l 'DAGGERHEART.GENERAL.stress'}}">
+        <div class="label"><i class="fa-solid fa-bolt"></i></div>
         <div class="value" data-bind="stress">{{stress.value}}/{{stress.max}}</div>
       </div>
 
@@ -394,14 +394,14 @@
             </summary>
 
             <div class="acc-body">
-              <p><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
+              <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
                 <strong>Domain</strong>: {{domain}}</p>
               {{{description}}}
             </div>
           </details>
         </li>
         {{else}}
-        <li class="acc">{{l "DAGGERHEART.UI.NoneFound"}}</li>
+        <li class="acc"></li>
         {{/each}}
       </ul>
     </div>
@@ -449,7 +449,7 @@
             </summary>
 
             <div class="acc-body">
-              <p><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
+              <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
                 <strong>Domain</strong>: {{domain}}</p>
               {{{description}}}
             </div>
