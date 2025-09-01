@@ -4,6 +4,8 @@
 
 A heads-up display module for the Daggerheart system in Foundry VTT. Provides quick access to character resources and abilities without opening character sheets.
 
+<img width="1133" height="561" alt="image" src="https://github.com/user-attachments/assets/6a78337c-a3eb-47d6-9d1e-1247e60ff1c9" />
+
 ## Features
 
 - **Central Portrait Ring**: Character portrait with hope pips and customizable ring frames
