@@ -181,8 +181,11 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
 
     try {
-      // Clear targets using the correct Foundry API
-      game.user.targets.clear();
+
+      const currentTargets = [...game.user.targets];
+      if (currentTargets.length === 0) {
+        ui.notifications?.info("No target selected — the attack will not auto-apply damage.");
+      }
 
       if (isUnarmed) {
         if (Action?.execute) return await Action.execute({ source: actor, actionPath: "attack" });
