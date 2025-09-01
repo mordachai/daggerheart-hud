@@ -6,9 +6,23 @@
   --dh-border: #3b3248;
   --dh-text: #f5f5f7;
   --dh-muted: #c9c3d7;
-  --dh-accent: #f2c24b;      /* gold chips */
+  --dh-accent: #f2c24b;
   --dh-accent-ink: #2b220a;
+  --dhud-ring-main: none;
+  --dhud-ring-weapon: none;
 }
+
+/* Themes */
+body.dhud-theme-default  { --dh-accent:#f0b400; --dh-surface:#15161a; --dh-border:rgba(255,255,255,0.12); }
+body.dhud-theme-crimson  { --dh-accent:#d12a2a; --dh-surface:#1a0e10; --dh-border:rgba(255,180,180,0.18); }
+body.dhud-theme-emerald  { --dh-accent:#10a37f; --dh-surface:#0d1412; --dh-border:rgba(170,255,220,0.16); }
+body.dhud-theme-midnight { --dh-accent:#6aa3ff; --dh-surface:#0a101b; --dh-border:rgba(180,210,255,0.16); }
+
+/* Toggled by settings: document.body.classList.toggle('dhud-hide-hotbar', ...) */
+body.dhud-hide-hotbar #hotbar { display: none !important; }
+
+.dhud { background-color: var(--dhud-bg); }
+.dhud .accent { color: var(--dhud-accent); }
 
 /* ===== Remove “janela” e clipping do Application V2 ===== */
 .daggerheart-hud.window-app,
@@ -171,15 +185,24 @@
 .dhud-circle {
   width: var(--side-d);
   height: var(--side-d);
-  border: 3px solid var(--dh-border);
+  /* border: 3px solid var(--dh-border); */
   border-radius: 999px;
-  background: var(--dh-surface);
+  /* background: var(--dh-surface); */
+
+  /* optional frame art from settings */
+  background-image: var(--dhud-ring-weapon, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
   display: grid;
   place-items: center;
   position: relative;
-  z-index: 1;          
+  z-index: 1;
   pointer-events: auto;
 }
+.dhud-circle .item-icon { position: relative; z-index: 2; }
+
 .dhud-roll { cursor: pointer; }
 .dhud-roll:hover { border-color: var(--dh-accent); }
 .dhud-circle .item-icon {
@@ -211,16 +234,28 @@
 .dhud-ring {
   grid-area: ring;
   position: relative;
-  width: var(--circle-d); height: var(--circle-d);
-  border: 6px solid var(--dh-border);
+  width: var(--circle-d);
+  height: var(--circle-d);
+  /* border: 6px solid var(--dh-border); */
   border-radius: 999px;
-  display: grid; place-items: center;
-  background: var(--dh-surface);
+  display: grid;
+  place-items: center;
+
+  /* one circle: use surface (no art) OR the configured frame art */
+  /* background: var(--dh-surface); */
+  background-image: var(--dhud-ring-main, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
   z-index: 2;
-  pointer-events: auto; 
+  pointer-events: auto;
   cursor: grab;
 }
 .dhud-ring:active { cursor: grabbing; }
+
+.dhud-ring img {border: none}
+
 
 .dhud-portrait {
   width: calc(var(--circle-d) - 28px);
@@ -229,13 +264,22 @@
   border: 3px solid var(--dh-border); 
   pointer-events: auto; 
 }
-.dhud-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
+.dhud-portrait-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 999px;
+  z-index: 1;
+  display: block;
+}
 /* Hope pips */
 .dhud-pips {
-  position: absolute; top: -20px; left: 50%;
-  transform: translateX(-50%);
-  display: flex; gap: .3rem;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
 }
 
 /* default (empty) pip */

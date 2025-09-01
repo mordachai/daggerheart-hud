@@ -1,4 +1,5 @@
 // module/daggerheart-hud.mjs
+import { registerSettings, getSetting, S } from "./settings.mjs";
 import { DaggerheartActorHUD } from "./apps/dh-actor-hud.mjs";
 import { registerDHUDHelpers } from "./helpers/handlebars-helpers.mjs";
 
@@ -8,6 +9,8 @@ const TEMPLATE_PATHS = [
 ];
 
 export const DHUD = { ID: "daggerheart-hud", templates: TEMPLATE_PATHS };
+
+Hooks.once("init", registerSettings);
 
 Hooks.once("init", () => {
   registerDHUDHelpers();
@@ -31,6 +34,7 @@ Hooks.on("controlToken", async (token, controlled) => {
     if (_hudApp) { _hudApp.close({ force: true }); _hudApp = null; }
     return;
   }
+  if (getSetting(S.disableForMe)) return; // per-user opt-out
   if (_hudApp) await _hudApp.close({ force: true });
 
   // ✅ Application V2
@@ -39,6 +43,16 @@ Hooks.on("controlToken", async (token, controlled) => {
 });
 
 //Hooks.on("canvasPan", () => _hudApp?.close({ force: true }));
+
+Hooks.on("daggerheart-hud:images-changed", () => {
+  const el = _hudApp?.element;
+  if (!el) return;
+  const main = (game.settings.get("daggerheart-hud","ringMainImg")   || "").trim();
+  const weap = (game.settings.get("daggerheart-hud","ringWeaponImg") || "").trim();
+  el.style.setProperty("--dhud-ring-main",   main ? `url("${main}")` : "none");
+  el.style.setProperty("--dhud-ring-weapon", weap ? `url("${weap}")` : "none");
+});
+
 
 Hooks.on("deleteToken", (scene, tokenDoc) => {
   const t = canvas.tokens?.controlled[0];

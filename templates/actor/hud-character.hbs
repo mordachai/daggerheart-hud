@@ -217,15 +217,12 @@
       </div>
 
       <div class="dhud-ring">
+        <img class="dhud-portrait-img" src="{{portrait}}" alt="{{actorName}}">
         <div class="dhud-pips" aria-label="Hope">
           {{#each hopePips}}
             <span class="pip {{#if this.filled}}filled{{/if}}"></span>
           {{/each}}
         </div>
-        <div class="dhud-portrait" title="{{actorName}}">
-          <img src="{{portrait}}" alt="{{actorName}}">
-        </div>
-        {{!-- <div class="dhud-ring__label">Hope</div> --}}
       </div>
 
       <div class="dhud-count dhud-count--stress">
@@ -233,7 +230,6 @@
         <div class="value" data-bind="stress">{{stress.value}}/{{stress.max}}</div>
       </div>
 
-      {{!-- Thresholds: | MINOR | nA | MAJOR | nB | SEVERE | --}}
       <div class="dhud-thresholds" aria-label="Damage thresholds">
         <span class="chip">MINOR</span>
         <span class="val">{{thresholds.major}}</span>
