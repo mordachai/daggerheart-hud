@@ -38,6 +38,9 @@ https://raw.githubusercontent.com/mordachai/daggerheart-hud/main/module.json
 - Foundry VTT v13+
 - Daggerheart system
 
+## Known Issues
+- Deal damage is not working for players (Probably a system-related issue? Investigating. Until solved, the GM must click the **Deal Damage** button in chat.)
+
 ## License
 
 MIT License
