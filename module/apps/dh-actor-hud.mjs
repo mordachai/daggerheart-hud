@@ -158,6 +158,134 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     this.token = token ?? actor?.getActiveTokens()?.[0]?.document ?? null;
   }
 
+  async _executeItem(item, actionPath = "use") {
+    const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
+    try {
+      if (typeof item.rollAction === "function") return await item.rollAction(actionPath);
+      if (typeof item.use === "function")       return await item.use({ action: actionPath });
+      if (Action?.execute)                      return await Action.execute({ source: item, actionPath });
+      item.sheet?.render(true, { focus: true });
+    } catch (err) {
+      console.error("[DHUD] Item exec failed", err);
+      ui.notifications?.error("Action failed (see console)");
+    }
+  }
+
+  async _rollWeapon(btn, { secondary=false } = {}) {
+    if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
+
+    const actor  = this.actor;
+    if (!actor) return;
+
+    const isUnarmed = btn.dataset.unarmed === "true";
+    const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
+
+    try {
+      if (isUnarmed) {
+        if (Action?.execute) return await Action.execute({ source: actor, actionPath: "attack" });
+        actor.sheet?.render(true, { focus: true });
+        ui.notifications?.info("Open the Unarmed Attack and click Attack");
+        return;
+      }
+
+      let item = btn.dataset.itemId ? actor.items.get(btn.dataset.itemId) : null;
+      if (!item) {
+        const weaponsAll = actor.items.filter(i => i.type === "weapon");
+        const equipped   = weaponsAll.filter(w => w.system?.equipped === true);
+        if (secondary) {
+          const primaryId = this.element.querySelector("[data-action='roll-primary']")?.dataset?.itemId ?? null;
+          item = equipped.find(w => w.system?.secondary === true)
+              ?? equipped.find(w => w.id && w.id !== primaryId)
+              ?? null;
+        } else {
+          item = equipped.find(w => w.system?.secondary !== true) ?? null;
+        }
+      }
+      if (!item) return void ui.notifications?.warn(secondary ? "No secondary weapon found" : "No primary weapon found");
+
+      if (typeof item.rollAction === "function") return await item.rollAction("attack");
+      if (typeof item.use       === "function")  return await item.use({ action: "attack" });
+      if (Action?.execute)                      return await Action.execute({ source: item, actionPath: "attack" });
+
+      item.sheet?.render(true, { focus: true });
+      ui.notifications?.info("Open the weapon and click Attack");
+    } catch (err) {
+      console.error("[DHUD] Weapon roll failed", err);
+      ui.notifications?.error("Weapon roll failed (see console)");
+    }
+  }
+
+  _bindDelegatedEvents() {
+    const rootEl = this.element;
+    if (!rootEl || this._delegatedBound) return;
+
+    const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+
+    rootEl.addEventListener("click", async (ev) => {
+      const actor = this.actor;
+      if (!actor) return;
+
+      // Ring toggle (wings)
+      const ring = ev.target.closest(".dhud-ring");
+      if (ring) {
+        if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
+        stop(ev);
+        const shell = rootEl.querySelector(".dhud");
+        const willOpen = shell?.getAttribute("data-wings") !== "open";
+        setWingsState(rootEl, willOpen ? "open" : "closed");
+        this._wingsState = willOpen ? "open" : "closed";
+        return;
+      }
+
+      // Trait roll
+      const traitBtn = ev.target.closest("[data-action='roll-trait']");
+      if (traitBtn) {
+        if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
+        stop(ev);
+        const traitKey = traitBtn.dataset.trait;
+        ui.chat?.processMessage?.(`/dr trait=${traitKey}`);
+        return;
+      }
+
+      // Primary / Secondary weapon rolls
+      const prim = ev.target.closest("[data-action='roll-primary']");
+      if (prim) { stop(ev); await this._rollWeapon(prim, { secondary: false }); return; }
+
+      const sec  = ev.target.closest("[data-action='roll-secondary']");
+      if (sec)  { stop(ev); await this._rollWeapon(sec,  { secondary: true  }); return; }
+
+      // Execute item (features, consumables, domain cards)
+      const execBtn = ev.target.closest("[data-action='item-exec']");
+      if (execBtn) {
+        stop(ev);
+        const item = actor.items.get(execBtn.dataset.itemId);
+        const actionPath = execBtn.dataset.actionpath || "use";
+        if (item) await this._executeItem(item, actionPath);
+        return;
+      }
+
+      // Send to chat (uses your helper with fallbacks)
+      const chatBtn = ev.target.closest("[data-action='to-chat']");
+      if (chatBtn) {
+        stop(ev);
+        const item = actor.items.get(chatBtn.dataset.itemId);
+        if (item) await sendItemToChat(item, actor); // helper already handles fallbacks:contentReference[oaicite:3]{index=3}
+        return;
+      }
+
+      // Move domain card (loadout <-> vault)
+      const mvBtn = ev.target.closest("[data-action='to-vault'],[data-action='to-loadout']");
+      if (mvBtn) {
+        stop(ev);
+        const item = actor.items.get(mvBtn.dataset.itemId);
+        if (item) await item.update({ "system.inVault": mvBtn.dataset.action === "to-vault" });
+        return;
+      }
+    }, true); // capture=true beats <summary> default toggle
+
+    this._delegatedBound = true;
+  }
+
   async _prepareContext(_options) {
     const actor = this.actor ?? null;
 
@@ -369,9 +497,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       .filter(Boolean)
       .join("\n") || "";
 
-
-
-
     // === RESOURCES (exact system paths) ===
     const hitPoints = {
       // system.resources.hitPoints.{value,max,isReversed}
@@ -500,32 +625,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       };
 
       (entry.inVault ? domainVault : domainLoadout).push(entry);
-    }
-
-
-
-    
-
-    // Debug (feel free to keep while wiring more keys)
-    console.debug("[DHUD] _prepareContext (wired)", {
-      actorId: actor?.id,
-      actorName,
-      portrait,
-      hope: { value: hopeValue, max: hopeMax },
-      hopePipsLen: hopePips.length,
-      paths: {
-      resources: sys.resources,
-      traits: sys.traits,
-      proficiency, evasion, armorScore: sys.armorScore,
-      damageThresholds: sys.damageThresholds,
-      resistance: sys.resistance,
-      ancestry: ancestryFeatures.map(f => f.name),
-      community: communityFeatures.map(f => f.name),
-      subclassTier,
-      allowed: Array.from(allowedSubclassIds),
-      shownSubclass: subclassFeatures.map(f => `${f.name}`),
-      }
-    });
+    }  
 
     // === PARENT ITEMS: ancestry / community / class / subclass (for header captions) ===
     const byType = (t) => (this.actor?.items ?? []).find(i => i.type === t) ?? null;
@@ -576,6 +676,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     const root = this.element;
     if (!root) return;
 
+    // Debug/visibility
     const imgEl = root.querySelector(".dhud-portrait img");
     console.debug("[DHUD] _onRender: portrait img element", {
       found: !!imgEl,
@@ -583,21 +684,22 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       alt: imgEl?.getAttribute("alt")
     });
 
-    // Make roll targets feel clickable
+    // Make roll targets feel clickable (purely cosmetic)
     root.querySelectorAll(".dhud-roll").forEach(el => {
       el.style.cursor = "pointer";
       el.setAttribute("aria-pressed", "false");
     });
 
-    // Tabs/panels toggler
+    // Tabs/panels toggler (kept)
     attachDHUDToggles(root);
 
-    // Ensure wings default CLOSED before showing anything
+    // Ensure wings default CLOSED before showing; also init internal state
     if (!this._wingsInit) {
       const shell = root.querySelector(".dhud");
       if (shell && !shell.hasAttribute("data-wings")) {
         shell.setAttribute("data-wings", "closed");
       }
+      this._wingsState = shell?.getAttribute("data-wings") || "closed";
       this._wingsInit = true;
     }
 
@@ -616,479 +718,16 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       window.addEventListener("resize", this._onResize);
     }
 
-    // Drag by the ring (function should implement the didMove safeguard)
+    // Drag by the ring (has didMove safeguard)
     if (!this._dragHooked) {
       enableDragByRing(root, this);
       this._dragHooked = true;
     }
 
-    // Toggle wings by clicking the ring (ignore click right after a drag)
-    const ring = root.querySelector(".dhud-ring");
-    if (ring && !this._ringToggleHooked) {
-      ring.style.cursor = "pointer";
-      ring.addEventListener("click", () => {
-        if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
-
-        const shell = root.querySelector(".dhud");
-        const willOpen = shell?.getAttribute("data-wings") !== "open";
-
-        setWingsState(root, willOpen ? "open" : "closed");
-        // keep internal state in sync (used by layout restore, etc.)
-        this._wingsState = willOpen ? "open" : "closed";
-      });
-
-      // mark hooked
-      this._ringToggleHooked = true;
-
-      // initialize internal state from current DOM
-      const shell = root.querySelector(".dhud");
-      this._wingsState = shell?.getAttribute("data-wings") || "closed";
-    }
-
-    // --- Traits: icon rolls immediately; only the title toggles <details>
-    if (!this._traitRollHooked) {
-      const panel = this.element.querySelector(".dhud-panel--traits");
-      if (panel) {
-        // Helper: stop <summary> default toggle
-        const stopToggle = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
-
-        // 1) Icon + value should NOT toggle the <details>
-        panel.querySelectorAll("summary .icon, summary .value").forEach(el => {
-          if (el._dhudBlockToggle) return;
-          el.addEventListener("click",     stopToggle, true);   // capture to beat summary
-          el.addEventListener("pointerup", stopToggle, true);
-          el.addEventListener("keydown", (ev) => {
-            if (ev.key === "Enter" || ev.key === " ") stopToggle(ev);
-          }, true);
-          el._dhudBlockToggle = true;
-        });
-
-        // 2) Clicking the icon rolls immediately (no second click in chat)
-        panel.querySelectorAll("[data-action='roll-trait']").forEach(btn => {
-          if (btn._dhudRollBound) return;
-
-          const rollNow = () => {
-            if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
-            const traitKey = btn.dataset.trait;
-            ui.chat?.processMessage?.(`/dr trait=${traitKey}`);
-          };
-
-          btn.addEventListener("click", (ev) => { stopToggle(ev); rollNow(); }, true);
-          btn.addEventListener("keydown", (ev) => {
-            if (ev.key === "Enter" || ev.key === " ") { stopToggle(ev); rollNow(); }
-          }, true);
-
-          btn._dhudRollBound = true;
-        });
-      }
-      this._traitRollHooked = true;
-    }
-
-    // --- Primary Weapon roll: click the left circle (item or unarmed)
-    if (!this._primaryWeaponHooked) {
-      const btn = this.element.querySelector("[data-action='roll-primary']");
-      if (btn) {
-        btn.addEventListener("click", async (ev) => {
-          if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
-
-          const actor = this.actor;
-          if (!actor) return;
-
-          const isUnarmed = btn.dataset.unarmed === "true";
-          const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
-
-          try {
-            if (isUnarmed) {
-              // Unarmed: execute the actor-level "attack" action so the system builds the full chat card
-              if (Action?.execute) {
-                await Action.execute({ source: actor, actionPath: "attack" });
-                return;
-              }
-              // Fallback if executor not exposed: open the actor sheet to the Actions tab
-              actor.sheet?.render(true, { focus: true });
-              ui.notifications?.info("Open the Unarmed Attack and click Attack");
-              return;
-            }
-
-            // Weapon item: resolve by dataset or re-pick
-            const idFromDom = btn.dataset.itemId;
-            let item = idFromDom ? actor.items.get(idFromDom) : null;
-            if (!item) {
-              // re-pick: ONLY equipped & NOT secondary
-              const weapons = actor.items.filter(i => i.type === "weapon");
-              const equippedNonSecondary = weapons.filter(w => w.system?.equipped === true && w.system?.secondary !== true);
-              item = equippedNonSecondary[0] ?? null;
-
-            }
-            if (!item) {
-              ui.notifications?.warn("No primary weapon found");
-              return;
-            }
-
-            // Prefer item action methods if provided by the system
-            if (typeof item.rollAction === "function") { await item.rollAction("attack"); return; }
-            if (typeof item.use       === "function") { await item.use({ action: "attack" }); return; }
-
-            // Or a system-level executor
-            if (Action?.execute) { await Action.execute({ source: item, actionPath: "attack" }); return; }
-
-            // Last resort: open the weapon sheet
-            item.sheet?.render(true, { focus: true });
-            ui.notifications?.info("Open the weapon and click Attack");
-          } catch (err) {
-            console.error("[DHUD] Primary weapon roll failed", err);
-            ui.notifications?.error("Weapon roll failed (see console)");
-          }
-        }, true);
-      }
-      this._primaryWeaponHooked = true;
-    }
-
-    // --- Secondary Weapon roll: click the right circle (item or unarmed)
-    if (!this._secondaryWeaponHooked) {
-      const btn = this.element.querySelector("[data-action='roll-secondary']");
-      if (btn) {
-        btn.addEventListener("click", async (ev) => {
-          if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
-
-          const actor = this.actor;
-          if (!actor) return;
-
-          const isUnarmed = btn.dataset.unarmed === "true";
-          const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
-
-          try {
-            if (isUnarmed) {
-              // Use actor-level unarmed attack so the system builds the full card flow
-              if (Action?.execute) {
-                await Action.execute({ source: actor, actionPath: "attack" });
-                return;
-              }
-              actor.sheet?.render(true, { focus: true });
-              ui.notifications?.info("Open the Unarmed Attack and click Attack");
-              return;
-            }
-
-            // Resolve secondary item by dataset or re-pick from equipped†secondary
-            const idFromDom = btn.dataset.itemId;
-            let item = idFromDom ? actor.items.get(idFromDom) : null;
-            if (!item) {
-            const weaponsAll = actor.items.filter(i => i.type === "weapon");
-            const equipped   = weaponsAll.filter(w => w.system?.equipped === true);
-
-            const primaryId = this.element.querySelector("[data-action='roll-primary']")?.dataset?.itemId ?? null;
-
-            // 1) prefer an equipped weapon flagged secondary
-            // 2) else any other equipped weapon that's not the primary
-            item =
-              equipped.find(w => w.system?.secondary === true) ??
-              equipped.find(w => w.id && w.id !== primaryId) ??
-              null;
-
-            }
-            if (!item) { ui.notifications?.warn("No secondary weapon found"); return; }
-
-            // Same action order as primary
-            if (typeof item.rollAction === "function") { await item.rollAction("attack"); return; }
-            if (typeof item.use       === "function") { await item.use({ action: "attack" }); return; }
-            if (Action?.execute) { await Action.execute({ source: item, actionPath: "attack" }); return; }
-
-            item.sheet?.render(true, { focus: true });
-            ui.notifications?.info("Open the weapon and click Attack");
-          } catch (err) {
-            console.error("[DHUD] Secondary weapon roll failed", err);
-            ui.notifications?.error("Weapon roll failed (see console)");
-          }
-        }, true);
-      }
-      this._secondaryWeaponHooked = true;
-    }
-
-    // --- ANCESTRY/COMMUNITY: icon executes; title toggles; chat bubble sends to chat
-    if (!this._ancestryHooked) {
-      const panel = this.element.querySelector(".dhud-panel--ancestry");
-      if (panel) {
-        const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
-
-        // prevent <summary> toggle when clicking the icon or chat icon
-        panel.querySelectorAll("summary .icon, summary .chat").forEach(el => {
-          if (el._dhudBlockToggle) return;
-          el.addEventListener("click", stop, true);
-          el.addEventListener("keydown", (ev) => {
-            if (ev.key === "Enter" || ev.key === " ") stop(ev);
-          }, true);
-          el._dhudBlockToggle = true;
-        });
-
-        // execute feature on icon click
-        panel.addEventListener("click", async (ev) => {
-          const execBtn = ev.target.closest("[data-action='item-exec']");
-          if (!execBtn) return;
-          stop(ev);
-
-          const actor = this.actor;
-          const itemId = execBtn.dataset.itemId;
-          const actionPath = execBtn.dataset.actionpath || "use";
-          const item = actor?.items.get(itemId);
-          if (!item) return;
-
-          const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
-
-          try {
-            if (typeof item.rollAction === "function") {
-              await item.rollAction(actionPath);
-              return;
-            }
-            if (typeof item.use === "function") {
-              await item.use({ action: actionPath });
-              return;
-            }
-            if (Action?.execute) {
-              await Action.execute({ source: item, actionPath });
-              return;
-            }
-            // fallback: open the item so user can click whatever the sheet provides
-            item.sheet?.render(true, { focus: true });
-          } catch (err) {
-            console.error("[DHUD] Ancestry feature exec failed", err);
-            ui.notifications?.error("Feature execution failed (see console)");
-          }
-        }, true);
-
-        // send to chat on bubble click
-        panel.addEventListener("click", async (ev) => {
-          const chatBtn = ev.target.closest("[data-action='to-chat']");
-          if (!chatBtn) return;
-          stop(ev);
-
-          const actor = this.actor;
-          const item = actor?.items.get(chatBtn.dataset.itemId);
-          if (!item) return;
-
-          await sendItemToChat(item, actor);
-        }, true);
-
-      }
-      this._ancestryHooked = true;
-    }
-
-    // --- CLASS/SUBCLASS: icon executes; title toggles; chat bubble sends to chat
-    if (!this._classHooked) {
-      const panel = this.element.querySelector(".dhud-panel--class");
-      if (panel) {
-        const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
-
-        // prevent <summary> toggle when clicking the icon or chat icon
-        panel.querySelectorAll("summary .icon, summary .chat").forEach(el => {
-          if (el._dhudBlockToggle) return;
-          el.addEventListener("click", stop, true);
-          el.addEventListener("keydown", (ev) => {
-            if (ev.key === "Enter" || ev.key === " ") stop(ev);
-          }, true);
-          el._dhudBlockToggle = true;
-        });
-
-        // execute feature on icon click
-        panel.addEventListener("click", async (ev) => {
-          const execBtn = ev.target.closest("[data-action='item-exec']");
-          if (!execBtn) return;
-          stop(ev);
-
-          const actor = this.actor;
-          const itemId = execBtn.dataset.itemId;
-          const actionPath = execBtn.dataset.actionpath || "use";
-          const item = actor?.items.get(itemId);
-          if (!item) return;
-
-          const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
-
-          try {
-            if (typeof item.rollAction === "function") { await item.rollAction(actionPath); return; }
-            if (typeof item.use       === "function") { await item.use({ action: actionPath }); return; }
-            if (Action?.execute) { await Action.execute({ source: item, actionPath }); return; }
-            item.sheet?.render(true, { focus: true });
-          } catch (err) {
-            console.error("[DHUD] Class feature exec failed", err);
-            ui.notifications?.error("Feature execution failed (see console)");
-          }
-        }, true);
-
-        // send to chat on bubble click
-        panel.addEventListener("click", async (ev) => {
-          const chatBtn = ev.target.closest("[data-action='to-chat']");
-          if (!chatBtn) return;
-          stop(ev);
-
-          const actor = this.actor;
-          const item = actor?.items.get(chatBtn.dataset.itemId);
-          if (!item) return;
-
-          await sendItemToChat(item, actor);
-        }, true);
-
-      }
-      this._classHooked = true;
-    }
-
-    // --- INVENTORY (Consumables, Loot): icon executes (consumables), title toggles, chat posts
-    if (!this._inventoryHooked) {
-      const panel = this.element.querySelector(".dhud-panel--inventory");
-      if (panel) {
-        const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
-
-        // stop <summary> toggle on icon/chat
-        panel.querySelectorAll("summary .icon, summary .chat").forEach(el => {
-          if (el._dhudBlockToggle) return;
-          el.addEventListener("click", stop, true);
-          el.addEventListener("keydown", (ev) => {
-            if (ev.key === "Enter" || ev.key === " ") stop(ev);
-          }, true);
-          el._dhudBlockToggle = true;
-        });
-
-        // optional import-level helper
-        const _sendToChat = (typeof sendItemToChat === "function")
-          ? sendItemToChat
-          : async (item, actor) => {
-              const speaker = ChatMessage.getSpeaker({ actor });
-              try {
-                if (typeof item.displayCard === "function") { await item.displayCard({ speaker }); return; }
-              } catch {}
-              try {
-                if (typeof item.toChat === "function") { await item.toChat.call(item, { speaker }); return; }
-              } catch {}
-              try {
-                if (Item?.prototype?.toChat) { await Item.prototype.toChat.call(item, { speaker }); return; }
-              } catch {}
-              const content = `<h3>${foundry.utils.escapeHTML(item.name)}</h3>${item.system?.description ?? ""}`;
-              await ChatMessage.create({ speaker, content });
-            };
-
-        // execute on icon
-        panel.addEventListener("click", async (ev) => {
-          const execBtn = ev.target.closest("[data-action='item-exec']");
-          if (!execBtn) return;
-          stop(ev);
-
-          const actor = this.actor;
-          const itemId = execBtn.dataset.itemId;
-          const actionPath = execBtn.dataset.actionpath || "";
-          const item = actor?.items.get(itemId);
-          if (!item) return;
-
-          // Consumables: try to "use"; Loot: open sheet (no real action)
-          try {
-            if (item.type === "consumable") {
-              const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
-              if (typeof item.rollAction === "function") { await item.rollAction(actionPath || "use"); return; }
-              if (typeof item.use       === "function") { await item.use({ action: actionPath || "use" }); return; }
-              if (Action?.execute) { await Action.execute({ source: item, actionPath: actionPath || "use" }); return; }
-            }
-
-            // default: just open the item
-            item.sheet?.render(true, { focus: true });
-          } catch (err) {
-            console.error("[DHUD] Inventory item exec failed", err);
-            ui.notifications?.error("Item action failed (see console)");
-          }
-        }, true);
-
-        // send to chat on bubble click
-        panel.addEventListener("click", async (ev) => {
-          const chatBtn = ev.target.closest("[data-action='to-chat']");
-          if (!chatBtn) return;
-          stop(ev);
-
-          const actor = this.actor;
-          const item = actor?.items.get(chatBtn.dataset.itemId);
-          if (!item) return;
-
-          await sendItemToChat(item, actor);
-        }, true);
-
-      }
-      this._inventoryHooked = true;
-    }
-
-    // --- DOMAINS / LOADOUT + VAULT
-    if (!this._domainsHooked) {
-      const panels = this.element.querySelectorAll(".dhud-panel--domains, .dhud-panel--vault");
-      panels.forEach((panel) => {
-        const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
-
-        // prevent <summary> toggle on icon/chat/move
-        panel.querySelectorAll("summary .icon, summary .chat, summary .move").forEach(el => {
-          if (el._dhudBlockToggle) return;
-          el.addEventListener("click", stop, true);
-          el.addEventListener("keydown", (ev) => {
-            if (ev.key === "Enter" || ev.key === " ") stop(ev);
-          }, true);
-          el._dhudBlockToggle = true;
-        });
-
-        // EXECUTE on icon
-        panel.addEventListener("click", async (ev) => {
-          const btn = ev.target.closest("[data-action='item-exec']");
-          if (!btn) return;
-          stop(ev);
-
-          const actor = this.actor;
-          const item  = actor?.items.get(btn.dataset.itemId);
-          if (!item) return;
-
-          const actionPath = btn.dataset.actionpath || "use";
-          const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
-
-          try {
-            if (typeof item.rollAction === "function") { await item.rollAction(actionPath); return; }
-            if (typeof item.use       === "function") { await item.use({ action: actionPath }); return; }
-            if (Action?.execute) { await Action.execute({ source: item, actionPath }); return; }
-            item.sheet?.render(true, { focus: true });
-          } catch (err) {
-            console.error("[DHUD] Domain exec failed", err);
-            ui.notifications?.error("Domain action failed (see console)");
-          }
-        }, true);
-
-        // MOVE: to vault / to loadout
-        panel.addEventListener("click", async (ev) => {
-          const mv = ev.target.closest("[data-action='to-vault'],[data-action='to-loadout']");
-          if (!mv) return;
-          stop(ev);
-
-          const actor = this.actor;
-          const item  = actor?.items.get(mv.dataset.itemId);
-          if (!item) return;
-
-          const toVault = mv.dataset.action === "to-vault";
-          try {
-            await item.update({ "system.inVault": toVault });
-            // your update hooks will re-render; layout snapshot restores position/wings
-          } catch (err) {
-            console.error("[DHUD] Domain move failed", err);
-            ui.notifications?.error("Failed to move domain card");
-          }
-        }, true);
-
-        // SEND TO CHAT
-        panel.addEventListener("click", async (ev) => {
-          const chatBtn = ev.target.closest("[data-action='to-chat']");
-          if (!chatBtn) return;
-          stop(ev);
-
-          const actor = this.actor;
-          const item  = actor?.items.get(chatBtn.dataset.itemId);
-          if (!item) return;
-
-          await sendItemToChat(item, actor);
-        }, true);
-
-      });
-
-      this._domainsHooked = true;
-    }
-
+    // One-time delegated event switchboard (handles ring, traits, weapons, exec, chat, move)
+    this._bindDelegatedEvents();
   }
+
 
 
 }
