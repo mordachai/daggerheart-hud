@@ -174,13 +174,16 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
   async _rollWeapon(btn, { secondary=false } = {}) {
     if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
 
-    const actor  = this.actor;
+    const actor = this.actor;
     if (!actor) return;
 
     const isUnarmed = btn.dataset.unarmed === "true";
     const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
 
     try {
+      // Clear targets using the correct Foundry API
+      game.user.targets.clear();
+
       if (isUnarmed) {
         if (Action?.execute) return await Action.execute({ source: actor, actionPath: "attack" });
         actor.sheet?.render(true, { focus: true });
@@ -211,7 +214,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       ui.notifications?.info("Open the weapon and click Attack");
     } catch (err) {
       console.error("[DHUD] Weapon roll failed", err);
-      ui.notifications?.error("Weapon roll failed (see console)");
+      ui.notifications?.error("Weapon roll failed - this may be a system issue");
     }
   }
 
