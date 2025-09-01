@@ -158,7 +158,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     this.token = token ?? actor?.getActiveTokens()?.[0]?.document ?? null;
   }
 
-
   async _prepareContext(_options) {
     const actor = this.actor ?? null;
 
@@ -866,12 +865,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           const item = actor?.items.get(chatBtn.dataset.itemId);
           if (!item) return;
 
-          try {
-            await sendItemToChat(item, actor);
-          } catch (err) {
-            console.error("[DHUD] Ancestry to-chat failed (after fallbacks)", err);
-            ui.notifications?.error("Failed to send to chat (see console)");
-          }
+          await sendItemToChat(item, actor);
         }, true);
 
       }
@@ -929,12 +923,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           const item = actor?.items.get(chatBtn.dataset.itemId);
           if (!item) return;
 
-          try {
-            await sendItemToChat(item, actor);
-          } catch (err) {
-            console.error("[DHUD] Class to-chat failed (after fallbacks)", err);
-            ui.notifications?.error("Failed to send to chat (see console)");
-          }
+          await sendItemToChat(item, actor);
         }, true);
 
       }
@@ -1004,7 +993,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           }
         }, true);
 
-        // send to chat
+        // send to chat on bubble click
         panel.addEventListener("click", async (ev) => {
           const chatBtn = ev.target.closest("[data-action='to-chat']");
           if (!chatBtn) return;
@@ -1014,13 +1003,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           const item = actor?.items.get(chatBtn.dataset.itemId);
           if (!item) return;
 
-          try {
-            await _sendToChat(item, actor);
-          } catch (err) {
-            console.error("[DHUD] Inventory to-chat failed (after fallbacks)", err);
-            ui.notifications?.error("Failed to send to chat (see console)");
-          }
+          await sendItemToChat(item, actor);
         }, true);
+
       }
       this._inventoryHooked = true;
     }
@@ -1095,22 +1080,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           const item  = actor?.items.get(chatBtn.dataset.itemId);
           if (!item) return;
 
-          try {
-            if (typeof sendItemToChat === "function") {
-              await sendItemToChat(item, actor);
-            } else {
-              const speaker = ChatMessage.getSpeaker({ actor });
-              try { if (typeof item.displayCard === "function") return void (await item.displayCard({ speaker })); } catch {}
-              try { if (typeof item.toChat       === "function") return void (await item.toChat.call(item, { speaker })); } catch {}
-              try { if (Item?.prototype?.toChat) return void (await Item.prototype.toChat.call(item, { speaker })); } catch {}
-              const content = `<h3>${foundry.utils.escapeHTML(item.name)}</h3>${item.system?.description ?? ""}`;
-              await ChatMessage.create({ speaker, content });
-            }
-          } catch (err) {
-            console.error("[DHUD] Domain to-chat failed", err);
-            ui.notifications?.error("Failed to send to chat (see console)");
-          }
+          await sendItemToChat(item, actor);
         }, true);
+
       });
 
       this._domainsHooked = true;
