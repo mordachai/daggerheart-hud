@@ -217,7 +217,12 @@
       </div>
 
       <div class="dhud-ring">
-        <img class="dhud-portrait-img" src="{{portrait}}" alt="{{actorName}}">
+        <div class="dhud-portrait">
+          <img class="dhud-portrait-img" src="{{portrait}}" alt="{{actorName}}">
+        </div>
+        
+        <div class="dhud-ring-overlay"></div>
+        
         <div class="dhud-pips" aria-label="Hope">
           {{#each hopePips}}
             <span class="pip {{#if this.filled}}filled{{/if}}"></span>

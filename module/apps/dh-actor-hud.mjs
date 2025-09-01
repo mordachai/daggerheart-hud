@@ -675,42 +675,71 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     };
   }
 
-  async _onRender() {
-    if (getSetting(S.disableForMe)) { this.close(); return; } // ← bail out
-    const root = this.element;
-    if (!root) return;
+// Complete _onRender method with image fixes AND all original functionality
+async _onRender() {
+  if (getSetting(S.disableForMe)) { this.close(); return; } // ← bail out
+  const root = this.element;
+  if (!root) return;
 
-    // Debug/visibility
-    const imgEl = root.querySelector(".dhud-portrait img");
-    console.debug("[DHUD] _onRender: portrait img element", {
-      found: !!imgEl,
-      src: imgEl?.getAttribute("src"),
-      alt: imgEl?.getAttribute("alt")
-    });
+  // Debug/visibility
+  const imgEl = root.querySelector(".dhud-portrait img");
+  console.debug("[DHUD] _onRender: portrait img element", {
+    found: !!imgEl,
+    src: imgEl?.getAttribute("src"),
+    alt: imgEl?.getAttribute("alt")
+  });
 
-    function toRouteURL(p) {
-      if (!p) return "";
-      // Accept "modules/..." or "/modules/..." from FilePicker
-      const clean = p.startsWith("/") ? p : `/${p}`;
-      const abs   = foundry.utils.getRoute(clean); // handles route prefix
+  // Fixed image URL handling
+  function toRouteURL(p) {
+    if (!p) return "none";
+    
+    // Clean the path - handle both relative and absolute paths
+    let cleanPath = p.trim();
+    
+    // If it's already a full URL (http/https), use it as-is
+    if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+      return `url("${cleanPath}")`;
+    }
+    
+    // If it starts with a slash, it's already absolute
+    if (cleanPath.startsWith("/")) {
+      const abs = foundry.utils.getRoute(cleanPath);
       return `url("${abs}")`;
     }
+    
+    // If it doesn't start with slash, add one
+    if (!cleanPath.startsWith("/")) {
+      cleanPath = `/${cleanPath}`;
+    }
+    
+    const abs = foundry.utils.getRoute(cleanPath);
+    return `url("${abs}")`;
+  }
 
-    const mainRing = (getSetting(S.ringMainImg)   || "").trim();
-    const weapRing = (getSetting(S.ringWeaponImg) || "").trim();
+  const mainRing = getSetting(S.ringMainImg) || "";
+  const weapRing = getSetting(S.ringWeaponImg) || "";
 
-    root.style.setProperty("--dhud-ring-main",   mainRing ? toRouteURL(mainRing) : "none");
-    root.style.setProperty("--dhud-ring-weapon", weapRing ? toRouteURL(weapRing) : "none");
+  // Debug the image paths
+  console.debug("[DHUD] Ring images:", {
+    mainRing: mainRing,
+    weapRing: weapRing,
+    mainRingURL: toRouteURL(mainRing),
+    weapRingURL: toRouteURL(weapRing)
+  });
 
-    const offset = Number(getSetting(S.bottomOffset)) || 110;
+  // Apply the CSS custom properties
+  root.style.setProperty("--dhud-ring-main", toRouteURL(mainRing));
+  root.style.setProperty("--dhud-ring-weapon", toRouteURL(weapRing));
 
-    // Make roll targets feel clickable (purely cosmetic)
-    root.querySelectorAll(".dhud-roll").forEach(el => {
-      el.style.cursor = "pointer";
-      el.setAttribute("aria-pressed", "false");
-    });
+  const offset = Number(getSetting(S.bottomOffset)) || 110;
 
-    attachDHUDToggles(root);
+  // Make roll targets feel clickable (purely cosmetic)
+  root.querySelectorAll(".dhud-roll").forEach(el => {
+    el.style.cursor = "pointer";
+    el.setAttribute("aria-pressed", "false");
+  });
+
+  attachDHUDToggles(root);
 
   // Ensure wings default CLOSED before showing; also init internal state
   if (!this._wingsInit) {
@@ -745,8 +774,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
   // Delegated handlers (ring, traits, weapons, exec, chat, move)
   this._bindDelegatedEvents();   
-
-  }
+}
 
   async close(opts) {
     if (this._onResize) {
