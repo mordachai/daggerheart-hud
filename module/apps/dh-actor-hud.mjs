@@ -675,106 +675,103 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     };
   }
 
-// Complete _onRender method with image fixes AND all original functionality
-async _onRender() {
-  if (getSetting(S.disableForMe)) { this.close(); return; } // ← bail out
-  const root = this.element;
-  if (!root) return;
+  async _onRender() {
+    if (getSetting(S.disableForMe)) { this.close(); return; } // ← bail out
+    const root = this.element;
+    if (!root) return;
 
-  // Debug/visibility
-  const imgEl = root.querySelector(".dhud-portrait img");
-  console.debug("[DHUD] _onRender: portrait img element", {
-    found: !!imgEl,
-    src: imgEl?.getAttribute("src"),
-    alt: imgEl?.getAttribute("alt")
-  });
+    // Debug/visibility
+    const imgEl = root.querySelector(".dhud-portrait img");
+    console.debug("[DHUD] _onRender: portrait img element", {
+      found: !!imgEl,
+      src: imgEl?.getAttribute("src"),
+      alt: imgEl?.getAttribute("alt")
+    });
 
-  // Fixed image URL handling
-  function toRouteURL(p) {
-    if (!p) return "none";
-    
-    // Clean the path - handle both relative and absolute paths
-    let cleanPath = p.trim();
-    
-    // If it's already a full URL (http/https), use it as-is
-    if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
-      return `url("${cleanPath}")`;
-    }
-    
-    // If it starts with a slash, it's already absolute
-    if (cleanPath.startsWith("/")) {
+    // Fixed image URL handling
+    function toRouteURL(p) {
+      if (!p) return "none";
+      
+      // Clean the path - handle both relative and absolute paths
+      let cleanPath = p.trim();
+      
+      // If it's already a full URL (http/https), use it as-is
+      if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+        return `url("${cleanPath}")`;
+      }
+      
+      // If it starts with a slash, it's already absolute
+      if (cleanPath.startsWith("/")) {
+        const abs = foundry.utils.getRoute(cleanPath);
+        return `url("${abs}")`;
+      }
+      
+      // If it doesn't start with slash, add one
+      if (!cleanPath.startsWith("/")) {
+        cleanPath = `/${cleanPath}`;
+      }
+      
       const abs = foundry.utils.getRoute(cleanPath);
       return `url("${abs}")`;
     }
-    
-    // If it doesn't start with slash, add one
-    if (!cleanPath.startsWith("/")) {
-      cleanPath = `/${cleanPath}`;
+
+    function getEffectiveRingImage(playerSetting, gmSetting) {
+      const playerImg = getSetting(playerSetting)?.trim();
+      const gmImg = getSetting(gmSetting)?.trim();
+      return playerImg || gmImg || ""; // Player overrides GM, GM overrides empty
     }
-    
-    const abs = foundry.utils.getRoute(cleanPath);
-    return `url("${abs}")`;
-  }
 
-  const mainRing = getSetting(S.ringMainImg) || "";
-  const weapRing = getSetting(S.ringWeaponImg) || "";
+    const mainRing = getEffectiveRingImage(S.ringMainImgPlayer, S.ringMainImg);
+    const weapRing = getEffectiveRingImage(S.ringWeaponImgPlayer, S.ringWeaponImg);
 
-  // Debug the image paths
-  console.debug("[DHUD] Ring images:", {
-    mainRing: mainRing,
-    weapRing: weapRing,
-    mainRingURL: toRouteURL(mainRing),
-    weapRingURL: toRouteURL(weapRing)
-  });
+    // Apply the CSS custom properties
+    root.style.setProperty("--dhud-ring-main", toRouteURL(mainRing));
+    root.style.setProperty("--dhud-ring-weapon", toRouteURL(weapRing));
 
-  // Apply the CSS custom properties
-  root.style.setProperty("--dhud-ring-main", toRouteURL(mainRing));
-  root.style.setProperty("--dhud-ring-weapon", toRouteURL(weapRing));
+    // const offset = Number(getSetting(S.bottomOffset)) || 110;
 
-  const offset = Number(getSetting(S.bottomOffset)) || 110;
-
-  // Make roll targets feel clickable (purely cosmetic)
-  root.querySelectorAll(".dhud-roll").forEach(el => {
-    el.style.cursor = "pointer";
-    el.setAttribute("aria-pressed", "false");
-  });
-
-  attachDHUDToggles(root);
-
-  // Ensure wings default CLOSED before showing; also init internal state
-  if (!this._wingsInit) {
-    const shell = root.querySelector(".dhud");
-    if (shell && !shell.hasAttribute("data-wings")) shell.setAttribute("data-wings", "closed");
-    this._wingsState = shell?.getAttribute("data-wings") || "closed";
-    this._wingsInit = true;
-  }
-
-  // First boot: place & wire resize (reads fresh setting every time)
-  if (!this._booted) {
-    const applyPlacement = () => {
-      const fresh = Number(getSetting(S.bottomOffset)) || 110;
-      placeAtBottom(root, fresh);
-    };
-
-    root.classList.add("is-booting");
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        applyPlacement();
-        root.classList.remove("is-booting");
-        this._booted = true;
-      });
+    // Make roll targets feel clickable (purely cosmetic)
+    root.querySelectorAll(".dhud-roll").forEach(el => {
+      el.style.cursor = "pointer";
+      el.setAttribute("aria-pressed", "false");
     });
 
-    this._onResize = () => { if (!this._isDragging) applyPlacement(); };
-    window.addEventListener("resize", this._onResize);
+    attachDHUDToggles(root);
+
+    // Ensure wings default CLOSED before showing; also init internal state
+    if (!this._wingsInit) {
+      const shell = root.querySelector(".dhud");
+      if (shell && !shell.hasAttribute("data-wings")) shell.setAttribute("data-wings", "closed");
+      this._wingsState = shell?.getAttribute("data-wings") || "closed";
+      this._wingsInit = true;
+    }
+
+    // First boot: place & wire resize (reads fresh setting every time)
+    if (!this._booted) {
+      const applyPlacement = () => {
+        const fresh = Number(getSetting(S.bottomOffset)) || 110;
+        placeAtBottom(root, fresh);
+      };
+
+      root.classList.add("is-booting");
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          applyPlacement();
+          root.classList.remove("is-booting");
+          this._booted = true;
+        });
+      });
+
+      this._onResize = () => { if (!this._isDragging) applyPlacement(); };
+      window.addEventListener("resize", this._onResize);
+    }
+
+    // Drag by the ring
+    if (!this._dragHooked) { enableDragByRing(root, this); this._dragHooked = true; }
+
+    // Delegated handlers (ring, traits, weapons, exec, chat, move)
+    this._bindDelegatedEvents();   
   }
-
-  // Drag by the ring
-  if (!this._dragHooked) { enableDragByRing(root, this); this._dragHooked = true; }
-
-  // Delegated handlers (ring, traits, weapons, exec, chat, move)
-  this._bindDelegatedEvents();   
-}
 
   async close(opts) {
     if (this._onResize) {

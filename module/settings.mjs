@@ -6,6 +6,8 @@ export const S = {
   disableForMe: "disableForMe",  
   ringMainImg: "ringMainImg",
   ringWeaponImg: "ringWeaponImg",
+  ringMainImgPlayer: "ringMainImgPlayer", 
+  ringWeaponImgPlayer: "ringWeaponImgPlayer",
   colorScheme: "colorScheme",
   hideHotbar: "hideHotbar",
 };
@@ -46,31 +48,59 @@ export function registerSettings() {
         }
   });
 
-    game.settings.register(MOD, S.disableForMe, {
-        name: "Disable this HUD for me",
-        hint: "Hides the Daggerheart HUD only for your user.",
-        scope: "client",                    // ← per user
-        config: true,
-        type: Boolean,
-        default: false,
-        onChange: (value) => {
-        // Tell the module to react (close open HUDs if turning off)
-        Hooks.callAll("daggerheart-hud:setting-changed", { key: S.disableForMe, value });
-        }
-    });
+  game.settings.register(MOD, S.disableForMe, {
+      name: "Disable this HUD for me",
+      hint: "Hides the Daggerheart HUD only for your user.",
+      scope: "client",                    // ← per user
+      config: true,
+      type: Boolean,
+      default: false,
+      onChange: (value) => {
+      // Tell the module to react (close open HUDs if turning off)
+      Hooks.callAll("daggerheart-hud:setting-changed", { key: S.disableForMe, value });
+      }
+  });
 
   game.settings.register(MOD, S.ringMainImg, {
-    name: "Ring Image: Main Circle",
-    hint: "Image used for the central ring.",
-    scope: scopeClient, config: true, type: String, default: "",
+    name: "Ring Image: Main Circle (GM Default)",
+    hint: "Default main ring image for all players.",
+    scope: "world", // changed from "client" to "world"
+    config: true,
+    type: String,
+    default: "",
     filePicker: true,
     onChange: () => Hooks.callAll("daggerheart-hud:images-changed"),
   });
 
   game.settings.register(MOD, S.ringWeaponImg, {
-    name: "Ring Image: Weapon Circles",
-    hint: "Image used for the weapon circles.",
-    scope: scopeClient, config: true, type: String, default: "",
+    name: "Ring Image: Weapon Circles (GM Default)",
+    hint: "Default weapon ring image for all players.",
+    scope: "world", // changed from "client" to "world" 
+    config: true,
+    type: String,
+    default: "",
+    filePicker: true,
+    onChange: () => Hooks.callAll("daggerheart-hud:images-changed"),
+  });
+
+  game.settings.register(MOD, S.ringMainImgPlayer, {
+    name: "Ring Image: Main Circle (Personal Override)",
+    hint: "Your personal main ring image. Leave empty to use GM default.",
+    scope: "client", // per-player
+    config: true, 
+    type: String, 
+    default: "",
+    filePicker: true,
+    onChange: () => Hooks.callAll("daggerheart-hud:images-changed"),
+  });
+
+  game.settings.register(MOD, S.ringWeaponImgPlayer, {
+    name: "Ring Image: Weapon Circles (Personal Override)", 
+    hint: "Your personal weapon ring image. Leave empty to use GM default.",
+    scope: "client", // per-player
+    config: true,
+    type: String,
+    default: "",
     filePicker: true,
     onChange: () => Hooks.callAll("daggerheart-hud:images-changed"),
   });
