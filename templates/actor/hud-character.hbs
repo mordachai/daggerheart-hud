@@ -211,6 +211,7 @@
     </div>
 
     <div class="dhud-core__center">
+
       <div class="dhud-count dhud-count--hp" title="{{l 'DAGGERHEART.GENERAL.HitPoints.plural'}}">
         <div class="label"><i class="fa-solid fa-heart"></i></div>
         <div class="value" data-bind="hp">{{hitPoints.value}}/{{hitPoints.max}}</div>
@@ -225,7 +226,7 @@
         
         <div class="dhud-pips" aria-label="Hope">
           {{#each hopePips}}
-            <span class="pip {{#if this.filled}}filled{{/if}}"></span>
+            <span class="pip {{#if this.filled}}filled{{/if}}" data-index="{{@index}}"></span>
           {{/each}}
         </div>
       </div>
@@ -236,11 +237,11 @@
       </div>
 
       <div class="dhud-thresholds" aria-label="Damage thresholds">
-        <span class="chip">MINOR</span>
+        <span class="chip">{{l 'DAGGERHEART.GENERAL.Damage.minor'}}</span>
         <span class="val">{{thresholds.major}}</span>
-        <span class="chip">MAJOR</span>
+        <span class="chip">{{l 'DAGGERHEART.GENERAL.Damage.major'}}</span>
         <span class="val">{{thresholds.severe}}</span>
-        <span class="chip">SEVERE</span>
+        <span class="chip">{{l 'DAGGERHEART.GENERAL.Damage.severe'}}</span>
       </div>
     </div>
 
@@ -262,8 +263,8 @@
       </div>
     </div>
 
-    <div class="dhud-badge dhud-badge--left" title="Evasion">{{evasion}}</div>
-    <div class="dhud-badge dhud-badge--right" title="Armor">{{armor.max}}</div>
+    <div class="dhud-badge dhud-badge--left" title="{{l 'DAGGERHEART.GENERAL.evasion'}}">{{evasion}}</div>
+    <div class="dhud-badge dhud-badge--right" title="{{l 'DAGGERHEART.GENERAL.armorScore'}}">{{armor.max}}</div>
   </div>
 
   {{!-- =============== RIGHT WING (menus) =============== --}}

@@ -136,6 +136,23 @@ function attachDHUDToggles(root) {
 // ✅ APIs V2
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
+const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+async function bumpResource(actor, path, delta, { min = 0, max = Number.MAX_SAFE_INTEGER } = {}) {
+  const curr = Number(foundry.utils.getProperty(actor, path) ?? 0);
+  const next = clamp(curr + delta, min, max);
+  if (next === curr) return;
+  const update = {}; foundry.utils.setProperty(update, path, next);
+  await actor.update(update);
+}
+
+async function setResource(actor, path, value, { min = 0, max = Number.MAX_SAFE_INTEGER } = {}) {
+  const next = clamp(Number(value ?? 0), min, max);
+  const curr = Number(foundry.utils.getProperty(actor, path) ?? 0);
+  if (next === curr) return;
+  const update = {}; foundry.utils.setProperty(update, path, next);
+  await actor.update(update);
+}
 export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: "daggerheart-hud",
@@ -157,6 +174,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     this.actor = actor ?? null;
     this.token = token ?? actor?.getActiveTokens()?.[0]?.document ?? null;
   }
+
+  
 
   async _executeItem(item, actionPath = "use") {
     const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
@@ -221,6 +240,71 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     }
   }
 
+  _bindResourceAdjusters(rootEl) {
+    // LEFT CLICK = minus for HP/Stress; fill bar for Hope
+    rootEl.addEventListener("click", async (ev) => {
+      const actor = this.actor; if (!actor) return;
+
+      // HP / Stress on .value
+      const valueEl = ev.target.closest(".dhud-count .value");
+      if (valueEl) {
+        const bind = valueEl.dataset.bind; // "hp" or "stress"
+        if (bind === "hp") {
+          const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
+          await bumpResource(actor, "system.resources.hitPoints.value", -1, { min: 0, max });
+          return;
+        }
+        if (bind === "stress") {
+          const max = Number(this.actor.system?.resources?.stress?.max ?? 0);
+          await bumpResource(actor, "system.resources.stress.value", -1, { min: 0, max });
+          return;
+        }
+      }
+
+      // HOPE: click a pip to fill up to that point (index+1)
+      const pip = ev.target.closest(".dhud-pips .pip");
+      if (pip) {
+        const idx = Number(pip.dataset.index || 0);
+        const max = Number(this.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
+        await setResource(actor, "system.resources.hope.value", idx + 1, { min: 0, max });
+        return;
+      }
+    }, true);
+
+    // RIGHT CLICK = plus for HP/Stress; reduce by one for Hope (so you can back off)
+    rootEl.addEventListener("contextmenu", async (ev) => {
+      const actor = this.actor; if (!actor) return;
+
+      // Stop the browser menu
+      ev.preventDefault();
+
+      // HP / Stress on .value
+      const valueEl = ev.target.closest(".dhud-count .value");
+      if (valueEl) {
+        const bind = valueEl.dataset.bind; // "hp" or "stress"
+        if (bind === "hp") {
+          const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
+          await bumpResource(actor, "system.resources.hitPoints.value", +1, { min: 0, max });
+          return;
+        }
+        if (bind === "stress") {
+          const max = Number(this.actor.system?.resources?.stress?.max ?? 0);
+          await bumpResource(actor, "system.resources.stress.value", +1, { min: 0, max });
+          return;
+        }
+      }
+
+      // HOPE: right-click a pip to set to that index (i.e., one less than clicked pip)
+      const pip = ev.target.closest(".dhud-pips .pip");
+      if (pip) {
+        const idx = Number(pip.dataset.index || 0);
+        const max = Number(this.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
+        await setResource(actor, "system.resources.hope.value", idx, { min: 0, max });
+        return;
+      }
+    }, true);
+  }
+
   _bindDelegatedEvents() {
     const rootEl = this.element;
     if (!rootEl || this._delegatedBound) return;
@@ -238,8 +322,13 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         stop(ev);
         const shell = rootEl.querySelector(".dhud");
         const willOpen = shell?.getAttribute("data-wings") !== "open";
-        setWingsState(rootEl, willOpen ? "open" : "closed");
-        this._wingsState = willOpen ? "open" : "closed";
+        const next = willOpen ? "open" : "closed";
+        setWingsState(rootEl, next);
+        this._wingsState = next;
+        // persist per user, per actor
+        if (this.actor) {
+          await game.user.setFlag("daggerheart-hud", `wings.${this.actor.id}`, next);
+        }
         return;
       }
 
@@ -744,11 +833,18 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
     attachDHUDToggles(root);
 
-    // Ensure wings default CLOSED before showing; also init internal state
+    if (!this._resAdjBound) {
+      this._bindResourceAdjusters(root);
+      this._resAdjBound = true;
+    }
+
+    // Apply saved wings state (per user, per actor); default to "closed" if none
     if (!this._wingsInit) {
-      const shell = root.querySelector(".dhud");
-      if (shell && !shell.hasAttribute("data-wings")) shell.setAttribute("data-wings", "closed");
-      this._wingsState = shell?.getAttribute("data-wings") || "closed";
+      const saved = this.actor
+        ? (await game.user.getFlag("daggerheart-hud", `wings.${this.actor.id}`)) || "closed"
+        : "closed";
+      setWingsState(root, saved);
+      this._wingsState = saved;
       this._wingsInit = true;
     }
 

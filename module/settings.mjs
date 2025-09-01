@@ -27,7 +27,7 @@ function applyHotbarVisibility() {
 }
 
 function applyColorScheme() {
-  const scheme = getSetting(S.colorScheme); // "default" | "crimson" | "emerald" | "midnight"
+  const scheme = getSetting(S.colorScheme); // "default" | "crimson" | "emerald" | "midnight" / "oceanic" / "solarflare"
   // Use body classes so CSS can theme via variables.
   const prefix = "dhud-theme-";
   document.body.classList.forEach(c => { if (c.startsWith(prefix)) document.body.classList.remove(c); });
@@ -109,7 +109,7 @@ export function registerSettings() {
     name: "HUD Color Scheme",
     hint: "Pick a color scheme for the HUD.",
     scope: scopeClient, config: true, type: String, default: "default",
-    choices: { default: "Default", crimson: "Crimson", emerald: "Emerald", midnight: "Midnight" },
+    choices: { default: "Default", crimson: "Crimson", emerald: "Emerald", midnight: "Midnight", solarflare: "Solarflare", oceanic: "Oceanic" },
     onChange: applyColorScheme,
   });
 

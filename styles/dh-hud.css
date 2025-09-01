@@ -16,7 +16,10 @@
 body.dhud-theme-default  { --dh-accent:#f2c24b; --dh-surface:#15161a; --dh-border:rgba(255,255,255,0.12); --dh-pip-border:#f2c34b; }
 body.dhud-theme-crimson  { --dh-accent:#d12a2a; --dh-surface:#1a0e10; --dh-border:rgba(255,180,180,0.18); --dh-pip-border:rgba(255,180,180,0.60); }
 body.dhud-theme-emerald  { --dh-accent:#10a37f; --dh-surface:#0d1412; --dh-border:rgba(170,255,220,0.16); --dh-pip-border:rgba(170,255,220,0.60); }
-body.dhud-theme-midnight { --dh-accent:#6aa3ff; --dh-surface:#0a101b; --dh-border:rgba(180,210,255,0.16); --dh-pip-border:rgba(180,210,255,0.60); }
+body.dhud-theme-midnight  { --dh-accent:#9b59b6; --dh-surface:#120a14; --dh-border:rgba(220,180,255,0.16); --dh-pip-border:rgba(220,180,255,0.60); }
+body.dhud-theme-oceanic  { --dh-accent:#1abc9c; --dh-surface:#0a1414; --dh-border:rgba(150,255,240,0.14); --dh-pip-border:rgba(150,255,240,0.60); }
+body.dhud-theme-solarflare  { --dh-accent:#ff6a3d; --dh-surface:#1a0d0a; --dh-border:rgba(255,180,160,0.18); --dh-pip-border:rgba(255,180,160,0.65); }
+
 
 /* Toggled by settings: document.body.classList.toggle('dhud-hide-hotbar', ...) */
 body.dhud-hide-hotbar #hotbar { display: none !important; }
@@ -388,6 +391,16 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   height: calc(var(--pip) - 3px);
   }
 
+.dhud-count .value,
+.dhud-pips .pip {
+  cursor: pointer;
+  user-select: none;
+}
+.dhud-pips .pip { display:inline-block; width:10px; height:10px; border-radius:50%; }
+.dhud-pips .pip.filled { opacity: 1; }
+.dhud-pips .pip:not(.filled) { opacity: 0.35; }
+
+
 /* HP / Stress (absolutos; clicáveis para futuros +/-) */
 .dhud-count {
   position: absolute;
@@ -419,12 +432,13 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   pointer-events: none;
 }
 .dhud-thresholds .chip {
-  background: var(--dh-accent);
-  color: var(--dh-text);
-  padding: .12rem .5rem;
+  background: var(--dh-surface);
+  color: var(--dh-accent);
+  padding: .14rem .6rem;
   border-radius: 8px;
   font-weight: 900;
   letter-spacing: .04em;
+  text-transform: uppercase;
 }
 .dhud-thresholds .val {
   padding: .1rem .45rem;
