@@ -152,6 +152,17 @@ async function setResource(actor, path, value, { min = 0, max = Number.MAX_SAFE_
   const update = {}; foundry.utils.setProperty(update, path, next);
   await actor.update(update);
 }
+
+export function getActorRingImageOrDefault(actor, kind) {
+if (!actor) return "";
+const flagKey = kind === "main" ? "ringPortrait" : "ringWeapons";
+const fromFlag = actor.getFlag("daggerheart-hud", flagKey) || "";
+if (fromFlag && String(fromFlag).trim()) return String(fromFlag).trim();
+// Fallback to GM defaults (these settings already exist in settings.mjs)
+const key = kind === "main" ? S.ringMainImg : S.ringWeaponImg;
+return (getSetting(key) || "").trim();
+}
+
 export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: "daggerheart-hud",
@@ -376,7 +387,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     }, true); // capture=true beats <summary> default toggle
 
     this._delegatedBound = true;
-  }
+  }  
 
   async _prepareContext(_options) {
     const actor = this.actor ?? null;
@@ -812,12 +823,14 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       return getSetting(key)?.trim() || "";
     }
 
-    const mainRing = getGMRingImage("main");
-    const weapRing = getGMRingImage("weapon");
+    // 1) resolve paths com prioridade: Actor flags -> GM defaults
+    const mainRing = getActorRingImageOrDefault(this.actor, "main");
+    const weapRing = getActorRingImageOrDefault(this.actor, "weapon");
 
-    // apply
+    // 2) aplica nas CSS vars usadas pelo HUD
     root.style.setProperty("--dhud-ring-main",  toRouteURL(mainRing));
     root.style.setProperty("--dhud-ring-weapon", toRouteURL(weapRing));
+
 
     // Make roll targets feel clickable (purely cosmetic)
     root.querySelectorAll(".dhud-roll").forEach(el => {
@@ -842,18 +855,28 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       this._wingsInit = true;
     }
 
-    // run once per HUD instance
     if (!this._imgHooked) {
       this._applyRingArt ??= () => {
-        const mr = getGMRingImage("main");
-        const wr = getGMRingImage("weapon");
+        const mr = getActorRingImageOrDefault(this.actor, "main");
+        const wr = getActorRingImageOrDefault(this.actor, "weapon");
         root.style.setProperty("--dhud-ring-main",  toRouteURL(mr));
         root.style.setProperty("--dhud-ring-weapon", toRouteURL(wr));
       };
+
+      // já existia:
       Hooks.on("daggerheart-hud:images-changed", this._applyRingArt);
+
+      // novo: quando o diálogo salva flags por Actor
+      this._ringsUpdatedHandler = ({ actorIds = [] } = {}) => {
+        if (!this.actor) return;
+        if (actorIds.length && !actorIds.includes(this.actor.id)) return; // ignore se não é este ator
+        this._applyRingArt?.();
+      };
+      Hooks.on("daggerheart-hud:rings-updated", this._ringsUpdatedHandler);
+
       this._imgHooked = true;
     }
-    // call once now too
+    // chama uma vez agora também (mantém seu comportamento atual)
     this._applyRingArt?.();
 
     // First boot: place & wire resize (reads fresh setting every time)
@@ -886,11 +909,15 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
   async close(opts) {
     if (this._imgHooked && this._applyRingArt) {
       Hooks.off("daggerheart-hud:images-changed", this._applyRingArt);
+      if (this._ringsUpdatedHandler) {
+        Hooks.off("daggerheart-hud:rings-updated", this._ringsUpdatedHandler);
+        this._ringsUpdatedHandler = null;
+      }
       this._imgHooked = false;
     }
-    // ... your existing resize cleanup ...
     return super.close(opts);
   }
+
 
 
 }

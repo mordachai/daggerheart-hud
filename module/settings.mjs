@@ -1,4 +1,6 @@
 // module/settings.mjs
+import { openHudRingsDialog } from "./apps/hud-rings.mjs";
+
 const MOD = "daggerheart-hud";
 
 export const S = {
@@ -35,6 +37,31 @@ function applyColorScheme() {
 export function registerSettings() {
   const scopeClient = "client";   // per-user
   const scopeWorld  = "world";    // shared
+
+  game.settings.registerMenu("daggerheart-hud", "hudImagesConfig", {
+  name: "HUD Images Config",
+  label: "HUD Images Config",
+  icon: "fas fa-ring",
+  type: class DHUDImagesLauncher extends FormApplication {
+    static get defaultOptions() {
+      return foundry.utils.mergeObject(super.defaultOptions, {
+        id: "dhud-images-launcher",
+        template: "modules/daggerheart-hud/templates/ui/blank.hbs",
+        title: "HUD Images Config (Launcher)",
+        popOut: false
+      });
+    }
+    async getData() { return {}; }
+    async _render(...args) {
+      await super._render(...args);
+      setTimeout(() => {
+        try { openHudRingsDialog(); } finally { this.close({ force: true }); }
+      }, 0);
+    }
+  },
+  restricted: true
+});
+
 
   game.settings.register(MOD, S.bottomOffset, {
     name: "HUD Anchor: Bottom Offset (px)",

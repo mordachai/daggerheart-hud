@@ -1,0 +1,54 @@
+<div class="dh-hudrings-root">
+  <div class="dh-hudrings">
+    <div class="header">
+      <h3>Ring: Portrait</h3>
+      <h3>Rings: Weapons</h3>
+    </div>
+
+    {{#if actors}}
+      <div class="grid">
+        {{#each actors}}
+          <div class="row" data-actor-id="{{id}}">
+            <!-- Left column: Portrait ring -->
+            <div class="left col portrait">
+              <div class="label">{{name}}</div>
+              <div class="cell">
+                <img class="preview preview-portrait" src="{{portrait}}" alt="portrait ring preview"/>
+                <div class="field">
+                  <input type="text" class="path path-portrait" value="{{portrait}}" placeholder="path/to/portrait-ring.png"/>
+                  <button type="button" class="dh-picker pick-portrait" data-type="image" data-target=".path-portrait" title="Pick portrait ring">
+                    <i class="fas fa-file-import"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right column: Weapons rings -->
+            <div class="right col weapons">
+              <div class="label spacer">&nbsp;</div>
+              <div class="cell">
+                <img class="preview preview-weapons" src="{{weapons}}" alt="weapons ring preview"/>
+                <div class="field">
+                  <input type="text" class="path path-weapons" value="{{weapons}}" placeholder="path/to/weapons-ring.png"/>
+                  <button type="button" class="dh-picker pick-weapons" data-type="image" data-target=".path-weapons" title="Pick weapons ring">
+                    <i class="fas fa-file-import"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <p class="empty"><em>No player characters found.</em></p>
+    {{/if}}
+  </div>
+
+  <footer class="dh-hudrings-footer">
+    <button type="button" class="dh-cancel"><i class="fas fa-times"></i> Cancel</button>
+    <button type="button" class="dh-save"><i class="fas fa-save"></i> Save</button>
+  </footer>
+
+
+
+</div>
