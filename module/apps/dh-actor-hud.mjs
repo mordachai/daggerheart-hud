@@ -296,8 +296,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         return;
       }
 
-      // REMOVED: Armor handling - now handled in _bindDelegatedEvents only
-
     }, true);
 
     // RIGHT CLICK = plus for HP/Stress; reduce by one for Hope
@@ -334,8 +332,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         await setResource(actor, "system.resources.hope.value", idx, { min: 0, max });
         return;
       }
-
-      // REMOVED: Armor handling - now handled in _bindDelegatedEvents only
       
     }, true);
   }
@@ -406,7 +402,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const ring = ev.target.closest(".dhud-ring");
       if (ring) {
         // Additional safety checks to prevent accidental wing toggles
-        const isInteractiveElement = ev.target.closest(".dhud-pips, .dhud-count, .dhud-badge, .dhud-portrait, [data-action]");
+        // Note: .dhud-portrait is removed from this check so ring clicks still work
+        const isInteractiveElement = ev.target.closest(".dhud-pips, .dhud-count, .dhud-badge, [data-action]");
         if (isInteractiveElement) {
           // This click was on an interactive element, don't toggle wings
           return;
