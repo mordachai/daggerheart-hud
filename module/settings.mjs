@@ -5,10 +5,7 @@ const MOD = "daggerheart-hud";
 
 export const S = {
   bottomOffset: "bottomOffset",
-  disableForMe: "disableForMe",  
-  ringMainImg: "ringMainImg",
-  ringWeaponImg: "ringWeaponImg",
-  colorScheme: "colorScheme",
+  disableForMe: "disableForMe",
   hideHotbar: "hideHotbar",
 };
 
@@ -26,103 +23,75 @@ function applyHotbarVisibility() {
   document.body.classList.toggle("dhud-hide-hotbar", !!hide);
 }
 
-function applyColorScheme() {
-  const scheme = getSetting(S.colorScheme); // "default" | "crimson" | "emerald" | "midnight" / "oceanic" / "solarflare"
-  // Use body classes so CSS can theme via variables.
-  const prefix = "dhud-theme-";
-  document.body.classList.forEach(c => { if (c.startsWith(prefix)) document.body.classList.remove(c); });
-  document.body.classList.add(`${prefix}${scheme}`);
-}
-
 export function registerSettings() {
-  const scopeClient = "client";   // per-user
-  const scopeWorld  = "world";    // shared
+  const scopeClient = "client"; // per-user
 
+  // Launcher that opens the V2 dialog (we accept the V1 FormApplication warning in v13)
   game.settings.registerMenu("daggerheart-hud", "hudImagesConfig", {
-  name: "HUD Images Config",
-  label: "HUD Images Config",
-  icon: "fas fa-ring",
-  type: class DHUDImagesLauncher extends FormApplication {
-    static get defaultOptions() {
-      return foundry.utils.mergeObject(super.defaultOptions, {
-        id: "dhud-images-launcher",
-        template: "modules/daggerheart-hud/templates/ui/blank.hbs",
-        title: "HUD Images Config (Launcher)",
-        popOut: false
-      });
-    }
-    async getData() { return {}; }
-    async _render(...args) {
-      await super._render(...args);
-      setTimeout(() => {
-        try { openHudRingsDialog(); } finally { this.close({ force: true }); }
-      }, 0);
-    }
-  },
-  restricted: true
-});
+    name: "HUD Images Config",
+    label: "HUD Images Config",
+    icon: "fas fa-ring",
+    type: class DHUDImagesLauncher extends FormApplication {
+      static get defaultOptions() {
+        return foundry.utils.mergeObject(super.defaultOptions, {
+          id: "dhud-images-launcher",
+          template: "modules/daggerheart-hud/templates/ui/blank.hbs",
+          title: "HUD Images Config (Launcher)",
+          popOut: false
+        });
+      }
+      async getData() { return {}; }
+      async _render(...args) {
+        await super._render(...args);
+        setTimeout(() => {
+          try { openHudRingsDialog(); } finally { this.close({ force: true }); }
+        }, 0);
+      }
+    },
+    restricted: true
+  });
 
-
+  // HUD anchor placement (client)
   game.settings.register(MOD, S.bottomOffset, {
     name: "HUD Anchor: Bottom Offset (px)",
     hint: "Vertical distance from screen bottom for the HUD anchor.",
-    scope: scopeClient, config: true, type: Number, default: 110, range: { min: 0, max: 400, step: 5 },
-     onChange: (v) => {
-        // Recompute immediately via our resize handler
-        window.dispatchEvent(new Event("resize"));
-        }
-  });
-
-  game.settings.register(MOD, S.disableForMe, {
-      name: "Disable this HUD for me",
-      hint: "Hides the Daggerheart HUD only for your user.",
-      scope: "client",                    // ← per user
-      config: true,
-      type: Boolean,
-      default: false,
-      onChange: (value) => {
-      // Tell the module to react (close open HUDs if turning off)
-      Hooks.callAll("daggerheart-hud:setting-changed", { key: S.disableForMe, value });
-      }
-  });
-
-  game.settings.register(MOD, S.ringMainImg, {
-    name: "Ring Image: Main Circle (GM Default)",
-    hint: "Default main ring image for all players.",
-    scope: "world", // changed from "client" to "world"
+    scope: scopeClient,
     config: true,
-    type: String,
-    default: "",
-    filePicker: true,
-    onChange: () => Hooks.callAll("daggerheart-hud:images-changed"),
+    type: Number,
+    default: 110,
+    range: { min: 0, max: 400, step: 5 },
+    onChange: () => {
+      // Recompute immediately via our resize handler
+      window.dispatchEvent(new Event("resize"));
+    }
   });
 
-  game.settings.register(MOD, S.ringWeaponImg, {
-    name: "Ring Image: Weapon Circles (GM Default)",
-    hint: "Default weapon ring image for all players.",
-    scope: "world", // changed from "client" to "world" 
-    config: true,
-    type: String,
-    default: "",
-    filePicker: true,
-    onChange: () => Hooks.callAll("daggerheart-hud:images-changed"),
-  });
-
-  game.settings.register(MOD, S.colorScheme, {
-    name: "HUD Color Scheme",
-    hint: "Pick a color scheme for the HUD.",
-    scope: scopeClient, config: true, type: String, default: "default",
-    choices: { default: "Default", crimson: "Crimson", emerald: "Emerald", midnight: "Midnight", solarflare: "Solarflare", oceanic: "Oceanic" },
-    onChange: applyColorScheme,
-  });
-
+  // Per-user: hide the Foundry hotbar
   game.settings.register(MOD, S.hideHotbar, {
     name: "Hide Foundry Hotbar",
     hint: "Completely hide the bottom hotbar (per-user).",
-    scope: scopeClient, config: true, type: Boolean, default: false,
+    scope: scopeClient,
+    config: true,
+    type: Boolean,
+    default: false,
     onChange: applyHotbarVisibility,
   });
 
-  // Apply client-affecting settings on init/ready
-  Hooks.once("ready", () => { applyHotbarVisibility(); applyColorScheme(); });
+  // Per-user: disable this HUD for me
+  game.settings.register(MOD, S.disableForMe, {
+    name: "Disable this HUD for me",
+    hint: "Hides the Daggerheart HUD only for your user.",
+    scope: scopeClient,
+    config: true,
+    type: Boolean,
+    default: false,
+    onChange: (value) => {
+      Hooks.callAll("daggerheart-hud:setting-changed", { key: S.disableForMe, value });
+    }
+  });
+
+  // Apply client-affecting settings on ready
+  Hooks.once("ready", () => {
+    applyHotbarVisibility();
+  });
 }

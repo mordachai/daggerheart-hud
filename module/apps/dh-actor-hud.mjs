@@ -154,14 +154,12 @@ async function setResource(actor, path, value, { min = 0, max = Number.MAX_SAFE_
 }
 
 export function getActorRingImageOrDefault(actor, kind) {
-if (!actor) return "";
-const flagKey = kind === "main" ? "ringPortrait" : "ringWeapons";
-const fromFlag = actor.getFlag("daggerheart-hud", flagKey) || "";
-if (fromFlag && String(fromFlag).trim()) return String(fromFlag).trim();
-// Fallback to GM defaults (these settings already exist in settings.mjs)
-const key = kind === "main" ? S.ringMainImg : S.ringWeaponImg;
-return (getSetting(key) || "").trim();
+  if (!actor) return "";
+  const flagKey = kind === "main" ? "ringPortrait" : "ringWeapons";
+  const v = actor.getFlag("daggerheart-hud", flagKey) || "";
+  return String(v || "").trim(); // no fallback to any GM/global setting
 }
+
 
 export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
@@ -481,8 +479,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     }
 
-    const hasRingArt = !!(getSetting(S.ringMainImg)?.trim());
-
     // === ANCESTRY / COMMUNITY FEATURES (correct filter: system.originItemType) ===
     const ancestryFeatures = [];
     const communityFeatures = [];
@@ -750,7 +746,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     return {
       actorName,
       portrait,
-      hasRingArt,
+      // hasRingArt,
 
       // resources
       hitPoints,
@@ -778,12 +774,25 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     };
   }
 
+  /** Apply the selected theme class to a given card (and remove previous). */
+  _applyCardTheme(card) {
+    const prefix = "dhud-theme-";
+    // remove any old theme class
+    Array.from(card.classList).forEach(c => { if (c.startsWith(prefix)) card.classList.remove(c); });
+    // read current value (prefer select value; fall back to data-color; default if empty)
+    const sel = card.querySelector("select.dh-color");
+    const val = (sel?.value || card.getAttribute("data-color") || "default").trim() || "default";
+    card.classList.add(prefix + val);
+  }
+
   async _onRender() {
-    if (getSetting(S.disableForMe)) { this.close(); return; } // ← bail out
+    // Respect per-user disable toggle
+    if (getSetting(S.disableForMe)) { this.close(); return; }
+
     const root = this.element;
     if (!root) return;
 
-    // Debug/visibility
+    // Debug: portrait image element presence
     const imgEl = root.querySelector(".dhud-portrait img");
     console.debug("[DHUD] _onRender: portrait img element", {
       found: !!imgEl,
@@ -791,61 +800,62 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       alt: imgEl?.getAttribute("alt")
     });
 
-    // Fixed image URL handling
+    // Normalize image paths to routed URLs
     function toRouteURL(p) {
       if (!p) return "none";
-      
-      // Clean the path - handle both relative and absolute paths
       let cleanPath = p.trim();
-      
-      // If it's already a full URL (http/https), use it as-is
-      if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
+
+      // Full URLs pass through
+      if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
         return `url("${cleanPath}")`;
       }
-      
-      // If it starts with a slash, it's already absolute
+
+      // Absolute module/asset paths
       if (cleanPath.startsWith("/")) {
         const abs = foundry.utils.getRoute(cleanPath);
         return `url("${abs}")`;
       }
-      
-      // If it doesn't start with slash, add one
+
+      // Ensure leading slash for relative asset paths
       if (!cleanPath.startsWith("/")) {
         cleanPath = `/${cleanPath}`;
       }
-      
+
       const abs = foundry.utils.getRoute(cleanPath);
       return `url("${abs}")`;
     }
 
-    function getGMRingImage(kind /* "main" | "weapon" */) {
-      const key = kind === "main" ? S.ringMainImg : S.ringWeaponImg;
-      return getSetting(key)?.trim() || "";
+    // --- Theme: Actor flag only (fallback to "default"). No player/global overrides.
+    const actorScheme = this.actor ? (await this.actor.getFlag("daggerheart-hud", "colorScheme")) || "" : "";
+    const effectiveScheme = actorScheme || "default";
+    {
+      const prefix = "dhud-theme-";
+      root.classList.forEach(c => { if (c.startsWith(prefix)) root.classList.remove(c); });
+      root.classList.add(`${prefix}${effectiveScheme}`);
     }
 
-    // 1) resolve paths com prioridade: Actor flags -> GM defaults
+    // --- Ring art: Actor flags only (no GM/global fallback)
     const mainRing = getActorRingImageOrDefault(this.actor, "main");
     const weapRing = getActorRingImageOrDefault(this.actor, "weapon");
-
-    // 2) aplica nas CSS vars usadas pelo HUD
     root.style.setProperty("--dhud-ring-main",  toRouteURL(mainRing));
     root.style.setProperty("--dhud-ring-weapon", toRouteURL(weapRing));
 
-
-    // Make roll targets feel clickable (purely cosmetic)
+    // Cosmetic pointer cursor for roll targets
     root.querySelectorAll(".dhud-roll").forEach(el => {
       el.style.cursor = "pointer";
       el.setAttribute("aria-pressed", "false");
     });
 
+    // Feature toggles on the HUD
     attachDHUDToggles(root);
 
+    // One-time wiring for resource adjusters
     if (!this._resAdjBound) {
       this._bindResourceAdjusters(root);
       this._resAdjBound = true;
     }
 
-    // Apply saved wings state (per user, per actor); default to "closed" if none
+    // Restore wings open/closed per user+actor (default: closed)
     if (!this._wingsInit) {
       const saved = this.actor
         ? (await game.user.getFlag("daggerheart-hud", `wings.${this.actor.id}`)) || "closed"
@@ -855,31 +865,37 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       this._wingsInit = true;
     }
 
+    // Hooks to re-apply art/theme on changes coming from the Configurator
     if (!this._imgHooked) {
-      this._applyRingArt ??= () => {
+      // Re-apply both rings and theme when the Configurator saves
+      this._reapplyAppearance ??= async ({ actorIds = [] } = {}) => {
+        if (!this.actor) return;
+        if (actorIds.length && !actorIds.includes(this.actor.id)) return;
+
+        // rings
         const mr = getActorRingImageOrDefault(this.actor, "main");
         const wr = getActorRingImageOrDefault(this.actor, "weapon");
         root.style.setProperty("--dhud-ring-main",  toRouteURL(mr));
         root.style.setProperty("--dhud-ring-weapon", toRouteURL(wr));
+
+        // theme
+        const scheme = (await this.actor.getFlag("daggerheart-hud", "colorScheme")) || "default";
+        const prefix = "dhud-theme-";
+        root.classList.forEach(c => { if (c.startsWith(prefix)) root.classList.remove(c); });
+        root.classList.add(`${prefix}${scheme}`);
       };
 
-      // já existia:
-      Hooks.on("daggerheart-hud:images-changed", this._applyRingArt);
-
-      // novo: quando o diálogo salva flags por Actor
-      this._ringsUpdatedHandler = ({ actorIds = [] } = {}) => {
-        if (!this.actor) return;
-        if (actorIds.length && !actorIds.includes(this.actor.id)) return; // ignore se não é este ator
-        this._applyRingArt?.();
-      };
-      Hooks.on("daggerheart-hud:rings-updated", this._ringsUpdatedHandler);
+      // Listen only to the Configurator’s saves
+      Hooks.on("daggerheart-hud:rings-updated",      this._reapplyAppearance);
+      Hooks.on("daggerheart-hud:appearance-updated", this._reapplyAppearance);
 
       this._imgHooked = true;
     }
-    // chama uma vez agora também (mantém seu comportamento atual)
-    this._applyRingArt?.();
 
-    // First boot: place & wire resize (reads fresh setting every time)
+    // Apply once now
+    await this._reapplyAppearance?.({ actorIds: [this.actor?.id].filter(Boolean) });
+
+    // First boot: placement and resize behavior
     if (!this._booted) {
       const applyPlacement = () => {
         const fresh = Number(getSetting(S.bottomOffset)) || 110;
@@ -899,24 +915,41 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       window.addEventListener("resize", this._onResize);
     }
 
-    // Drag by the ring
-    if (!this._dragHooked) { enableDragByRing(root, this); this._dragHooked = true; }
+    // Drag support (by the ring)
+    if (!this._dragHooked) {
+      enableDragByRing(root, this);
+      this._dragHooked = true;
+    }
 
-    // Delegated handlers (ring, traits, weapons, exec, chat, move)
-    this._bindDelegatedEvents();   
+    // Delegated HUD interactions (ring, traits, weapons, exec, chat, move)
+    this._bindDelegatedEvents();
   }
 
   async close(opts) {
-    if (this._imgHooked && this._applyRingArt) {
-      Hooks.off("daggerheart-hud:images-changed", this._applyRingArt);
-      if (this._ringsUpdatedHandler) {
-        Hooks.off("daggerheart-hud:rings-updated", this._ringsUpdatedHandler);
-        this._ringsUpdatedHandler = null;
+    try {
+      if (this._imgHooked) {
+        // Unhook configurator updates
+        if (this._reapplyAppearance) {
+          Hooks.off("daggerheart-hud:rings-updated",      this._reapplyAppearance);
+          Hooks.off("daggerheart-hud:appearance-updated", this._reapplyAppearance);
+        }
+
+        // Clear refs
+        this._reapplyAppearance = null;
+        this._imgHooked = false;
       }
-      this._imgHooked = false;
+
+      // Remove window resize listener if set
+      if (this._onResize) {
+        window.removeEventListener("resize", this._onResize);
+        this._onResize = null;
+      }
+    } finally {
+      return super.close(opts);
     }
-    return super.close(opts);
   }
+
+
 
 
 

@@ -13,12 +13,46 @@
 }
 
 /* Themes */
-body.dhud-theme-default  { --dh-accent:#f2c24b; --dh-surface:#15161a; --dh-border:rgba(255,255,255,0.12); --dh-pip-border:#f2c34b; }
+
+/* body.dhud-theme-default  { --dh-accent:#f2c24b; --dh-surface:#15161a; --dh-border:rgba(255,255,255,0.12); --dh-pip-border:#f2c34b; }
 body.dhud-theme-crimson  { --dh-accent:#d12a2a; --dh-surface:#1a0e10; --dh-border:rgba(255,180,180,0.18); --dh-pip-border:rgba(255,180,180,0.60); }
 body.dhud-theme-emerald  { --dh-accent:#10a37f; --dh-surface:#0d1412; --dh-border:rgba(170,255,220,0.16); --dh-pip-border:rgba(170,255,220,0.60); }
 body.dhud-theme-midnight  { --dh-accent:#9b59b6; --dh-surface:#120a14; --dh-border:rgba(220,180,255,0.16); --dh-pip-border:rgba(220,180,255,0.60); }
 body.dhud-theme-oceanic  { --dh-accent:#1abc9c; --dh-surface:#0a1414; --dh-border:rgba(150,255,240,0.14); --dh-pip-border:rgba(150,255,240,0.60); }
-body.dhud-theme-solarflare  { --dh-accent:#ff6a3d; --dh-surface:#1a0d0a; --dh-border:rgba(255,180,160,0.18); --dh-pip-border:rgba(255,180,160,0.65); }
+body.dhud-theme-solarflare  { --dh-accent:#ff6a3d; --dh-surface:#1a0d0a; --dh-border:rgba(255,180,160,0.18); --dh-pip-border:rgba(255,180,160,0.65); } */
+
+/* Themes */
+body.dhud-theme-default,
+.daggerheart-hud.dhud-theme-default  { --dh-accent:#f2c24b; --dh-surface:#15161a; --dh-border:rgba(255,255,255,0.12); --dh-pip-border:#f2c34b; }
+
+body.dhud-theme-crimson,
+.daggerheart-hud.dhud-theme-crimson  { --dh-accent:#d12a2a; --dh-surface:#1a0e10; --dh-border:rgba(255,180,180,0.18); --dh-pip-border:rgba(255,180,180,0.60); }
+
+body.dhud-theme-emerald,
+.daggerheart-hud.dhud-theme-emerald  { --dh-accent:#10a37f; --dh-surface:#0d1412; --dh-border:rgba(170,255,220,0.16); --dh-pip-border:rgba(170,255,220,0.60); }
+
+body.dhud-theme-midnight,
+.daggerheart-hud.dhud-theme-midnight { --dh-accent:#9b59b6; --dh-surface:#120a14; --dh-border:rgba(220,180,255,0.16); --dh-pip-border:rgba(220,180,255,0.60); }
+
+body.dhud-theme-oceanic,
+.daggerheart-hud.dhud-theme-oceanic  { --dh-accent:#1abc9c; --dh-surface:#0a1414; --dh-border:rgba(150,255,240,0.14); --dh-pip-border:rgba(150,255,240,0.60); }
+
+body.dhud-theme-solarflare,
+.daggerheart-hud.dhud-theme-solarflare { --dh-accent:#ff6a3d; --dh-surface:#1a0d0a; --dh-border:rgba(255,180,160,0.18); --dh-pip-border:rgba(255,180,160,0.65); }
+
+
+/* 
+body.dhud-theme-default, .daggerheart-hud.dhud-theme-default { --dh-accent:#f2c24b; --dh-surface:#15161a; --dh-border:rgba(255,255,255,0.12); --dh-pip-border:#f2c34b; }
+body.dhud-theme-shadowveil, .daggerheart-hud.dhud-theme-shadowveil { --dh-accent:#6c5ce7; --dh-surface:#0d0a15; --dh-border:rgba(180,160,255,0.15); --dh-pip-border:rgba(180,160,255,0.65); }
+body.dhud-theme-ironclad, .daggerheart-hud.dhud-theme-ironclad { --dh-accent:#74b9ff; --dh-surface:#0a0f1a; --dh-border:rgba(160,200,255,0.16); --dh-pip-border:rgba(160,200,255,0.62); }
+body.dhud-theme-wildfire, .daggerheart-hud.dhud-theme-wildfire { --dh-accent:#e17055; --dh-surface:#1a100a; --dh-border:rgba(255,180,140,0.17); --dh-pip-border:rgba(255,180,140,0.63); }
+body.dhud-theme-frostbite, .daggerheart-hud.dhud-theme-frostbite { --dh-accent:#00cec9; --dh-surface:#0a1515; --dh-border:rgba(160,255,250,0.14); --dh-pip-border:rgba(160,255,250,0.58); }
+body.dhud-theme-thornwood, .daggerheart-hud.dhud-theme-thornwood { --dh-accent:#6ab04c; --dh-surface:#0e140a; --dh-border:rgba(180,255,160,0.16); --dh-pip-border:rgba(180,255,160,0.62); }
+body.dhud-theme-bloodmoon, .daggerheart-hud.dhud-theme-bloodmoon { --dh-accent:#c44569; --dh-surface:#150a0f; --dh-border:rgba(255,160,180,0.18); --dh-pip-border:rgba(255,160,180,0.64); }
+body.dhud-theme-goldenhour, .daggerheart-hud.dhud-theme-goldenhour { --dh-accent:#fdcb6e; --dh-surface:#1a1510; --dh-border:rgba(255,220,160,0.15); --dh-pip-border:rgba(255,220,160,0.60); }
+body.dhud-theme-stormcloud, .daggerheart-hud.dhud-theme-stormcloud { --dh-accent:#636e72; --dh-surface:#12131a; --dh-border:rgba(200,210,220,0.12); --dh-pip-border:rgba(200,210,220,0.55); }
+body.dhud-theme-mysticvoid, .daggerheart-hud.dhud-theme-mysticvoid { --dh-accent:#fd79a8; --dh-surface:#140a12; --dh-border:rgba(255,180,220,0.16); --dh-pip-border:rgba(255,180,220,0.62); }
+ */
 
 
 /* Toggled by settings: document.body.classList.toggle('dhud-hide-hotbar', ...) */
@@ -514,21 +548,126 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .capitalize { text-transform: capitalize; }
 
 
-/* Styles for HUD Rings dialog*/
+/* HUD Images Config — 2-up cards */
 .dh-hudrings { padding: 12px; }
-.dh-hudrings .header { display:grid; grid-template-columns: 1fr 1fr; column-gap: 16px; margin: 4px 0 12px; }
-.dh-hudrings .header h3 { margin: 0; padding-bottom: 10px; text-align: left; font-size: 18px; border-bottom: 1px solid var(--dh-accent); }
-.dh-hudrings .grid { display: grid; row-gap: 12px; }
-.dh-hudrings .row { display:grid; grid-template-columns: 1fr 1fr; column-gap: 16px; align-items: center; }
-.dh-hudrings .col .label { width: 100%; margin-bottom: 6px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dh-hudrings .cell { display:flex; align-items:center; gap: 10px; }
-.dh-hudrings img.preview { width: 44px; height: 44px; object-fit: contain; border:1px solid var(--color-border-light-tertiary); border-radius: 4px; background: #232225; }
-.dh-hudrings .field { display:flex; flex:1; align-items:center; gap:6px; }
-.dh-hudrings .field input.path { flex:1; }
-.dh-hudrings .spacer { visibility:hidden; }
-.dh-hudrings .empty { margin: 8px 0; text-align:center; opacity: .8; }
-.dh-hudrings-footer { display:flex; justify-content:space-around; align-items: center; gap: 10px; margin-top: 20px; }
-.dh-hudrings-footer button { width: 90%; padding: 20px; background-color: var(--dh-surface); }
+
+.dh-hudrings .cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 cards per row */
+  gap: 16px;
+}
+
+/* Card shell */
+.dh-hudrings .card {
+  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Card header */
+.dh-hudrings .card-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+.dh-hudrings .who {
+  text-align: center;
+}
+.dh-hudrings .who .char {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
+}
+.dh-hudrings .who .player {
+  opacity: .8;
+  font-size: 12px;
+}
+.dh-hudrings .scheme {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+.dh-hudrings .scheme label { white-space: nowrap; }
+.dh-hudrings .scheme select.dh-color { min-width: 170px; }
+
+/* Previews row (portrait | weapons) */
+.dh-hudrings .previews {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.dh-hudrings .preview-card {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 8px;
+}
+.dh-hudrings .preview-card .title {
+  font-weight: 600;
+  text-align: left;
+  opacity: .9;
+}
+
+/* Preview box with click-to-pick and placeholder */
+.dh-hudrings .preview-box {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 120px;
+  border: 1px dashed var(--color-border, rgba(255,255,255,0.2));
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  overflow: hidden;
+  cursor: pointer;
+}
+.dh-hudrings .preview-box:hover {
+  outline: 2px solid var(--dh-accent, rgba(255,255,255,0.25));
+}
+.dh-hudrings .preview-box img.preview {
+  max-width: 100%; max-height: 100%; display: block;
+}
+
+/* "Search" placeholder */
+.dh-hudrings .preview-box .placeholder {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-style: italic; font-size: 0.95rem; opacity: 0.75; pointer-events: none;
+}
+.dh-hudrings .preview-box img.preview[src=""],
+.dh-hudrings .preview-box img.preview:not([src]) { display: none; }
+.dh-hudrings .preview-box img.preview[src]:not([src=""]) ~ .placeholder { display: none; }
+
+/* Path row under each preview */
+.dh-hudrings .path-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.dh-hudrings .path-row input.path { min-width: 0; }
+.dh-hudrings .path-row .clear-path {
+  width: 34px; height: 34px;
+  border: 1px solid var(--color-border, rgba(255,255,255,0.2));
+  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  line-height: 1; font-weight: 700;
+}
+.dh-hudrings .path-row .clear-path:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+/* Footer */
+.dh-hudrings .empty { margin: 8px 0; text-align: center; opacity: .8; }
+.dh-hudrings-footer {
+  display: flex; justify-content: space-around; align-items: center; gap: 10px; margin-top: 20px;
+}
+.dh-hudrings-footer button {
+  width: 90%; padding: 20px; background-color: var(--dh-surface);
+}
+
 
 /* ===== Responsivo ===== */
 @media (max-width: 980px) {
