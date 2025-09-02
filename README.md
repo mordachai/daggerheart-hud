@@ -29,8 +29,7 @@ Do you like neat table pieces? Custom appearance for everyone? Crazy themes? Wel
 ### Other settings:
 You can hide Foundry's macro hotbar, change the vertical position at which the HUD appears, or entirely disable it, while the other players can keep theirs (GMs tell the players where ro disable it)
 
-<img width="799" height="691" alt="image" src="https://github.com/user-attachments/assets/b5b7e5d0-b7bd-4305-b7de-804a40650213" />
-
+<img width="798" height="697" alt="image" src="https://github.com/user-attachments/assets/6bb65944-7452-4212-ae23-de4db51c8f02" />
 
 ## Installation
 
