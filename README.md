@@ -2,13 +2,13 @@
 
 # Daggerheart HUD
 
-<img width="1110" height="711" alt="image" src="https://github.com/user-attachments/assets/1c232175-160b-4ff1-8222-4caf8892b376" />
+<img width="1220" height="706" alt="image" src="https://github.com/user-attachments/assets/9c685e9b-39bb-4d2e-a282-ea7ff6af866f" />
 
 ## Watch it in action:
 
 A heads-up display module for the Daggerheart system in Foundry VTT. Provides quick access to character resources and abilities without opening character sheets.
 
-Select your token and the HUD will appear. It's that simple (always active and apply/remove conditions are a work in progress). **Double click** on the portrait opens the **character sheet.**
+Select your token, and the HUD will appear. It's that simple (always active and apply/remove conditions are a work in progress). **Double click** on the portrait opens the **character sheet.**
 
 ## Features
 
@@ -44,7 +44,7 @@ https://raw.githubusercontent.com/mordachai/daggerheart-hud/main/module.json
 - Daggerheart system
 
 ## Known Issues
-- Deal damage is not working for players (Probably a system-related issue? Investigating. Until solved, the GM must click the **Deal Damage** button in chat.)
+- Armor slots are not working with the left/right click flow.
 
 ## License
 
