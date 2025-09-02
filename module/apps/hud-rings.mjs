@@ -1,4 +1,4 @@
-// Daggerheart HUD – HUD Images Config dialog (per-Actor rings + per-Actor color scheme)
+// Daggerheart HUD – HUD Theme Config dialog (per-Actor rings + per-Actor color scheme)
 // Foundry VTT v13 — V2 Application (DialogV2) + Handlebars mixin
 
 const MODULE_ID = "daggerheart-hud";
@@ -9,7 +9,7 @@ const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const FP      = foundry.applications.apps.FilePicker.implementation; // v13 namespace
 const loadTex = foundry.canvas.loadTexture;                           // v13 namespace
 
-const LOG = (...a) => console.log("[HUD Images Config]", ...a);
+const LOG = (...a) => console.log("[HUD Theme Config]", ...a);
 
 
 async function getThemeChoicesFromCSS() {
@@ -103,7 +103,7 @@ async function getThemeChoicesFromCSS() {
 export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
   static DEFAULT_OPTIONS = {
     id: "dh-hud-images-config",
-    window: { title: "HUD Images Config" },
+    window: { title: "HUD Theme Config" },
     position: { width: 850, height: "auto" },
     buttons: [
       { action: "cancel", label: "Cancel", icon: "fas fa-times" },

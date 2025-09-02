@@ -505,7 +505,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .capitalize { text-transform: capitalize; }
 
 
-/* HUD Images Config — 2-up cards with theme support */
+/* HUD Theme Config — 2-up cards with theme support */
 .dh-hudrings { padding: 12px; }
 
 .dh-hudrings .cards {

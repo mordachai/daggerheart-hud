@@ -27,16 +27,16 @@ export function registerSettings() {
   const scopeClient = "client"; // per-user
 
   // Launcher that opens the V2 dialog (we accept the V1 FormApplication warning in v13)
-  game.settings.registerMenu("daggerheart-hud", "hudImagesConfig", {
-    name: "HUD Images Config",
-    label: "HUD Images Config",
+  game.settings.registerMenu("daggerheart-hud", "hudThemeConfig", {
+    name: "HUD Theme Config",
+    label: "HUD Theme Config",
     icon: "fas fa-ring",
-    type: class DHUDImagesLauncher extends FormApplication {
+    type: class DHUDThemeLauncher extends FormApplication {
       static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-          id: "dhud-images-launcher",
+          id: "dhud-theme-launcher",
           template: "modules/daggerheart-hud/templates/ui/blank.hbs",
-          title: "HUD Images Config (Launcher)",
+          title: "HUD Theme Config (Launcher)",
           popOut: false
         });
       }
