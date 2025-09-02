@@ -295,6 +295,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         await setResource(actor, "system.resources.hope.value", idx + 1, { min: 0, max });
         return;
       }
+
+      // REMOVED: Armor handling - now handled in _bindDelegatedEvents only
+
     }, true);
 
     // RIGHT CLICK = plus for HP/Stress; reduce by one for Hope
@@ -318,7 +321,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           await bumpResource(actor, "system.resources.stress.value", +1, { min: 0, max });
           return;
         }
-      }
+      }      
 
       // HOPE: right-click a pip to set to that index (i.e., one less than clicked pip)
       const pip = ev.target.closest(".dhud-pips .pip");
@@ -331,6 +334,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         await setResource(actor, "system.resources.hope.value", idx, { min: 0, max });
         return;
       }
+
+      // REMOVED: Armor handling - now handled in _bindDelegatedEvents only
+      
     }, true);
   }
 
@@ -339,6 +345,21 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     if (!rootEl || this._delegatedBound) return;
 
     const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+
+    // Double-click handler for portrait to open character sheet
+    rootEl.addEventListener("dblclick", async (ev) => {
+      const portrait = ev.target.closest(".dhud-portrait, .dhud-portrait-img");
+      if (portrait && this.actor) {
+        // Only open sheet if we haven't been dragging recently
+        if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 300) {
+          return; // Too soon after drag, ignore double-click
+        }
+        
+        stop(ev);
+        this.actor.sheet.render(true, { focus: true });
+        return;
+      }
+    }, true);
 
     rootEl.addEventListener("click", async (ev) => {
       const actor = this.actor;
@@ -371,11 +392,21 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         }
       }
 
+      // THIRD: Check if this is an armor badge click
+      const armorEl = ev.target.closest(".dhud-badge--right");
+      if (armorEl) {
+        stop(ev);
+        const max = Number(this.actor.system?.resources?.armor?.max ?? 0);
+        // Left click = take armor damage (decrease value)
+        await bumpResource(actor, "system.resources.armor.value", -1, { min: 0, max });
+        return;
+      }
+
       // Ring toggle (wings) - only if NOT clicking on interactive elements
       const ring = ev.target.closest(".dhud-ring");
       if (ring) {
         // Additional safety checks to prevent accidental wing toggles
-        const isInteractiveElement = ev.target.closest(".dhud-pips, .dhud-count, [data-action]");
+        const isInteractiveElement = ev.target.closest(".dhud-pips, .dhud-count, .dhud-badge, .dhud-portrait, [data-action]");
         if (isInteractiveElement) {
           // This click was on an interactive element, don't toggle wings
           return;
@@ -441,7 +472,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     }, true); // capture=true beats <summary> default toggle
 
-    // RIGHT CLICK handler for HP/Stress increment and Hope decrement
+    // RIGHT CLICK handler for HP/Stress increment, Hope decrement, and Armor repair
     rootEl.addEventListener("contextmenu", async (ev) => {
       const actor = this.actor;
       if (!actor) return;
@@ -472,10 +503,20 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           return;
         }
       }
+
+      // Armor right-click repair
+      const armorEl = ev.target.closest(".dhud-badge--right");
+      if (armorEl) {
+        stop(ev);
+        const max = Number(this.actor.system?.resources?.armor?.max ?? 0);
+        // Right click = repair armor (increase value)
+        await bumpResource(actor, "system.resources.armor.value", +1, { min: 0, max });
+        return;
+      }
     }, true);
 
     this._delegatedBound = true;
-  } 
+  }
 
   async _prepareContext(_options) {
     const actor = this.actor ?? null;
@@ -734,6 +775,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     const armor = {
       max: Number(armorResource.max ?? 0),
       value: Number(armorResource.value ?? 0),
+      marks: Number(armorResource.max ?? 0) - Number(armorResource.value ?? 0), // Calculate marks taken
+      isReversed: !!armorResource.isReversed
     };
 
     // === DAMAGE THRESHOLDS ===

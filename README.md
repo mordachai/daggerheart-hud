@@ -8,7 +8,7 @@
 
 A heads-up display module for the Daggerheart system in Foundry VTT. Provides quick access to character resources and abilities without opening character sheets.
 
-Select your token and the HUD will appear. It's that simple (always active and apply/remove conditions are a work in progress)
+Select your token and the HUD will appear. It's that simple (always active and apply/remove conditions are a work in progress). **Double click** on the portrait opens the **character sheet.**
 
 ## Features
 

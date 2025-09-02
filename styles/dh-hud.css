@@ -355,7 +355,6 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   justify-content: space-around;
   gap: 5px;
   z-index: 3;
-  /* pointer-events: none; */
 }
 
 .dhud-pips .pip {
@@ -364,6 +363,11 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   border: 2px solid var(--dh-pip-border);
   background: transparent;
   transition: background .15s, border-color .15s, transform .15s;
+}
+
+.dhud-pips .pip:hover {
+  transform: scale(1.15);
+  border: 3px solid var(--dh-pip-border);
 }
 
 /* Empty pips = circles */
@@ -382,14 +386,13 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   height: calc(var(--pip) - 3px);
   }
 
+
 .dhud-count .value,
 .dhud-pips .pip {
   cursor: pointer;
   user-select: none;
 }
-.dhud-pips .pip { display:inline-block; width:10px; height:10px; border-radius:50%; }
-.dhud-pips .pip.filled { opacity: 1; }
-.dhud-pips .pip:not(.filled) { opacity: 0.35; }
+/* .dhud-pips .pip { display:inline-block; width:10px; height:10px; border-radius:50%; } */
 
 
 /* HP / Stress (absolutos; clicáveis para futuros +/-) */
@@ -405,10 +408,18 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   left: var(--hp-left);
   text-align: center;
 }
+.dhud-count--hp .value:hover{
+  font-weight: 700;
+  text-shadow: 0px 0px 3px var(--dh-pip-border);
+}
 .dhud-count--stress {
   top: var(--stress-top);
   right: var(--stress-right);
   text-align: center;
+}
+.dhud-count--stress .value:hover{
+  font-weight: 700;
+  text-shadow: 0px 0px 3px var(--dh-pip-border);
 }
 
 /* Thresholds:  */
@@ -448,7 +459,6 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   top: 50%;
   transform: translateY(0%);
   z-index: 3;          
-  /* pointer-events: none;    */
   width: 40px; height: 40px;
   display: grid; place-items: center;
   font-weight: 800; font-size: .8rem;
@@ -467,6 +477,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
+  cursor: pointer;
 }
 
 /* ---- Wings open/close animation ---- */
