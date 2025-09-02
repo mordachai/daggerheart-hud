@@ -262,6 +262,8 @@ const DHUD_ACTOR_PATHS = [
   "system.resources.hitPoints",
   "system.resources.stress",
   "system.resources.hope",
+  "system.resources.armor",  // Add this line
+
   // traits
   "system.traits",
   // defenses / thresholds / misc

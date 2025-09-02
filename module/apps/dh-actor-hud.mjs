@@ -730,9 +730,10 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     // === PROFICIENCY / DEFENSES ===
     const proficiency = sys.proficiency ?? 0;   // system.proficiency
     const evasion     = sys.evasion     ?? 0;   // system.evasion
+    const armorResource = sys.resources?.armor ?? {};
     const armor = {
-      max:   sys.armorScore ?? 0,               // no max in system; mirror value so UI shows X/X
-      marks: 0
+      max: Number(armorResource.max ?? 0),
+      value: Number(armorResource.value ?? 0),
     };
 
     // === DAMAGE THRESHOLDS ===
