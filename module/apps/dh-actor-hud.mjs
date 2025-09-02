@@ -15,7 +15,6 @@ function placeAtBottom(appEl, offsetPx = 110) {
   appEl.style.left = `${left}px`;
 }
 
-
 function enableDragByRing(appEl, appInstance) {
   const handle = appEl.querySelector(".dhud-ring");
   if (!handle) return;
@@ -173,9 +172,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     
     this.actor = actor ?? null;
     this.token = token ?? actor?.getActiveTokens()?.[0]?.document ?? null;
-  }
-
-  
+  }  
 
   async _executeItem(item, actionPath = "use") {
     const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
@@ -810,20 +807,17 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       return `url("${abs}")`;
     }
 
-    function getEffectiveRingImage(playerSetting, gmSetting) {
-      const playerImg = getSetting(playerSetting)?.trim();
-      const gmImg = getSetting(gmSetting)?.trim();
-      return playerImg || gmImg || ""; // Player overrides GM, GM overrides empty
+    function getGMRingImage(kind /* "main" | "weapon" */) {
+      const key = kind === "main" ? S.ringMainImg : S.ringWeaponImg;
+      return getSetting(key)?.trim() || "";
     }
 
-    const mainRing = getEffectiveRingImage(S.ringMainImgPlayer, S.ringMainImg);
-    const weapRing = getEffectiveRingImage(S.ringWeaponImgPlayer, S.ringWeaponImg);
+    const mainRing = getGMRingImage("main");
+    const weapRing = getGMRingImage("weapon");
 
-    // Apply the CSS custom properties
-    root.style.setProperty("--dhud-ring-main", toRouteURL(mainRing));
+    // apply
+    root.style.setProperty("--dhud-ring-main",  toRouteURL(mainRing));
     root.style.setProperty("--dhud-ring-weapon", toRouteURL(weapRing));
-
-    // const offset = Number(getSetting(S.bottomOffset)) || 110;
 
     // Make roll targets feel clickable (purely cosmetic)
     root.querySelectorAll(".dhud-roll").forEach(el => {
@@ -847,6 +841,20 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       this._wingsState = saved;
       this._wingsInit = true;
     }
+
+    // run once per HUD instance
+    if (!this._imgHooked) {
+      this._applyRingArt ??= () => {
+        const mr = getGMRingImage("main");
+        const wr = getGMRingImage("weapon");
+        root.style.setProperty("--dhud-ring-main",  toRouteURL(mr));
+        root.style.setProperty("--dhud-ring-weapon", toRouteURL(wr));
+      };
+      Hooks.on("daggerheart-hud:images-changed", this._applyRingArt);
+      this._imgHooked = true;
+    }
+    // call once now too
+    this._applyRingArt?.();
 
     // First boot: place & wire resize (reads fresh setting every time)
     if (!this._booted) {
@@ -876,11 +884,13 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
   }
 
   async close(opts) {
-    if (this._onResize) {
-      window.removeEventListener("resize", this._onResize);
-      this._onResize = null;
+    if (this._imgHooked && this._applyRingArt) {
+      Hooks.off("daggerheart-hud:images-changed", this._applyRingArt);
+      this._imgHooked = false;
     }
+    // ... your existing resize cleanup ...
     return super.close(opts);
   }
+
 
 }
