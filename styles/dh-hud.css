@@ -671,6 +671,34 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   color: var(--dh-surface, #15161a);
 }
 
+.dhud {
+  /* Ensure wings are closed by default */
+}
+
+.dhud:not([data-wings="open"]) .dhud-wing--left,
+.dhud:not([data-wings="open"]) .dhud-wing--right {
+  /* Force wings to be hidden when not explicitly open */
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dhud[data-wings="open"] .dhud-wing--left,
+.dhud[data-wings="open"] .dhud-wing--right {
+  /* Wings visible when open */
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Alternatively, if you want them completely hidden: */
+.dhud[data-wings="closed"] .dhud-wing--left,
+.dhud[data-wings="closed"] .dhud-wing--right {
+  display: none;
+}
+
 
 /* ===== Responsivo ===== */
 @media (max-width: 980px) {

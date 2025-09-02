@@ -781,6 +781,18 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     const root = this.element;
     if (!root) return;
 
+    // Initialize wings state immediately to prevent blinking
+    if (!this._wingsInit) {
+      const saved = this.actor
+        ? (await game.user.getFlag("daggerheart-hud", `wings.${this.actor.id}`)) || "closed"
+        : "closed";
+      
+      // Set wings state immediately on the root element before other rendering
+      setWingsState(root, saved);
+      this._wingsState = saved;
+      this._wingsInit = true;
+    }
+
     // Debug: portrait image element presence
     const imgEl = root.querySelector(".dhud-portrait img");
     console.debug("[DHUD] _onRender: portrait img element", {
@@ -856,16 +868,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       this._resAdjBound = true;
     }
 
-    // Restore wings open/closed per user+actor (default: closed)
-    if (!this._wingsInit) {
-      const saved = this.actor
-        ? (await game.user.getFlag("daggerheart-hud", `wings.${this.actor.id}`)) || "closed"
-        : "closed";
-      setWingsState(root, saved);
-      this._wingsState = saved;
-      this._wingsInit = true;
-    }
-
     // Hooks to re-apply art/theme on changes coming from the Configurator
     if (!this._imgHooked) {
       // Re-apply both rings and theme when the Configurator saves
@@ -899,7 +901,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     // First boot: placement and resize behavior
     if (!this._booted) {
       const applyPlacement = () => {
-        const fresh = Number(getSetting(S.bottomOffset)) || 110;
+        const rawOffset = getSetting(S.bottomOffset);
+        const fresh = (rawOffset !== null && rawOffset !== undefined) ? Number(rawOffset) : 110;
         placeAtBottom(root, fresh);
       };
 
