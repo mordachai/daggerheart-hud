@@ -44,15 +44,6 @@ Hooks.on("controlToken", async (token, controlled) => {
 
 //Hooks.on("canvasPan", () => _hudApp?.close({ force: true }));
 
-Hooks.on("daggerheart-hud:images-changed", () => {
-  const el = _hudApp?.element;
-  if (!el) return;
-  const main = (game.settings.get("daggerheart-hud","ringMainImg")   || "").trim();
-  const weap = (game.settings.get("daggerheart-hud","ringWeaponImg") || "").trim();
-  el.style.setProperty("--dhud-ring-main",   main ? `url("${main}")` : "none");
-  el.style.setProperty("--dhud-ring-weapon", weap ? `url("${weap}")` : "none");
-});
-
 
 Hooks.on("deleteToken", (scene, tokenDoc) => {
   const t = canvas.tokens?.controlled[0];
