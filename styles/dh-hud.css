@@ -506,6 +506,8 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 
 
 /* HUD Theme Config — 2-up cards with theme support */
+#dh-hud-images-config .window-content { overflow: auto;}
+
 .dh-hudrings { padding: 12px; }
 
 .dh-hudrings .cards {
