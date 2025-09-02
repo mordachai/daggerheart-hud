@@ -2,9 +2,13 @@
 
 # Daggerheart HUD
 
+<img width="1110" height="711" alt="image" src="https://github.com/user-attachments/assets/1c232175-160b-4ff1-8222-4caf8892b376" />
+
+## Watch it in action:
+
 A heads-up display module for the Daggerheart system in Foundry VTT. Provides quick access to character resources and abilities without opening character sheets.
 
-<img width="1133" height="561" alt="image" src="https://github.com/user-attachments/assets/6a78337c-a3eb-47d6-9d1e-1247e60ff1c9" />
+Select your token and the HUD will appear. It's that simple (always active and apply/remove conditions are a work in progress)
 
 ## Features
 
@@ -17,15 +21,16 @@ A heads-up display module for the Daggerheart system in Foundry VTT. Provides qu
 
 ## Settings
 
-### GM Settings (World)
-- Default ring images for portrait and weapons
-- Color scheme (Default, Crimson, Emerald, Midnight)
+### HUD Theme Configurator:
+Do you like neat table pieces? Custom appearance for everyone? Crazy themes? Well, we got you fam!
 
-### Player Settings (Client)
-- Personal ring image overrides
-- Bottom offset positioning
-- Hide Foundry hotbar
-- Disable HUD entirely
+<img width="872" height="717" alt="image" src="https://github.com/user-attachments/assets/29d1bbe4-bd92-49a3-8b13-cb1c5a45228a" />
+
+### Other settings:
+You can hide Foundry's macro hotbar, change the vertical position at which the HUD appears, or entirely disable it, while the other players can keep theirs (GMs tell the players where ro disable it)
+
+<img width="799" height="691" alt="image" src="https://github.com/user-attachments/assets/b5b7e5d0-b7bd-4305-b7de-804a40650213" />
+
 
 ## Installation
 
