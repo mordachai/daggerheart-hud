@@ -6,7 +6,7 @@
   "compatibility": { "minimum": "13", "verified": "13" },
   "authors": [{ "name": "Gus" }],
   "esmodules": ["module/daggerheart-hud.mjs"],
-  "styles": ["styles/dh-hud.css"],
+  "styles": ["styles/dh-hud.css","styles/dhud-themes.css"],
   "dependencies": [{ "name": "daggerheart", "type": "system" }],
   "url": "https://github.com/mordachai/daggerheart-hud",
   "manifest": "https://raw.githubusercontent.com/mordachai/daggerheart-hud/main/module.json",

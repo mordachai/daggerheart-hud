@@ -774,17 +774,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     };
   }
 
-  /** Apply the selected theme class to a given card (and remove previous). */
-  _applyCardTheme(card) {
-    const prefix = "dhud-theme-";
-    // remove any old theme class
-    Array.from(card.classList).forEach(c => { if (c.startsWith(prefix)) card.classList.remove(c); });
-    // read current value (prefer select value; fall back to data-color; default if empty)
-    const sel = card.querySelector("select.dh-color");
-    const val = (sel?.value || card.getAttribute("data-color") || "default").trim() || "default";
-    card.classList.add(prefix + val);
-  }
-
   async _onRender() {
     // Respect per-user disable toggle
     if (getSetting(S.disableForMe)) { this.close(); return; }
@@ -825,13 +814,25 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       return `url("${abs}")`;
     }
 
-    // --- Theme: Actor flag only (fallback to "default"). No player/global overrides.
-    const actorScheme = this.actor ? (await this.actor.getFlag("daggerheart-hud", "colorScheme")) || "" : "";
-    const effectiveScheme = actorScheme || "default";
-    {
-      const prefix = "dhud-theme-";
-      root.classList.forEach(c => { if (c.startsWith(prefix)) root.classList.remove(c); });
-      root.classList.add(`${prefix}${effectiveScheme}`);
+    // --- Theme: Actor flag only. Fallback to "default" if the theme isn’t defined in CSS.
+    const prefix = "dhud-theme-";
+    const actorSchemeRaw = this.actor ? (await this.actor.getFlag("daggerheart-hud", "colorScheme")) : "";
+    const scheme = (actorSchemeRaw || "default").trim() || "default";
+
+    // remove any previous theme classes
+    for (const c of Array.from(root.classList)) {
+      if (c.startsWith(prefix)) root.classList.remove(c);
+    }
+
+    // apply the requested scheme
+    root.classList.add(prefix + scheme);
+
+    // verify the theme actually defines vars; if not, fallback to default
+    const cs = getComputedStyle(root);
+    if (!cs.getPropertyValue("--dh-accent").trim()) {
+      console.warn(`[DHUD] Unknown or missing theme "${scheme}" for ${this.actor?.name}; falling back to "default".`);
+      root.classList.remove(prefix + scheme);
+      root.classList.add(prefix + "default");
     }
 
     // --- Ring art: Actor flags only (no GM/global fallback)

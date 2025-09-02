@@ -1,0 +1,47 @@
+/* dhud-themes.css with automatic detection markers and corrected selectors */
+
+/* THEME_LIST_START */
+/* Available themes: default,shadowveil,ironclad,wildfire,frostbite,thornwood,bloodmoon,goldenhour,stormcloud,mysticvoid */
+/* THEME_LIST_END */
+
+/* When you add a new theme, update the comment above with the new name */
+
+:where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-default {
+  --dh-accent: #f2c24b; --dh-surface: #15161a; --dh-border: rgba(255, 255, 255, 0.12); --dh-pip-border: #f2c34b;
+}
+
+:where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-shadowveil {
+  --dh-accent: #6c5ce7; --dh-surface: #0d0a15; --dh-border: rgba(180, 160, 255, 0.15); --dh-pip-border: rgba(180, 160, 255, 0.65);
+}
+
+:where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-ironclad {
+  --dh-accent: #74b9ff; --dh-surface: #0a0f1a; --dh-border: rgba(160, 200, 255, 0.16); --dh-pip-border: rgba(160, 200, 255, 0.62);
+}
+
+:where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-wildfire {
+  --dh-accent: #e17055; --dh-surface: #1a100a; --dh-border: rgba(255, 180, 140, 0.17); --dh-pip-border: rgba(255, 180, 140, 0.63);
+}
+
+:where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-frostbite {
+  --dh-accent: #00cec9; --dh-surface: #0a1515; --dh-border: rgba(160, 255, 250, 0.14); --dh-pip-border: rgba(160, 255, 250, 0.58);
+}
+
+:where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-thornwood {
+  --dh-accent: #6ab04c; --dh-surface: #0e140a; --dh-border: rgba(180, 255, 160, 0.16); --dh-pip-border: rgba(180, 255, 160, 0.62);
+}
+
+:where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-bloodmoon {
+  --dh-accent: #c44569; --dh-surface: #150a0f; --dh-border: rgba(255, 160, 180, 0.18); --dh-pip-border: rgba(255, 160, 180, 0.64);
+}
+
+:where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-goldenhour {
+  --dh-accent: #fdcb6e; --dh-surface: #1a1510; --dh-border: rgba(255, 220, 160, 0.15); --dh-pip-border: rgba(255, 220, 160, 0.60);
+}
+
+:where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-stormcloud {
+  --dh-accent: #636e72; --dh-surface: #12131a; --dh-border: rgba(200, 210, 220, 0.12); --dh-pip-border: rgba(200, 210, 220, 0.55);
+}
+
+:where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-mysticvoid {
+  --dh-accent: #fd79a8; --dh-surface: #140a12; --dh-border: rgba(255, 180, 220, 0.16); --dh-pip-border: rgba(255, 180, 220, 0.62);
+}

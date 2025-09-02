@@ -1,6 +1,5 @@
-// module/apps/hud-rings.mjs
 // Daggerheart HUD – HUD Images Config dialog (per-Actor rings + per-Actor color scheme)
-// Foundry VTT v13 — V2 dialog (DialogV2 + Handlebars mixin)
+// Foundry VTT v13 — V2 Application (DialogV2) + Handlebars mixin
 
 const MODULE_ID = "daggerheart-hud";
 const FLAG_NS   = MODULE_ID;
@@ -12,16 +11,93 @@ const loadTex = foundry.canvas.loadTexture;                           // v13 nam
 
 const LOG = (...a) => console.log("[HUD Images Config]", ...a);
 
-/** Fixed color choices (Configurator is the only source of truth) */
-function getColorSchemeEntries() {
-  return [
-    { value: "default",    label: "Default" },
-    { value: "crimson",    label: "Crimson" },
-    { value: "emerald",    label: "Emerald" },
-    { value: "midnight",   label: "Midnight" },
-    { value: "oceanic",    label: "Oceanic" },
-    { value: "solarflare", label: "Solarflare" }
+
+async function getThemeChoicesFromCSS() {
+  const LOG = (...a) => console.log("[HUD Theme Detection]", ...a);
+  
+  try {
+    const cssPath = `modules/${MODULE_ID}/styles/dhud-themes.css`;
+    LOG("Attempting to fetch CSS file:", cssPath);
+    
+    const response = await foundry.utils.fetchWithTimeout(cssPath);
+    
+    if (response.ok) {
+      const cssText = await response.text();
+      LOG("CSS file loaded, length:", cssText.length);
+      
+      // Method 1: Try to read from special comment first
+      const commentMatch = cssText.match(/\/\*\s*Available themes:\s*([^*]+)\*\//);
+      if (commentMatch) {
+        const themeNames = commentMatch[1]
+          .split(',')
+          .map(name => name.trim())
+          .filter(Boolean);
+        
+        if (themeNames.length > 0) {
+          LOG("Found themes from comment:", themeNames);
+          const nicify = v => v.replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+          const all = themeNames.map(v => ({ value: v, label: nicify(v) }));
+          
+          // Ensure default is first
+          const hasDefault = all.some(x => x.value === "default");
+          const result = hasDefault
+            ? [{ value: "default", label: "Default" }, ...all.filter(x => x.value !== "default")]
+            : [{ value: "default", label: "Default" }, ...all];
+            
+          LOG("Final theme choices from comment:", result);
+          return result;
+        }
+      }
+      
+      // Method 2: Fallback to regex parsing if comment method fails
+      const names = new Set();
+      const re = /\.dhud-theme-([a-z0-9_-]+)/gi;
+      
+      let match;
+      while ((match = re.exec(cssText)) !== null) {
+        names.add(match[1]);
+        LOG("Found theme via regex:", match[1]);
+      }
+      
+      if (names.size > 0) {
+        LOG("Successfully extracted themes from CSS via regex:", Array.from(names));
+        
+        const nicify = v => v.replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+        const all = Array.from(names).sort().map(v => ({ value: v, label: nicify(v) }));
+        
+        const hasDefault = all.some(x => x.value === "default");
+        const result = hasDefault
+          ? [{ value: "default", label: "Default" }, ...all.filter(x => x.value !== "default")]
+          : [{ value: "default", label: "Default" }, ...all];
+          
+        LOG("Final theme choices from regex:", result);
+        return result;
+      }
+    } else {
+      LOG("Failed to fetch CSS file, status:", response.status);
+    }
+  } catch (error) {
+    LOG("Error reading CSS file:", error);
+  }
+
+  // Method 3: Ultimate fallback to hardcoded list
+  LOG("Using fallback themes");
+  
+  const fallbackThemes = [
+    "default",
+    "shadowveil",
+    "ironclad", 
+    "wildfire",
+    "frostbite",
+    "thornwood",
+    "bloodmoon",
+    "goldenhour",
+    "stormcloud",
+    "mysticvoid"
   ];
+  
+  const nicify = v => v.replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  return fallbackThemes.map(v => ({ value: v, label: nicify(v) }));
 }
 
 export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
@@ -42,52 +118,65 @@ export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
     if (button.action === "save")   return this.#saveFromDOM();
   }
 
-  async _prepareContext() {
-    // Only characters (regardless of owner)
-    const pcs = game.actors.contents
-      .filter(a => String(a?.type ?? "").toLowerCase() === "character")
-      .sort((a,b) => (a.name || "").localeCompare(b.name || ""));
+  /** Add/remove theme class on a card so it previews the selected scheme. */
+  _applyCardTheme(card) {
+    const prefix = "dhud-theme-";
+    // remove prior theme classes
+    Array.from(card.classList).forEach(c => { if (c.startsWith(prefix)) card.classList.remove(c); });
+    const sel = card.querySelector("select.dh-color");
+    const val = (sel?.value || card.getAttribute("data-color") || "default").trim() || "default";
+    card.classList.add(prefix + val);
+  }
 
-    const rows = await Promise.all(pcs.map(async (a) => {
-      // First non-GM owner (if any), else "Unassigned"
-      const owners = game.users?.filter(u => !u.isGM && a.testUserPermission?.(u, "OWNER")) || [];
-      const playerLabel = owners.length ? owners[0].name : "Unassigned";
+// Update the _prepareContext method in your HudRingsDialog class:
 
-      return {
-        id: a.id,
-        name: a.name,
-        playerLabel,
-        portrait:    await a.getFlag(FLAG_NS, "ringPortrait") || "",
-        weapons:     await a.getFlag(FLAG_NS, "ringWeapons")  || "",
-        colorScheme: await a.getFlag(FLAG_NS, "colorScheme")  || ""
-      };
-    }));
+async _prepareContext() {
+  // Only character actors (owner or not), sorted by name
+  const pcs = game.actors.contents
+    .filter(a => String(a?.type ?? "").toLowerCase() === "character")
+    .sort((a,b) => (a.name || "").localeCompare(b.name || ""));
 
-    const colorChoices = getColorSchemeEntries();
+  const rows = await Promise.all(pcs.map(async (a) => {
+    // first non-GM owner label if any
+    const owners = game.users?.filter(u => !u.isGM && a.testUserPermission?.(u, "OWNER")) || [];
+    const playerLabel = owners.length ? owners[0].name : "Unassigned";
+    return {
+      id: a.id,
+      name: a.name,
+      playerLabel,
+      portrait:    await a.getFlag(FLAG_NS, "ringPortrait") || "",
+      weapons:     await a.getFlag(FLAG_NS, "ringWeapons")  || "",
+      colorScheme: await a.getFlag(FLAG_NS, "colorScheme")  || ""
+    };
+  }));
 
-    LOG("_prepareContext actors snapshot", game.actors.contents.map(x => ({ name: x.name, type: x.type })));
-    LOG("filtered PCs", rows.map(r => r.name));
-    LOG("colorChoices", colorChoices);
+  // Now this properly awaits the async function
+  const colorChoices = await getThemeChoicesFromCSS();
 
-    return { actors: rows, colorChoices };
+  LOG("_prepareContext actors snapshot", game.actors.contents.map(x => ({ name: x.name, type: x.type })));
+  LOG("filtered PCs", rows.map(r => r.name));
+  LOG("colorChoices", colorChoices);
+
+  return { actors: rows, colorChoices };
   }
 
   _onRender(_context, _parts) {
     const root = this.element;
     LOG("_onRender cards:", root.querySelectorAll(".card[data-actor-id]").length);
 
+    // initialize & bind once per card
     root.querySelectorAll(".card[data-actor-id]").forEach(card => {
       const sel = card.querySelector("select.dh-color");
       if (sel) sel.value = card.getAttribute("data-color") || "";
 
-      // (NEW) apply theme class to the card now, and whenever the select changes
-      this._applyCardTheme(card);                               // initial
-      sel?.addEventListener("change", () => this._applyCardTheme(card)); // live
+      // live theme preview on the card
+      this._applyCardTheme(card);
+      sel?.addEventListener("change", () => this._applyCardTheme(card));
 
-      if (card.dataset.bound === "1") return; // don’t double-bind
+      if (card.dataset.bound === "1") return;
       card.dataset.bound = "1";
 
-      // (existing) live image preview bindings…
+      // live image preview bindings
       const inP = card.querySelector(".path-portrait");
       const inW = card.querySelector(".path-weapons");
       const imgP = card.querySelector(".preview-portrait");
@@ -97,7 +186,7 @@ export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
       inP?.addEventListener("input", updP);  inP?.addEventListener("change", updP);
       inW?.addEventListener("input", updW);  inW?.addEventListener("change", updW);
 
-      // (existing) click-to-pick & clear handlers…
+      // click preview → FilePicker (image)
       card.querySelectorAll(".preview-box").forEach(box => {
         box.addEventListener("click", (ev) => {
           ev.preventDefault(); ev.stopPropagation();
@@ -117,6 +206,7 @@ export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
         });
       });
 
+      // clear-path (✕) buttons
       card.querySelectorAll(".clear-path").forEach(btn => {
         btn.addEventListener("click", (ev) => {
           ev.preventDefault(); ev.stopPropagation();
@@ -129,15 +219,19 @@ export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
       });
     });
 
-    // (existing) footer buttons…
-    root.querySelector(".dh-cancel")?.addEventListener("click", (ev) => { ev.preventDefault(); this.close(); });
-    root.querySelector(".dh-save")?.addEventListener("click", async (ev) => { ev.preventDefault(); await this.#saveFromDOM(); });
+    // footer buttons inside template (mouse users)
+    root.querySelector(".dh-cancel")?.addEventListener("click", (ev) => {
+      ev.preventDefault(); this.close();
+    });
+    root.querySelector(".dh-save")?.addEventListener("click", async (ev) => {
+      ev.preventDefault(); await this.#saveFromDOM();
+    });
   }
 
   async #saveFromDOM() {
     const root = this.element;
 
-    // 1) Validate non-empty image paths in parallel
+    // 1) validate non-empty paths first (portrait/weapons)
     const validations = [];
     root.querySelectorAll(".card[data-actor-id]").forEach(card => {
       const p = card.querySelector(".path-portrait")?.value?.trim();
@@ -147,7 +241,7 @@ export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
     });
     await Promise.all(validations);
 
-    // 2) Save flags (empty clears)
+    // 2) save flags (empty clears)
     const updatedIds = [];
     const saves = [];
     root.querySelectorAll(".card[data-actor-id]").forEach(card => {
@@ -167,18 +261,7 @@ export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
     });
     await Promise.all(saves);
 
-    // 3) Echo flags to verify persistence (debug)
-    for (const id of updatedIds) {
-      const a = game.actors.get(id);
-      const back = {
-        portrait: await a.getFlag(FLAG_NS, "ringPortrait"),
-        weapons:  await a.getFlag(FLAG_NS, "ringWeapons"),
-        scheme:   await a.getFlag(FLAG_NS, "colorScheme")
-      };
-      LOG("saved flags (echo):", { id, name: a?.name, back });
-    }
-
-    // 4) Notify HUDs and close
+    // 3) notify HUDs and close
     Hooks.callAll("daggerheart-hud:rings-updated",      { actorIds: updatedIds });
     Hooks.callAll("daggerheart-hud:appearance-updated", { actorIds: updatedIds });
     ui.notifications.info("HUD images & colors saved.");
@@ -187,8 +270,8 @@ export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
 
   #warnInvalid(card, kind, path, err) {
     const name = card.querySelector(".char")?.textContent?.trim()
-             || card.querySelector(".label")?.textContent?.trim()
-             || "Actor";
+              || card.querySelector(".label")?.textContent?.trim()
+              || "Actor";
     console.warn(`[Daggerheart HUD] Invalid ${kind} path for ${name}:`, path, err);
     ui.notifications.warn(`${name}: invalid ${kind} image.`, { permanent: false });
   }
@@ -204,7 +287,7 @@ export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
   }
 }
 
-// Convenience open function used by the Settings launcher
+// Settings launcher helper
 export function openHudRingsDialog() {
   const app = new HudRingsDialog();
   app.render(true);
