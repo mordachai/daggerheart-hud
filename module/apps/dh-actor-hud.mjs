@@ -63,6 +63,8 @@ function enableDragByRing(appEl, appInstance) {
 }
 
 function setWingsState(rootEl, state /* "open" | "closed" */) {
+  console.log("[DEBUG] setWingsState called with state:", state);
+  console.trace();
   if (!rootEl) return;
   const shell = rootEl.querySelector(".dhud");
   const leftWing  = rootEl.querySelector(".dhud-wing--left");
@@ -88,6 +90,7 @@ function setWingsState(rootEl, state /* "open" | "closed" */) {
     const post = ring.getBoundingClientRect();
     const cxPost = post.left + post.width / 2;
     const dx = cxPost - cxPre;
+    console.log("[DEBUG] Wings compensation dx:", dx);
     if (Math.abs(dx) > 0.5) {
       const app = rootEl;
       const currentLeft = parseFloat(app.style.left || "0");
@@ -183,6 +186,17 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     this.token = token ?? actor?.getActiveTokens()?.[0]?.document ?? null;
   }  
 
+  reattachDragHandlers() {
+    const root = this.element;
+    if (root) {
+      this._dragHooked = false;
+      requestAnimationFrame(() => {
+        enableDragByRing(root, this);
+        this._dragHooked = true;
+      });
+    }
+  }
+
   async _executeItem(item, actionPath = "use") {
     const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
     try {
@@ -254,6 +268,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       // HP / Stress on .value
       const valueEl = ev.target.closest(".dhud-count .value");
       if (valueEl) {
+        ev.preventDefault();
+        ev.stopPropagation(); // Prevent bubbling to other handlers
+        
         const bind = valueEl.dataset.bind; // "hp" or "stress"
         if (bind === "hp") {
           const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
@@ -270,6 +287,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       // HOPE: click a pip to fill up to that point (index+1)
       const pip = ev.target.closest(".dhud-pips .pip");
       if (pip) {
+        ev.preventDefault();
+        ev.stopPropagation(); // IMPORTANT: Prevent bubbling to wing toggle handler
+        
         const idx = Number(pip.dataset.index || 0);
         const max = Number(this.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
         await setResource(actor, "system.resources.hope.value", idx + 1, { min: 0, max });
@@ -277,16 +297,16 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     }, true);
 
-    // RIGHT CLICK = plus for HP/Stress; reduce by one for Hope (so you can back off)
+    // RIGHT CLICK = plus for HP/Stress; reduce by one for Hope
     rootEl.addEventListener("contextmenu", async (ev) => {
       const actor = this.actor; if (!actor) return;
-
-      // Stop the browser menu
-      ev.preventDefault();
 
       // HP / Stress on .value
       const valueEl = ev.target.closest(".dhud-count .value");
       if (valueEl) {
+        ev.preventDefault();
+        ev.stopPropagation(); // Prevent bubbling
+        
         const bind = valueEl.dataset.bind; // "hp" or "stress"
         if (bind === "hp") {
           const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
@@ -303,6 +323,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       // HOPE: right-click a pip to set to that index (i.e., one less than clicked pip)
       const pip = ev.target.closest(".dhud-pips .pip");
       if (pip) {
+        ev.preventDefault();
+        ev.stopPropagation(); // IMPORTANT: Prevent bubbling to other handlers
+        
         const idx = Number(pip.dataset.index || 0);
         const max = Number(this.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
         await setResource(actor, "system.resources.hope.value", idx, { min: 0, max });
@@ -321,9 +344,43 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const actor = this.actor;
       if (!actor) return;
 
-      // Ring toggle (wings)
+      // FIRST: Check if this is a hope pip click and handle it early
+      const pip = ev.target.closest(".dhud-pips .pip");
+      if (pip) {
+        stop(ev);
+        const idx = Number(pip.dataset.index || 0);
+        const max = Number(this.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
+        await setResource(actor, "system.resources.hope.value", idx + 1, { min: 0, max });
+        return;
+      }
+
+      // SECOND: Check if this is an HP/Stress value click
+      const valueEl = ev.target.closest(".dhud-count .value");
+      if (valueEl) {
+        stop(ev);
+        const bind = valueEl.dataset.bind;
+        if (bind === "hp") {
+          const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
+          await bumpResource(actor, "system.resources.hitPoints.value", -1, { min: 0, max });
+          return;
+        }
+        if (bind === "stress") {
+          const max = Number(this.actor.system?.resources?.stress?.max ?? 0);
+          await bumpResource(actor, "system.resources.stress.value", -1, { min: 0, max });
+          return;
+        }
+      }
+
+      // Ring toggle (wings) - only if NOT clicking on interactive elements
       const ring = ev.target.closest(".dhud-ring");
       if (ring) {
+        // Additional safety checks to prevent accidental wing toggles
+        const isInteractiveElement = ev.target.closest(".dhud-pips, .dhud-count, [data-action]");
+        if (isInteractiveElement) {
+          // This click was on an interactive element, don't toggle wings
+          return;
+        }
+
         if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
         stop(ev);
         const shell = rootEl.querySelector(".dhud");
@@ -370,7 +427,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       if (chatBtn) {
         stop(ev);
         const item = actor.items.get(chatBtn.dataset.itemId);
-        if (item) await sendItemToChat(item, actor); // helper already handles fallbacks:contentReference[oaicite:3]{index=3}
+        if (item) await sendItemToChat(item, actor);
         return;
       }
 
@@ -384,8 +441,41 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     }, true); // capture=true beats <summary> default toggle
 
+    // RIGHT CLICK handler for HP/Stress increment and Hope decrement
+    rootEl.addEventListener("contextmenu", async (ev) => {
+      const actor = this.actor;
+      if (!actor) return;
+
+      // Hope pip right-click
+      const pip = ev.target.closest(".dhud-pips .pip");
+      if (pip) {
+        stop(ev);
+        const idx = Number(pip.dataset.index || 0);
+        const max = Number(this.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
+        await setResource(actor, "system.resources.hope.value", idx, { min: 0, max });
+        return;
+      }
+
+      // HP/Stress right-click increment
+      const valueEl = ev.target.closest(".dhud-count .value");
+      if (valueEl) {
+        stop(ev);
+        const bind = valueEl.dataset.bind;
+        if (bind === "hp") {
+          const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
+          await bumpResource(actor, "system.resources.hitPoints.value", +1, { min: 0, max });
+          return;
+        }
+        if (bind === "stress") {
+          const max = Number(this.actor.system?.resources?.stress?.max ?? 0);
+          await bumpResource(actor, "system.resources.stress.value", +1, { min: 0, max });
+          return;
+        }
+      }
+    }, true);
+
     this._delegatedBound = true;
-  }  
+  } 
 
   async _prepareContext(_options) {
     const actor = this.actor ?? null;
@@ -781,6 +871,12 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     const root = this.element;
     if (!root) return;
 
+    // Hide initially if we're going to restore a layout
+    if (this._initiallyHidden) {
+      root.style.visibility = 'hidden';
+      this._initiallyHidden = false;
+    }
+
     // Initialize wings state immediately to prevent blinking
     if (!this._wingsInit) {
       const saved = this.actor
@@ -919,11 +1015,14 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       window.addEventListener("resize", this._onResize);
     }
 
-    // Drag support (by the ring)
+    // Drag support (by the ring) - always re-setup and add delay for DOM readiness
     if (!this._dragHooked) {
-      enableDragByRing(root, this);
+      // Use requestAnimationFrame to ensure DOM is fully rendered
+      requestAnimationFrame(() => {
+        enableDragByRing(root, this);
+      });
       this._dragHooked = true;
-    }
+    }    
 
     // Delegated HUD interactions (ring, traits, weapons, exec, chat, move)
     this._bindDelegatedEvents();
@@ -952,9 +1051,5 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       return super.close(opts);
     }
   }
-
-
-
-
 
 }

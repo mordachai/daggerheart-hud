@@ -7,6 +7,7 @@ export const S = {
   bottomOffset: "bottomOffset",
   disableForMe: "disableForMe",
   hideHotbar: "hideHotbar",
+  alwaysVisible: "alwaysVisible",
 };
 
 export function getSetting(key) {
@@ -58,8 +59,8 @@ export function registerSettings() {
     scope: scopeClient,
     config: true,
     type: Number,
-    default: 110,
-    range: { min: 0, max: 400, step: 5 },
+    default: 5,
+    range: { min: 0, max: 500, step: 5 },
     onChange: () => {
       // Recompute immediately via our resize handler
       window.dispatchEvent(new Event("resize"));
@@ -73,8 +74,21 @@ export function registerSettings() {
     scope: scopeClient,
     config: true,
     type: Boolean,
-    default: false,
+    default: true,
     onChange: applyHotbarVisibility,
+  });
+
+  // Per-user: always show character HUD (players only)
+  game.settings.register(MOD, S.alwaysVisible, {
+    name: "Always Show My Character HUD",
+    hint: "Keep your character's HUD visible even when no token is selected (players only).",
+    scope: scopeClient,
+    config: true,
+    type: Boolean,
+    default: true,
+    onChange: (value) => {
+      Hooks.callAll("daggerheart-hud:setting-changed", { key: S.alwaysVisible, value });
+    }
   });
 
   // Per-user: disable this HUD for me
