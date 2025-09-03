@@ -62,4 +62,4 @@ https://raw.githubusercontent.com/mordachai/daggerheart-hud/main/module.json
 
 ## License
 
-MIT License
+Creative Commons Zero v1.0 Universal
