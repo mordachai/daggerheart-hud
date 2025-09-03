@@ -40,7 +40,16 @@ function enableDragByRing(appEl, appInstance) {
     handle.style.cursor = "grab";
     window.removeEventListener("pointermove", onMove, true);
     window.removeEventListener("pointerup", onUp, true);
-    if (didMove) appInstance._justDraggedTs = Date.now(); // só se arrastou de verdade
+    if (didMove) {
+      appInstance._justDraggedTs = Date.now();
+      
+      // Save the user's preferred HUD position (not per-actor)
+      const rect = appEl.getBoundingClientRect();
+      game.user.setFlag("daggerheart-hud", "globalPosition", {
+        left: rect.left,
+        top: rect.top
+      });
+    }
     didMove = false;
     requestAnimationFrame(() => { appInstance._isDragging = false; });
   };
@@ -872,11 +881,6 @@ rootEl.addEventListener('click', async (ev) => {
         const next = willOpen ? "open" : "closed";
         setWingsState(rootEl, next);
         this._wingsState = next;
-        // persist per user, per actor
-        if (this.actor) {
-          await game.user.setFlag("daggerheart-hud", `wings.${this.actor.id}`, next);
-        }
-        return;
       }
 
       // Trait roll
@@ -1439,11 +1443,8 @@ rootEl.addEventListener('click', async (ev) => {
 
     // Initialize wings state immediately to prevent blinking
     if (!this._wingsInit) {
-      const saved = this.actor
-        ? (await game.user.getFlag("daggerheart-hud", `wings.${this.actor.id}`)) || "closed"
-        : "closed";
-      
-      // Set wings state immediately on the root element before other rendering
+      const saved = (await game.user.getFlag("daggerheart-hud", "wings")) || "closed";
+    // Set wings state immediately on the root element before other rendering
       setWingsState(root, saved);
       this._wingsState = saved;
       this._wingsInit = true;
@@ -1560,9 +1561,21 @@ rootEl.addEventListener('click', async (ev) => {
     // First boot: placement and resize behavior
     if (!this._booted) {
       const applyPlacement = () => {
-        const rawOffset = getSetting(S.bottomOffset);
-        const fresh = (rawOffset !== null && rawOffset !== undefined) ? Number(rawOffset) : 110;
-        placeAtBottom(root, fresh);
+        // Check if user has a saved global position
+        const userGlobalPos = game.user.getFlag("daggerheart-hud", "globalPosition");
+        
+        if (userGlobalPos) {
+          // Use the user's saved position
+          root.style.position = "absolute";
+          root.style.left = `${userGlobalPos.left}px`;
+          root.style.top = `${userGlobalPos.top}px`;
+          root.style.bottom = "auto";
+        } else {
+          // Use default bottom positioning for first time
+          const rawOffset = getSetting(S.bottomOffset);
+          const fresh = (rawOffset !== null && rawOffset !== undefined) ? Number(rawOffset) : 110;
+          placeAtBottom(root, fresh);
+        }
       };
 
       root.classList.add("is-booting");
