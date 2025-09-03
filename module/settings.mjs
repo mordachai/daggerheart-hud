@@ -59,7 +59,7 @@ export function registerSettings() {
     scope: scopeClient,
     config: true,
     type: Number,
-    default: 5,
+    default: 75,
     range: { min: 0, max: 500, step: 5 },
     onChange: () => {
       // Recompute immediately via our resize handler
@@ -74,7 +74,7 @@ export function registerSettings() {
     scope: scopeClient,
     config: true,
     type: Boolean,
-    default: true,
+    default: false,
     onChange: applyHotbarVisibility,
   });
 
