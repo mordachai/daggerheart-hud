@@ -1102,19 +1102,22 @@ rootEl.addEventListener('click', async (ev) => {
       });
     });
 
-    // Get generic Foundry conditions (exclude Daggerheart ones)
-    CONFIG.statusEffects
-      .filter(effect => !effect.systemEffect) // Exclude DH conditions already added
-      .forEach(effect => {
-        genericConditions.push({
-          id: effect.id,
-          name: effect.name, // i18n key
-          img: effect.img,
-          description: effect.description || "",
-          isActive: activeStatuses.has(effect.id),
-          source: 'foundry'
+    // Only add generic Foundry conditions if the system setting allows it
+    const showGenericStatuses = game.settings.get('daggerheart', 'Appearance').showGenericStatusEffects;
+    if (showGenericStatuses) {
+      CONFIG.statusEffects
+        .filter(effect => !effect.systemEffect)
+        .forEach(effect => {
+          genericConditions.push({
+            id: effect.id,
+            name: effect.name, // i18n key
+            img: effect.img,
+            description: effect.description || "",
+            isActive: activeStatuses.has(effect.id),
+            source: 'foundry'
+          });
         });
-      });
+    }
 
     const availableConditions = [...daggerheartConditions, ...genericConditions];
 
@@ -1416,7 +1419,8 @@ rootEl.addEventListener('click', async (ev) => {
       
       //effects
       statusEffects,
-      availableConditions 
+      availableConditions,
+      showGenericStatusSection: showGenericStatuses
     };
   }
 
