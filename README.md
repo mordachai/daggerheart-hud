@@ -22,7 +22,7 @@
 #### In the resources:
 
 - **Hope:** Left-click goes until the selected pip, Right-click goes until the previous. Use Right-click to zero the bar.
-- **HP and Stress:** Left-click = -1, Right-click= +1
+- **HP and Stress:** Left-click = **-1**, Right-click = **+1**
 - **Armor slots:** will be the same as HP/Stress but its not working right now (known bug)
 
 ## Features
