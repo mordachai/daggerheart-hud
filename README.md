@@ -8,22 +8,22 @@
 
 #### On the central part (in the portrait):
 
-**- Left click:** toggle wing menus with Trait, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout and Vault
-**- Double click:** opens the character sheet
-**- Click n' drag:** moves HUD around
-**- Right click:** opens context menu with Toggle Statuses
+- **Left click:** toggle wing menus with Traits, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout and Vault
+- **Double click:** opens the character sheet
+- **Click n' drag:** moves HUD around
+- **Right click:** opens context menu with Toggle Statuses
 
 #### Inside the wings menus:
 
 - Clicking on a _icon_ **executes the roll**, if there is anything to roll
 - In the _title_ will **open the description** for the item, if there is any
-- Other options are Send to Chat, Send to Vault, and Send to Vault
+- Other options are _Send to Chat_, _Send to Vault_, and _Send to Loadout_
 
 #### In the resources:
 
-**- Hope:** Left-click goes until the selected pip, Right-click goes until the previous. Use Right-click to zero the bar.
-**- HP and Stress:** Left-click = -1, Right-click= +1
-**- Armor slots:** will be the same as HP/Stress but its not working right now (known bug)
+- **Hope:** Left-click goes until the selected pip, Right-click goes until the previous. Use Right-click to zero the bar.
+- **HP and Stress:** Left-click = **-1**, Right-click = **+1**
+- **Armor slots:** will be the same as HP/Stress but its not working right now (known bug)
 
 ## Features
 
