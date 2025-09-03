@@ -462,7 +462,61 @@
       </ul>
     </div>
   </div>
+</div>
 
-
+{{!-- =============== CONTEXT MENU & STATUS GRID =============== --}}
+  
+  {{!-- Context Menu --}}
+  <div class="dhud-context-menu" id="dhud-context-menu">
+    <div class="dhud-context-item" data-action="apply-status">
+      <i class="fas fa-magic"></i>
+      Apply Status Effect
+    </div>
   </div>
+
+  {{!-- Status Effects Grid --}}
+  <div class="dhud-status-grid" id="dhud-status-grid">
+    <div class="dhud-status-header">
+      <i class="fas fa-magic"></i>
+      Apply Status Effect
+    </div>
+    
+    {{#if availableConditions}}
+      <div class="dhud-status-section">
+        <div class="dhud-status-section-title">Daggerheart Conditions</div>
+        <div class="dhud-status-icons" data-section="daggerheart">
+          {{#each availableConditions}}
+            {{#if (eq source "daggerheart")}}
+              <div class="dhud-status-icon {{#if isActive}}active{{/if}}" 
+                   data-condition-id="{{id}}" 
+                   data-condition-name="{{l name}}"
+                   title="{{l name}}">
+                <img src="{{img}}" alt="{{l name}}">
+              </div>
+            {{/if}}
+          {{/each}}
+        </div>
+      </div>
+
+      <div class="dhud-status-section">
+        <div class="dhud-status-section-title">Generic Conditions</div>
+        <div class="dhud-status-icons" data-section="generic">
+          {{#each availableConditions}}
+            {{#if (eq source "foundry")}}
+              <div class="dhud-status-icon {{#if isActive}}active{{/if}}" 
+                   data-condition-id="{{id}}" 
+                   data-condition-name="{{l name}}"
+                   title="{{l name}}">
+                <img src="{{img}}" alt="{{l name}}">
+              </div>
+            {{/if}}
+          {{/each}}
+        </div>
+      </div>
+    {{/if}}
+  </div>
+
+  {{!-- Tooltip --}}
+  <div class="dhud-tooltip" id="dhud-tooltip"></div>
+
 </section>
