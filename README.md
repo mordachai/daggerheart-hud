@@ -8,7 +8,7 @@
 
 #### On the central part (in the portrait):
 
-- **Left click:** toggle wing menus with Trait, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout and Vault
+- **Left click:** toggle wing menus with Traits, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout and Vault
 - **Double click:** opens the character sheet
 - **Click n' drag:** moves HUD around
 - **Right click:** opens context menu with Toggle Statuses
@@ -17,7 +17,7 @@
 
 - Clicking on a _icon_ **executes the roll**, if there is anything to roll
 - In the _title_ will **open the description** for the item, if there is any
-- Other options are Send to Chat, Send to Vault, and Send to Loadout
+- Other options are _Send to Chat_, _Send to Vault_, and _Send to Loadout_
 
 #### In the resources:
 
