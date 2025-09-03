@@ -17,7 +17,7 @@
 
 - Clicking on a _icon_ **executes the roll**, if there is anything to roll
 - In the _title_ will **open the description** for the item, if there is any
-- Other options are Send to Chat, Send to Vault, and Send to Vault
+- Other options are Send to Chat, Send to Vault, and Send to Loadout
 
 #### In the resources:
 
