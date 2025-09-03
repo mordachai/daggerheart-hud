@@ -299,6 +299,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
   }
 
   _hideStatusGrid() {
+    console.log('[DEBUG] _hideStatusGrid called');
+    console.trace(); // This will show the call stack
     const grid = this.element?.querySelector('#dhud-status-grid');
     if (grid) grid.classList.remove('show');
   }
@@ -352,16 +354,21 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     if (viewportX + gridRect.width > viewportWidth) {
       adjustedX = x - gridRect.width;
     }
+    
+    // FIX: Better vertical positioning logic
     if (viewportY + gridRect.height > viewportHeight) {
-      adjustedY = y - gridRect.height - 10; // Position above if no room below
+      // Try positioning above the context menu instead
+      adjustedY = y - gridRect.height - 20;
+      
+      // If still off-screen above, position at top of viewport
+      if (hudRect.top + adjustedY < 10) {
+        adjustedY = 10 - hudRect.top;
+      }
     }
     
-    // Ensure it doesn't go off edges (convert back to HUD-relative)
+    // Ensure minimum bounds
     if (hudRect.left + adjustedX < 10) {
       adjustedX = 10 - hudRect.left;
-    }
-    if (hudRect.top + adjustedY < 10) {
-      adjustedY = 10 - hudRect.top;
     }
     
     // Apply final position
@@ -372,7 +379,11 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       contextMenuPos: { x, y },
       gridPos: { adjustedX, adjustedY },
       viewport: { viewportX, viewportY },
-      gridSize: { width: gridRect.width, height: gridRect.height }
+      gridSize: { width: gridRect.width, height: gridRect.height },
+      finalViewportPos: { 
+        x: hudRect.left + adjustedX, 
+        y: hudRect.top + adjustedY 
+      }
     });
   }
 
@@ -468,7 +479,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       ui.notifications?.error("Failed to remove condition");
     }
   }
-
 
   _isConditionActive(conditionId) {
     if (!this.actor) return false;
@@ -692,34 +702,49 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     }, true);
 
-    // Status icon interactions - simple toggle with proper state checking
-    rootEl.addEventListener('click', async (ev) => {
-      const statusIcon = ev.target.closest('.dhud-status-icon');
-      if (statusIcon) {
-        stop(ev);
-        const conditionId = statusIcon.dataset.conditionId;
-        
-        // Check actual condition state from actor, not just CSS class
-        const isActive = this._isConditionActive(conditionId);
-        
-        console.log('[DEBUG] Status icon clicked:', { 
-          conditionId, 
-          cssActive: statusIcon.classList.contains('active'),
-          actuallyActive: isActive 
-        });
-        
-        if (isActive) {
-          // Remove the condition
-          await this._removeCondition(conditionId);
-          statusIcon.classList.remove('active');
-        } else {
-          // Apply the condition
-          await this._applyCondition(conditionId);
-          statusIcon.classList.add('active');
-        }
-        return;
-      }
-    }, true);
+// Status icon interactions - simple toggle with proper state checking
+rootEl.addEventListener('click', async (ev) => {
+  const statusIcon = ev.target.closest('.dhud-status-icon');
+  if (statusIcon) {
+    console.log('[DEBUG] Status icon click - before stop()');
+    stop(ev);
+    console.log('[DEBUG] Status icon click - after stop()');
+    
+    const conditionId = statusIcon.dataset.conditionId;
+    
+    // Check actual condition state from actor, not just CSS class
+    const isActive = this._isConditionActive(conditionId);
+    
+    console.log('[DEBUG] Status icon clicked:', { 
+      conditionId, 
+      cssActive: statusIcon.classList.contains('active'),
+      actuallyActive: isActive 
+    });
+    
+    if (isActive) {
+      // Remove the condition
+      await this._removeCondition(conditionId);
+      statusIcon.classList.remove('active');
+    } else {
+      // Apply the condition
+      await this._applyCondition(conditionId);
+      statusIcon.classList.add('active');
+    }
+    
+    console.log('[DEBUG] Status icon click - finished processing');
+    
+    // ADD THIS: Check grid state after processing
+    const grid = this.element.querySelector('#dhud-status-grid');
+    console.log('[DEBUG] Grid state after status toggle:', {
+      exists: !!grid,
+      hasShowClass: grid?.classList.contains('show'),
+      visible: grid?.style.display !== 'none',
+      position: grid ? { left: grid.style.left, top: grid.style.top } : null
+    });
+    
+    return;
+  }
+}, true);
 
     // Status icon tooltips
     rootEl.addEventListener('mouseover', (ev) => {
@@ -739,9 +764,29 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
     // Close menus on outside clicks
     document.addEventListener('click', (ev) => {
-      if (this.element && !this.element.contains(ev.target)) {
+      // More thorough checks
+      const clickedElement = ev.target;
+      const statusIcon = clickedElement.closest('.dhud-status-icon');
+      const contextMenu = clickedElement.closest('#dhud-context-menu, .dhud-context-menu');
+      const statusGrid = clickedElement.closest('#dhud-status-grid, .dhud-status-grid');
+      const withinHUD = this.element && this.element.contains(clickedElement);
+      
+      console.log('[DEBUG] Outside click analysis:', {
+        clickedTag: clickedElement.tagName,
+        clickedClass: clickedElement.className,
+        statusIcon: !!statusIcon,
+        contextMenu: !!contextMenu,
+        statusGrid: !!statusGrid,
+        withinHUD: withinHUD
+      });
+      
+      // Only close if we're truly clicking outside everything
+      if (!statusIcon && !contextMenu && !statusGrid && !withinHUD) {
+        console.log('[DEBUG] Hiding menus - truly outside click');
         this._hideStatusContextMenu();
         this._hideStatusGrid();
+      } else {
+        console.log('[DEBUG] Not hiding - click was inside relevant elements');
       }
     }, { capture: true });
 

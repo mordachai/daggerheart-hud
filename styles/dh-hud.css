@@ -723,6 +723,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   z-index: 1000;
   min-width: 180px;
   display: none;
+  opacity: .85;
 }
 
 .dhud-context-menu.show {
@@ -753,7 +754,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 /* Status Effects Grid */
 .dhud-status-grid {
   position: absolute;
-  background: var(--dh-panel);
+  background: var(--dh-surface);
   border: 2px solid var(--dh-border);
   border-radius: 8px;
   padding: 12px;
@@ -831,7 +832,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   object-fit: contain;
 }
 
-.dhud-status-icon.active::after {
+/* .dhud-status-icon.active::after {
   content: '✓';
   position: absolute;
   top: -4px;
@@ -846,7 +847,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   justify-content: center;
   font-size: 10px;
   font-weight: bold;
-}
+} */
 
 /* Tooltip */
 .dhud-tooltip {
