@@ -11,7 +11,7 @@
 - **Left click:** toggle wing menus with Traits, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout and Vault
 - **Double click:** opens the character sheet
 - **Click n' drag:** moves HUD around
-- **Right click:** opens context menu with Toggle Statuses
+- **Right click:** opens context menu with _Toggle Conditions_
 
 #### Inside the wings menus:
 
