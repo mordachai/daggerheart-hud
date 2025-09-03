@@ -4,11 +4,26 @@
 
 <img width="1220" height="706" alt="image" src="https://github.com/user-attachments/assets/9c685e9b-39bb-4d2e-a282-ea7ff6af866f" />
 
-## Watch it in action:
+### HUD Mouse Controls:
 
-A heads-up display module for the Daggerheart system in Foundry VTT. Provides quick access to character resources and abilities without opening character sheets.
+#### On the central part (in the portrait):
 
-Select your token, and the HUD will appear. **Double click** on the portrait opens the **character sheet.**
+**- Left click:** toggle wing menus with Trait, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout and Vault
+**- Double click:** opens the character sheet
+**- Click n' drag:** moves HUD around
+**- Right click:** opens context menu with Toggle Statuses
+
+#### Inside the wings menus:
+
+- Clicking on a _icon_ **executes the roll**, if there is anything to roll
+- In the _title_ will **open the description** for the item, if there is any
+- Other options are Send to Chat, Send to Vault, and Send to Vault
+
+#### In the resources:
+
+**- Hope:** Left-click goes until the selected pip, Right-click goes until the previous. Use Right-click to zero the bar.
+**- HP and Stress:** Left-click = -1, Right-click= +1
+**- Armor slots:** will be the same as HP/Stress but its not working right now (known bug)
 
 ## Features
 
