@@ -72,8 +72,6 @@ function enableDragByRing(appEl, appInstance) {
 }
 
 function setWingsState(rootEl, state /* "open" | "closed" */) {
-  console.log("[DEBUG] setWingsState called with state:", state);
-  console.trace();
   if (!rootEl) return;
   const shell = rootEl.querySelector(".dhud");
   const leftWing  = rootEl.querySelector(".dhud-wing--left");
@@ -99,7 +97,6 @@ function setWingsState(rootEl, state /* "open" | "closed" */) {
     const post = ring.getBoundingClientRect();
     const cxPost = post.left + post.width / 2;
     const dx = cxPost - cxPre;
-    console.log("[DEBUG] Wings compensation dx:", dx);
     if (Math.abs(dx) > 0.5) {
       const app = rootEl;
       const currentLeft = parseFloat(app.style.left || "0");
@@ -284,22 +281,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     menu.style.left = `${relativeX}px`;
     menu.style.top = `${relativeY}px`;
     
-    console.log('[DEBUG] Menu positioned relative to portrait:', { 
-      portraitCenter: { x: portraitCenterX, y: portraitCenterY },
-      portraitRect: { 
-        left: portraitRect.left, 
-        top: portraitRect.top, 
-        bottom: portraitRect.bottom,
-        width: portraitRect.width,
-        height: portraitRect.height
-      },
-      menuPosition: { 
-        viewport: { x: menuX, y: menuY },
-        relative: { x: relativeX, y: relativeY }
-      },
-      menuSize: { width: menuWidth, height: menuHeight },
-      viewport: { width: viewportWidth, height: viewportHeight }
-    });
   }
 
   _hideStatusContextMenu() {
@@ -308,8 +289,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
   }
 
   _hideStatusGrid() {
-    console.log('[DEBUG] _hideStatusGrid called');
-    console.trace(); // This will show the call stack
     const grid = this.element?.querySelector('#dhud-status-grid');
     if (grid) grid.classList.remove('show');
   }
@@ -383,17 +362,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     // Apply final position
     grid.style.left = `${adjustedX}px`;
     grid.style.top = `${adjustedY}px`;
-    
-    console.log('[DEBUG] Status grid positioned:', {
-      contextMenuPos: { x, y },
-      gridPos: { adjustedX, adjustedY },
-      viewport: { viewportX, viewportY },
-      gridSize: { width: gridRect.width, height: gridRect.height },
-      finalViewportPos: { 
-        x: hudRect.left + adjustedX, 
-        y: hudRect.top + adjustedY 
-      }
-    });
   }
 
   _showTooltip(x, y, text) {
@@ -409,8 +377,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
   async _applyCondition(conditionId) {
     if (!this.actor) return;
     
-    console.log('[DEBUG] Applying condition:', conditionId);
-    
+   
     // Find condition data
     const condition = this._currentContext?.availableConditions?.find(c => c.id === conditionId);
     if (!condition) {
@@ -431,12 +398,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     };
     
-    console.log('[DEBUG] Creating effect:', effectData);
     
     try {
       await this.actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
-      ui.notifications?.info(`Applied ${effectData.name}`);
-      console.log('[DEBUG] Effect created successfully');
     } catch (err) {
       console.error("[DHUD] Failed to apply condition", err);
       ui.notifications?.error("Failed to apply condition");
@@ -445,16 +409,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
   async _removeCondition(conditionId) {
     if (!this.actor) return;
-    
-    console.log('[DEBUG] Removing condition:', conditionId);
-    console.log('[DEBUG] Available effects:', this.actor.effects.map(e => ({
-      id: e.id,
-      name: e.name,
-      statuses: e.statuses,
-      disabled: e.disabled,
-      conditionFlag: e.getFlag('daggerheart-hud', 'conditionId')
-    })));
-    
+        
     // Find the effect by the condition ID flag first, fallback to statuses
     let effect = this.actor.effects.find(e => 
       e.getFlag('daggerheart-hud', 'conditionId') === conditionId && !e.disabled
@@ -471,18 +426,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       console.warn('[DEBUG] No effect found for condition:', conditionId);
       return;
     }
-    
-    console.log('[DEBUG] Found effect to remove:', { 
-      id: effect.id, 
-      name: effect.name, 
-      statuses: effect.statuses,
-      conditionFlag: effect.getFlag('daggerheart-hud', 'conditionId')
-    });
-    
+        
     try {
       await this.actor.deleteEmbeddedDocuments("ActiveEffect", [effect.id]);
-      ui.notifications?.info(`Removed ${effect.name}`);
-      console.log('[DEBUG] Effect removed successfully');
     } catch (err) {
       console.error("[DHUD] Failed to remove condition", err);
       ui.notifications?.error("Failed to remove condition");
@@ -672,10 +618,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
     // Right-click on portrait to show context menu
     rootEl.addEventListener('contextmenu', async (ev) => {
-      console.log('[DEBUG] Any contextmenu event:', ev.target);
       const portrait = ev.target.closest('.dhud-portrait, .dhud-portrait-img');
       if (portrait) {
-        console.log('[DEBUG] SUCCESS - Portrait contextmenu triggered!');
         ev.preventDefault();
         ev.stopPropagation();
         
@@ -715,20 +659,13 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 rootEl.addEventListener('click', async (ev) => {
   const statusIcon = ev.target.closest('.dhud-status-icon');
   if (statusIcon) {
-    console.log('[DEBUG] Status icon click - before stop()');
     stop(ev);
-    console.log('[DEBUG] Status icon click - after stop()');
-    
+   
     const conditionId = statusIcon.dataset.conditionId;
     
     // Check actual condition state from actor, not just CSS class
     const isActive = this._isConditionActive(conditionId);
-    
-    console.log('[DEBUG] Status icon clicked:', { 
-      conditionId, 
-      cssActive: statusIcon.classList.contains('active'),
-      actuallyActive: isActive 
-    });
+   
     
     if (isActive) {
       // Remove the condition
@@ -740,16 +677,9 @@ rootEl.addEventListener('click', async (ev) => {
       statusIcon.classList.add('active');
     }
     
-    console.log('[DEBUG] Status icon click - finished processing');
     
     // ADD THIS: Check grid state after processing
     const grid = this.element.querySelector('#dhud-status-grid');
-    console.log('[DEBUG] Grid state after status toggle:', {
-      exists: !!grid,
-      hasShowClass: grid?.classList.contains('show'),
-      visible: grid?.style.display !== 'none',
-      position: grid ? { left: grid.style.left, top: grid.style.top } : null
-    });
     
     return;
   }
@@ -780,18 +710,8 @@ rootEl.addEventListener('click', async (ev) => {
       const statusGrid = clickedElement.closest('#dhud-status-grid, .dhud-status-grid');
       const withinHUD = this.element && this.element.contains(clickedElement);
       
-      console.log('[DEBUG] Outside click analysis:', {
-        clickedTag: clickedElement.tagName,
-        clickedClass: clickedElement.className,
-        statusIcon: !!statusIcon,
-        contextMenu: !!contextMenu,
-        statusGrid: !!statusGrid,
-        withinHUD: withinHUD
-      });
-      
       // Only close if we're truly clicking outside everything
       if (!statusIcon && !contextMenu && !statusGrid && !withinHUD) {
-        console.log('[DEBUG] Hiding menus - truly outside click');
         this._hideStatusContextMenu();
         this._hideStatusGrid();
       } else {

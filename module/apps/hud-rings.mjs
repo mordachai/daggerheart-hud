@@ -9,11 +9,9 @@ const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const FP      = foundry.applications.apps.FilePicker.implementation; // v13 namespace
 const loadTex = foundry.canvas.loadTexture;                           // v13 namespace
 
-const LOG = (...a) => console.log("[HUD Theme Config]", ...a);
 
 
 async function getThemeChoicesFromCSS() {
-  const LOG = (...a) => console.log("[HUD Theme Detection]", ...a);
   
   try {
     const cssPath = `modules/${MODULE_ID}/styles/dhud-themes.css`;

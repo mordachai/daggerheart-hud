@@ -18,7 +18,6 @@ Hooks.once("init", () => {
 Hooks.once("ready", async () => {
   // Use namespace oficial para loadTemplates
   await foundry.applications.handlebars.loadTemplates(DHUD.templates);
-  console.log(`${DHUD.ID} | templates preloaded`);
 });
 
 let _hudApp;
