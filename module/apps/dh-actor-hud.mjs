@@ -436,47 +436,39 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
   }
 
   _isConditionActive(conditionId) {
-    if (!this.actor) return false;
-    
-    // Check by flag first
-    let effect = this.actor.effects.find(e => {
+    const actor = this.actor;
+    if (!actor) return false;
+
+    // Some Foundry versions expose effects as a Collection; both of these should work:
+    const effects = Array.isArray(actor.effects) ? actor.effects : actor.effects?.contents ?? [];
+
+    for (const e of effects) {
+      if (!e || e.disabled) continue;
+
+      // 1) Check the custom flag (safely)
+      let hasFlag = false;
       try {
-        return e.getFlag('daggerheart-hud', 'conditionId') === conditionId && !e.disabled;
-      } catch (err) {
-        return false;
+        hasFlag = e.getFlag?.('daggerheart-hud', 'conditionId') === conditionId;
+      } catch {
+        // swallow and continue
       }
-    });
-    
-    // Fallback to statuses check with better type handling
-    if (!effect) {
-      effect = this.actor.effects.find(e => {
-        try {
-          if (e.disabled) return false;
-          
-          const statuses = e.statuses;
-          
-          // Handle different possible types for statuses
-          if (Array.isArray(statuses)) {
-            return statuses.includes(conditionId);
-          } else if (statuses instanceof Set) {
-            return statuses.has(conditionId);
-          } else if (typeof statuses === 'string') {
-            return statuses === conditionId;
-          } else if (statuses && typeof statuses === 'object') {
-            // Handle object-like structures
-            return Object.values(statuses).includes(conditionId);
-          }
-          
-          return false;
-        } catch (err) {
-          console.warn('[DEBUG] Error checking effect statuses:', err, e);
-          return false;
-        }
-      });
+      if (hasFlag) return true;
+
+      // 2) Fallback: normalize statuses and check inclusion
+      const s = e.statuses;
+      const list =
+        Array.isArray(s) ? s :
+        s instanceof Set ? Array.from(s) :
+        typeof s === 'string' ? [s] :
+        (s && typeof s === 'object') ? Object.values(s) :
+        [];
+
+      if (list.includes(conditionId)) return true;
     }
-    
-    return !!effect;
+
+    return false;
   }
+
 
   async _rollWeapon(btn, { secondary=false } = {}) {
     if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;

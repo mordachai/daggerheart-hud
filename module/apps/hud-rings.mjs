@@ -9,20 +9,14 @@ const { DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const FP      = foundry.applications.apps.FilePicker.implementation; // v13 namespace
 const loadTex = foundry.canvas.loadTexture;                           // v13 namespace
 
-
-
 async function getThemeChoicesFromCSS() {
-  
   try {
     const cssPath = `modules/${MODULE_ID}/styles/dhud-themes.css`;
-    LOG("Attempting to fetch CSS file:", cssPath);
-    
     const response = await foundry.utils.fetchWithTimeout(cssPath);
-    
+
     if (response.ok) {
       const cssText = await response.text();
-      LOG("CSS file loaded, length:", cssText.length);
-      
+
       // Method 1: Try to read from special comment first
       const commentMatch = cssText.match(/\/\*\s*Available themes:\s*([^*]+)\*\//);
       if (commentMatch) {
@@ -30,61 +24,49 @@ async function getThemeChoicesFromCSS() {
           .split(',')
           .map(name => name.trim())
           .filter(Boolean);
-        
+
         if (themeNames.length > 0) {
-          LOG("Found themes from comment:", themeNames);
           const nicify = v => v.replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
           const all = themeNames.map(v => ({ value: v, label: nicify(v) }));
-          
-          // Ensure default is first
+
           const hasDefault = all.some(x => x.value === "default");
           const result = hasDefault
             ? [{ value: "default", label: "Default" }, ...all.filter(x => x.value !== "default")]
             : [{ value: "default", label: "Default" }, ...all];
-            
-          LOG("Final theme choices from comment:", result);
+
           return result;
         }
       }
-      
+
       // Method 2: Fallback to regex parsing if comment method fails
       const names = new Set();
       const re = /\.dhud-theme-([a-z0-9_-]+)/gi;
-      
+
       let match;
       while ((match = re.exec(cssText)) !== null) {
         names.add(match[1]);
-        LOG("Found theme via regex:", match[1]);
       }
-      
+
       if (names.size > 0) {
-        LOG("Successfully extracted themes from CSS via regex:", Array.from(names));
-        
         const nicify = v => v.replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
         const all = Array.from(names).sort().map(v => ({ value: v, label: nicify(v) }));
-        
+
         const hasDefault = all.some(x => x.value === "default");
         const result = hasDefault
           ? [{ value: "default", label: "Default" }, ...all.filter(x => x.value !== "default")]
           : [{ value: "default", label: "Default" }, ...all];
-          
-        LOG("Final theme choices from regex:", result);
+
         return result;
       }
-    } else {
-      LOG("Failed to fetch CSS file, status:", response.status);
     }
   } catch (error) {
-    LOG("Error reading CSS file:", error);
+    // silently fail and continue to fallback
   }
 
-  // Method 3: Ultimate fallback to hardcoded list
-  LOG("Using fallback themes");
-  
   const fallbackThemes = [
     "default",
     "shadowveil",
-    "ironclad", 
+    "ironclad",
     "wildfire",
     "frostbite",
     "thornwood",
@@ -93,11 +75,10 @@ async function getThemeChoicesFromCSS() {
     "stormcloud",
     "mysticvoid"
   ];
-  
+
   const nicify = v => v.replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
   return fallbackThemes.map(v => ({ value: v, label: nicify(v) }));
 }
-
 export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
   static DEFAULT_OPTIONS = {
     id: "dh-hud-images-config",
@@ -151,16 +132,11 @@ async _prepareContext() {
   // Now this properly awaits the async function
   const colorChoices = await getThemeChoicesFromCSS();
 
-  LOG("_prepareContext actors snapshot", game.actors.contents.map(x => ({ name: x.name, type: x.type })));
-  LOG("filtered PCs", rows.map(r => r.name));
-  LOG("colorChoices", colorChoices);
-
   return { actors: rows, colorChoices };
   }
 
   _onRender(_context, _parts) {
     const root = this.element;
-    LOG("_onRender cards:", root.querySelectorAll(".card[data-actor-id]").length);
 
     // initialize & bind once per card
     root.querySelectorAll(".card[data-actor-id]").forEach(card => {
@@ -250,7 +226,6 @@ async _prepareContext() {
       const weapons  = String(card.querySelector(".path-weapons")?.value  ?? "").trim();
       const scheme   = String(card.querySelector("select.dh-color")?.value ?? "").trim();
 
-      LOG("saving actor", { id, name: actor.name, portrait, weapons, scheme });
 
       updatedIds.push(id);
       saves.push(this.#setOrClearFlag(actor, "ringPortrait", portrait));
