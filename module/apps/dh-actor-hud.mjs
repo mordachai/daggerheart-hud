@@ -556,7 +556,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         return;
       }
 
-      // ARMOR: left click = take damage (add marks)
+      // ARMOR: left click = repair (remove marks)
       const armorEl = ev.target.closest(".dhud-badge--right");
       if (armorEl) {
         ev.preventDefault();
@@ -572,8 +572,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         }
         
         const currentMarks = Number(equippedArmor.system?.marks?.value ?? 0);
-        const baseScore = Number(equippedArmor.system?.baseScore ?? 0);
-        const newMarks = Math.min(baseScore, currentMarks + 1); // Add 1 mark (damage)
+        const newMarks = Math.max(0, currentMarks - 1); // Remove 1 mark (repair)
         
         if (newMarks !== currentMarks) {
           try {
@@ -585,6 +584,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         }
         return;
       }
+
 
     }, true);
 
@@ -627,7 +627,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         return;
       }
 
-      // ARMOR: right click = repair (remove marks)
+      // ARMOR: right click = damage (add marks)
       const armorEl = ev.target.closest(".dhud-badge--right");
       if (armorEl) {
         ev.preventDefault();
@@ -643,7 +643,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         }
         
         const currentMarks = Number(equippedArmor.system?.marks?.value ?? 0);
-        const newMarks = Math.max(0, currentMarks - 1); // Remove 1 mark (repair)
+        const baseScore = Number(equippedArmor.system?.baseScore ?? 0);
+        const newMarks = Math.min(baseScore, currentMarks + 1); // Add 1 mark (damage)
         
         if (newMarks !== currentMarks) {
           try {
@@ -1171,11 +1172,12 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     if (equippedArmor) {
       const armorSys = equippedArmor.system;
       const baseScore = Number(armorSys.baseScore ?? 0);
-      const marks = Number(armorSys.marks?.value ?? 0);
+      const rawMarks = Number(armorSys.marks?.value ?? 0);
+      const marks = Math.max(0, Math.min(baseScore, rawMarks));
       
       armor = {
         max: baseScore,           // Total armor slots
-        value: baseScore - marks, // Current armor (max - marks taken)
+        value: marks, // Current armor (max - marks taken)
         marks: marks,             // Damage marks taken
         isReversed: false,        // Armor doesn't use isReversed like HP/Stress
         name: equippedArmor.name,
