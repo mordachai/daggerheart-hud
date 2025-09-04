@@ -4,7 +4,7 @@
     {{!-- TRAITS --}}
     <div class="dhud-tabwrap">
       <div class="dhud-tab" role="button" tabindex="0"
-           data-tab="traits" aria-controls="panel-traits" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Trait.plural"}}</div>
+          data-tab="traits" aria-controls="panel-traits" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Trait.plural"}}</div>
       <div id="panel-traits" class="dhud-panel dhud-panel--traits" data-panel="traits" role="dialog" aria-label="Traits">
       <header>{{l "DAGGERHEART.GENERAL.Trait.plural"}}</header>
         <ul class="dhud-acc">
@@ -12,16 +12,12 @@
           <li class="acc">
             <details>
               <summary>
-                <img
-                  class="icon dhud-roll"
-                  src="icons/svg/d20-black.svg"
-                  alt=""
+                <i class="fa-light fa-dice-d12 icon dhud-roll"
                   role="button"
                   tabindex="0"
                   data-action="roll-trait"
                   data-trait="{{key}}"
-                  title="Roll {{name}}"
-                >
+                  title="{{l "DAGGERHEART.GENERAL.Roll.trait"}}: {{l name}}"></i>
                 <span class="title">{{name}}</span>
                 <span class="value">{{value}}</span>
               </summary>
@@ -30,6 +26,33 @@
           </li>
           {{else}}
           <li class="acc">No traits found</li>
+          {{/each}}
+        </ul>
+
+        {{!-- EXPERIENCES SECTION --}}
+        <header>Experiences</header>
+        <ul class="dhud-acc">
+          {{#each experiences}}
+          <li class="acc">
+            <details>
+              <summary>
+                <i class="fa-light fa-star icon"
+                  role="button"
+                  tabindex="0"
+                  data-action="roll-experience"
+                  data-experience-id="{{id}}"
+                  data-experience-key="{{key}}"
+                  title="Roll Experience: {{name}}"></i>
+                <span class="title">{{name}}</span>
+                <span class="value">+{{value}}</span>
+              </summary>
+              {{#if description}}
+              <div class="acc-body">{{{description}}}</div>
+              {{/if}}
+            </details>
+          </li>
+          {{else}}
+          <li class="acc">No experiences found</li>
           {{/each}}
         </ul>
       </div>
@@ -471,6 +494,14 @@
     <div class="dhud-context-item" data-action="apply-status">
       <i class="fas fa-magic"></i>
       Toggle Conditions 
+    </div>
+    <div class="dhud-context-item" data-action="short-rest">
+      <i class="fas fa-utensils"></i>
+      Short Rest
+    </div>
+    <div class="dhud-context-item" data-action="long-rest">
+      <i class="fas fa-bed"></i>
+      Long Rest
     </div>
   </div>
 

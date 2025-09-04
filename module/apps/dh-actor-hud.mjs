@@ -215,7 +215,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       ui.notifications?.error("Action failed (see console)");
     }
   }
-
   // === STATUS CONTEXT MENU METHODS ===
 
   _showStatusContextMenu(x, y) {
@@ -469,7 +468,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     return false;
   }
 
-
   async _rollWeapon(btn, { secondary=false } = {}) {
     if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
 
@@ -660,8 +658,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }, true);
     }
 
-  // Add this simple test to your _bindResourceAdjusters method to isolate the issue:
-
 
   _bindDelegatedEvents() {
     const rootEl = this.element;
@@ -704,9 +700,24 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
             this._showStatusGrid(x, y);
           }
         }
+        
+        // ADD THIS NEW SECTION HERE:
+        if (action === 'short-rest' || action === 'long-rest') {
+          // Open the Daggerheart downtime dialog
+          try {
+            const DowntimeDialog = game.system.api.applications.dialogs.Downtime;
+            const dialog = new DowntimeDialog(this.actor);
+            dialog.render(true);
+          } catch (error) {
+            console.error("Error opening downtime dialog:", error);
+            ui.notifications.error("Failed to open rest dialog");
+          }
+        }
+        
         this._hideStatusContextMenu();
         return;
       }
+      
     }, true);
 
     // Status icon interactions
@@ -847,6 +858,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         if (item) await item.update({ "system.inVault": mvBtn.dataset.action === "to-vault" });
         return;
       }
+
+      
+
     }, true);
 
     this._delegatedBound = true;
@@ -1160,8 +1174,23 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     });
 
     // === PROFICIENCY / DEFENSES ===
-    const proficiency = sys.proficiency ?? 0;   // system.proficiency
-    const evasion     = sys.evasion     ?? 0;   // system.evasion
+    const proficiency = sys.proficiency ?? 0;
+    const evasion     = sys.evasion     ?? 0; 
+
+    // === EXPERIENCES ===
+    const experiences = [];
+    const rawExperiences = sys.experiences ?? {};
+    for (const [id, exp] of Object.entries(rawExperiences)) {
+      if (!exp || typeof exp !== 'object') continue;
+      experiences.push({
+        id: id,                           
+        key: id,                         
+        name: exp.name || "Unnamed",
+        value: Number(exp.value ?? 0),
+        core: !!exp.core,
+        description: exp.description || ""
+      });
+    }
 
     // === ARMOR (from equipped armor item, not resources) ===
     const equippedArmor = (this.actor?.items ?? []).find(item => 
@@ -1312,6 +1341,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       armor,
       thresholds,
       proficiency,
+      experiences,
 
       // traits & resistances (even if HBS doesn’t show yet, ready to use)
       traits,

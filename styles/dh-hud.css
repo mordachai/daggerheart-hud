@@ -103,7 +103,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud[data-open="vault"]     #panel-vault { display: block; }
 
 /* ===== Accordion (itens dos painéis) ===== */
-.dhud-acc { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.dhud-acc { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem;  }
 
 /* Keep each accordion row on a single line and push controls to the right */
 .dhud-acc summary {
@@ -116,9 +116,17 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   border-radius: 4px;
 }
 
+.dhud-acc .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  vertical-align: middle;
+}
+
 /* Icon stays fixed size */
 .dhud-acc summary .icon {
-  width: 20px; height: 20px;
+  width: 24px; height: 24px;
   flex: 0 0 auto;
 }
 
@@ -250,8 +258,20 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   /* border: 2px solid green; */
 }
 
-.dhud-roll { cursor: pointer; }
-.dhud-roll:hover { border-color: var(--dh-accent); }
+.dhud-roll { 
+  cursor: pointer;
+  border: 2px solid var(--dh-border); /* Add transparent border for consistent sizing */
+  border-radius: 4px; /* Optional: rounded corners */
+  padding: 4px; /* Small padding to prevent content from touching border */
+  display: inline-flex; /* Use flexbox for alignment */
+  align-items: center; /* Vertically center the icon */
+  justify-content: center; /* Horizontally center the icon */
+  transition: border-color 0.2s ease; /* Smooth transition for hover effect */
+}
+
+.dhud-roll:hover { 
+  border-color: var(--dh-accent); 
+}
 
 /* aproximação dos círculos laterais */
 .dhud-core__leftcircle  { transform: translateX(var(--overlap)); }
