@@ -480,6 +480,11 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   cursor: pointer;
 }
 
+.dhud-badge--right:hover {
+  font-weight: 700;
+  text-shadow: 0px 0px 3px var(--dh-pip-border);
+}
+
 /* ---- Wings open/close animation ---- */
 .dhud--layout {
   --wing-shift: 28px;                       /* slide distance */
