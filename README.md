@@ -25,7 +25,7 @@
 
 - **Hope:** Left-click goes until the selected pip, Right-click goes until the previous. Use Right-click to zero the bar.
 - **HP and Stress:** Left-click = **-1**, Right-click = **+1**
-- **Armor slots:** will be the same as HP/Stress but its not working right now (known bug)
+- **Armor slots:** Left-click = **-1**, Right-click = **+1**. If you don't have armor equipped, you will get a warning. 
 
 ## Features
 
@@ -60,7 +60,7 @@ https://raw.githubusercontent.com/mordachai/daggerheart-hud/main/module.json
 - Daggerheart system
 
 ## Known Issues
-- Armor slots are not working with the left/right click flow.
+
 
 ## License
 
