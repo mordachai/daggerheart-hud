@@ -529,7 +529,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
   }
 
   _bindResourceAdjusters(rootEl) {
-    // LEFT CLICK = minus for HP/Stress; fill bar for Hope
+    // LEFT CLICK = minus for HP/Stress; fill bar for Hope; damage armor
     rootEl.addEventListener("click", async (ev) => {
       const actor = this.actor; if (!actor) return;
 
@@ -537,9 +537,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const valueEl = ev.target.closest(".dhud-count .value");
       if (valueEl) {
         ev.preventDefault();
-        ev.stopPropagation(); // Prevent bubbling to other handlers
+        ev.stopPropagation();
         
-        const bind = valueEl.dataset.bind; // "hp" or "stress"
+        const bind = valueEl.dataset.bind;
         if (bind === "hp") {
           const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
           await bumpResource(actor, "system.resources.hitPoints.value", -1, { min: 0, max });
@@ -556,7 +556,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const pip = ev.target.closest(".dhud-pips .pip");
       if (pip) {
         ev.preventDefault();
-        ev.stopPropagation(); // IMPORTANT: Prevent bubbling to wing toggle handler
+        ev.stopPropagation();
         
         const idx = Number(pip.dataset.index || 0);
         const max = Number(this.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
@@ -564,9 +564,39 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         return;
       }
 
+      // ARMOR: left click = take damage (add marks)
+      const armorEl = ev.target.closest(".dhud-badge--right");
+      if (armorEl) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        
+        const equippedArmor = (this.actor?.items ?? []).find(item => 
+          item.type === "armor" && item.system?.equipped === true
+        );
+        
+        if (!equippedArmor) {
+          ui.notifications?.warn("No equipped armor found");
+          return;
+        }
+        
+        const currentMarks = Number(equippedArmor.system?.marks?.value ?? 0);
+        const baseScore = Number(equippedArmor.system?.baseScore ?? 0);
+        const newMarks = Math.min(baseScore, currentMarks + 1); // Add 1 mark (damage)
+        
+        if (newMarks !== currentMarks) {
+          try {
+            await equippedArmor.update({ "system.marks.value": newMarks });
+          } catch (err) {
+            console.error("[DHUD] Failed to update armor", err);
+            ui.notifications?.error("Failed to update armor");
+          }
+        }
+        return;
+      }
+
     }, true);
 
-    // RIGHT CLICK = plus for HP/Stress; reduce by one for Hope
+    // RIGHT CLICK = plus for HP/Stress; reduce hope; repair armor
     rootEl.addEventListener("contextmenu", async (ev) => {
       const actor = this.actor; if (!actor) return;
 
@@ -578,9 +608,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const valueEl = ev.target.closest(".dhud-count .value");
       if (valueEl) {
         ev.preventDefault();
-        ev.stopPropagation(); // Prevent bubbling
+        ev.stopPropagation();
         
-        const bind = valueEl.dataset.bind; // "hp" or "stress"
+        const bind = valueEl.dataset.bind;
         if (bind === "hp") {
           const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
           await bumpResource(actor, "system.resources.hitPoints.value", +1, { min: 0, max });
@@ -593,20 +623,52 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         }
       }      
 
-      // HOPE: right-click a pip to set to that index (i.e., one less than clicked pip)
+      // HOPE: right-click a pip to set to that index (reduce hope)
       const pip = ev.target.closest(".dhud-pips .pip");
       if (pip) {
         ev.preventDefault();
-        ev.stopPropagation(); // IMPORTANT: Prevent bubbling to other handlers
+        ev.stopPropagation();
         
         const idx = Number(pip.dataset.index || 0);
         const max = Number(this.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
         await setResource(actor, "system.resources.hope.value", idx, { min: 0, max });
         return;
       }
-      
-    }, true);
-  }
+
+      // ARMOR: right click = repair (remove marks)
+      const armorEl = ev.target.closest(".dhud-badge--right");
+      if (armorEl) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        
+        const equippedArmor = (this.actor?.items ?? []).find(item => 
+          item.type === "armor" && item.system?.equipped === true
+        );
+        
+        if (!equippedArmor) {
+          ui.notifications?.warn("No equipped armor found");
+          return;
+        }
+        
+        const currentMarks = Number(equippedArmor.system?.marks?.value ?? 0);
+        const newMarks = Math.max(0, currentMarks - 1); // Remove 1 mark (repair)
+        
+        if (newMarks !== currentMarks) {
+          try {
+            await equippedArmor.update({ "system.marks.value": newMarks });
+          } catch (err) {
+            console.error("[DHUD] Failed to update armor", err);
+            ui.notifications?.error("Failed to update armor");
+          }
+        }
+        return;
+      }
+        
+      }, true);
+    }
+
+  // Add this simple test to your _bindResourceAdjusters method to isolate the issue:
+
 
   _bindDelegatedEvents() {
     const rootEl = this.element;
@@ -641,7 +703,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         const action = contextItem.dataset.action;
         
         if (action === 'apply-status') {
-          // FIXED: Use the context menu's current position instead of clientX/Y
           const menu = this.element.querySelector('#dhud-context-menu');
           if (menu) {
             const menuStyle = menu.style;
@@ -655,35 +716,25 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     }, true);
 
-// Status icon interactions - simple toggle with proper state checking
-rootEl.addEventListener('click', async (ev) => {
-  const statusIcon = ev.target.closest('.dhud-status-icon');
-  if (statusIcon) {
-    stop(ev);
-   
-    const conditionId = statusIcon.dataset.conditionId;
-    
-    // Check actual condition state from actor, not just CSS class
-    const isActive = this._isConditionActive(conditionId);
-   
-    
-    if (isActive) {
-      // Remove the condition
-      await this._removeCondition(conditionId);
-      statusIcon.classList.remove('active');
-    } else {
-      // Apply the condition
-      await this._applyCondition(conditionId);
-      statusIcon.classList.add('active');
-    }
-    
-    
-    // ADD THIS: Check grid state after processing
-    const grid = this.element.querySelector('#dhud-status-grid');
-    
-    return;
-  }
-}, true);
+    // Status icon interactions
+    rootEl.addEventListener('click', async (ev) => {
+      const statusIcon = ev.target.closest('.dhud-status-icon');
+      if (statusIcon) {
+        stop(ev);
+        
+        const conditionId = statusIcon.dataset.conditionId;
+        const isActive = this._isConditionActive(conditionId);
+        
+        if (isActive) {
+          await this._removeCondition(conditionId);
+          statusIcon.classList.remove('active');
+        } else {
+          await this._applyCondition(conditionId);
+          statusIcon.classList.add('active');
+        }
+        return;
+      }
+    }, true);
 
     // Status icon tooltips
     rootEl.addEventListener('mouseover', (ev) => {
@@ -703,19 +754,15 @@ rootEl.addEventListener('click', async (ev) => {
 
     // Close menus on outside clicks
     document.addEventListener('click', (ev) => {
-      // More thorough checks
       const clickedElement = ev.target;
       const statusIcon = clickedElement.closest('.dhud-status-icon');
       const contextMenu = clickedElement.closest('#dhud-context-menu, .dhud-context-menu');
       const statusGrid = clickedElement.closest('#dhud-status-grid, .dhud-status-grid');
       const withinHUD = this.element && this.element.contains(clickedElement);
       
-      // Only close if we're truly clicking outside everything
       if (!statusIcon && !contextMenu && !statusGrid && !withinHUD) {
         this._hideStatusContextMenu();
         this._hideStatusGrid();
-      } else {
-        console.log('[DEBUG] Not hiding - click was inside relevant elements');
       }
     }, { capture: true });
 
@@ -731,9 +778,8 @@ rootEl.addEventListener('click', async (ev) => {
     rootEl.addEventListener("dblclick", async (ev) => {
       const portrait = ev.target.closest(".dhud-portrait, .dhud-portrait-img");
       if (portrait && this.actor) {
-        // Only open sheet if we haven't been dragging recently
         if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 300) {
-          return; // Too soon after drag, ignore double-click
+          return;
         }
         
         stop(ev);
@@ -742,55 +788,16 @@ rootEl.addEventListener('click', async (ev) => {
       }
     }, true);
 
+    // MAIN CLICK HANDLER - All non-resource interactions
     rootEl.addEventListener("click", async (ev) => {
       const actor = this.actor;
       if (!actor) return;
 
-      // FIRST: Check if this is a hope pip click and handle it early
-      const pip = ev.target.closest(".dhud-pips .pip");
-      if (pip) {
-        stop(ev);
-        const idx = Number(pip.dataset.index || 0);
-        const max = Number(this.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
-        await setResource(actor, "system.resources.hope.value", idx + 1, { min: 0, max });
-        return;
-      }
-
-      // SECOND: Check if this is an HP/Stress value click
-      const valueEl = ev.target.closest(".dhud-count .value");
-      if (valueEl) {
-        stop(ev);
-        const bind = valueEl.dataset.bind;
-        if (bind === "hp") {
-          const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
-          await bumpResource(actor, "system.resources.hitPoints.value", -1, { min: 0, max });
-          return;
-        }
-        if (bind === "stress") {
-          const max = Number(this.actor.system?.resources?.stress?.max ?? 0);
-          await bumpResource(actor, "system.resources.stress.value", -1, { min: 0, max });
-          return;
-        }
-      }
-
-      // THIRD: Check if this is an armor badge click
-      const armorEl = ev.target.closest(".dhud-badge--right");
-      if (armorEl) {
-        stop(ev);
-        const max = Number(this.actor.system?.resources?.armor?.max ?? 0);
-        // Left click = take armor damage (decrease value)
-        await bumpResource(actor, "system.resources.armor.value", -1, { min: 0, max });
-        return;
-      }
-
       // Ring toggle (wings) - only if NOT clicking on interactive elements
       const ring = ev.target.closest(".dhud-ring");
       if (ring) {
-        // Additional safety checks to prevent accidental wing toggles
-        // Note: .dhud-portrait is removed from this check so ring clicks still work
         const isInteractiveElement = ev.target.closest(".dhud-pips, .dhud-count, .dhud-badge, [data-action]");
         if (isInteractiveElement) {
-          // This click was on an interactive element, don't toggle wings
           return;
         }
 
@@ -817,8 +824,8 @@ rootEl.addEventListener('click', async (ev) => {
       const prim = ev.target.closest("[data-action='roll-primary']");
       if (prim) { stop(ev); await this._rollWeapon(prim, { secondary: false }); return; }
 
-      const sec  = ev.target.closest("[data-action='roll-secondary']");
-      if (sec)  { stop(ev); await this._rollWeapon(sec,  { secondary: true  }); return; }
+      const sec = ev.target.closest("[data-action='roll-secondary']");
+      if (sec) { stop(ev); await this._rollWeapon(sec, { secondary: true }); return; }
 
       // Execute item (features, consumables, domain cards)
       const execBtn = ev.target.closest("[data-action='item-exec']");
@@ -830,7 +837,7 @@ rootEl.addEventListener('click', async (ev) => {
         return;
       }
 
-      // Send to chat (uses your helper with fallbacks)
+      // Send to chat
       const chatBtn = ev.target.closest("[data-action='to-chat']");
       if (chatBtn) {
         stop(ev);
@@ -847,53 +854,9 @@ rootEl.addEventListener('click', async (ev) => {
         if (item) await item.update({ "system.inVault": mvBtn.dataset.action === "to-vault" });
         return;
       }
-    }, true); // capture=true beats <summary> default toggle
-
-    // RIGHT CLICK handler for HP/Stress increment, Hope decrement, and Armor repair
-    rootEl.addEventListener("contextmenu", async (ev) => {
-      const actor = this.actor;
-      if (!actor) return;
-
-      // Hope pip right-click
-      const pip = ev.target.closest(".dhud-pips .pip");
-      if (pip) {
-        stop(ev);
-        const idx = Number(pip.dataset.index || 0);
-        const max = Number(this.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
-        await setResource(actor, "system.resources.hope.value", idx, { min: 0, max });
-        return;
-      }
-
-      // HP/Stress right-click increment
-      const valueEl = ev.target.closest(".dhud-count .value");
-      if (valueEl) {
-        stop(ev);
-        const bind = valueEl.dataset.bind;
-        if (bind === "hp") {
-          const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
-          await bumpResource(actor, "system.resources.hitPoints.value", +1, { min: 0, max });
-          return;
-        }
-        if (bind === "stress") {
-          const max = Number(this.actor.system?.resources?.stress?.max ?? 0);
-          await bumpResource(actor, "system.resources.stress.value", +1, { min: 0, max });
-          return;
-        }
-      }
-
-      // Armor right-click repair
-      const armorEl = ev.target.closest(".dhud-badge--right");
-      if (armorEl) {
-        stop(ev);
-        const max = Number(this.actor.system?.resources?.armor?.max ?? 0);
-        // Right click = repair armor (increase value)
-        await bumpResource(actor, "system.resources.armor.value", +1, { min: 0, max });
-        return;
-      }
     }, true);
 
     this._delegatedBound = true;
-
   }
 
   async _prepareContext(_options) {
@@ -1206,13 +1169,40 @@ rootEl.addEventListener('click', async (ev) => {
     // === PROFICIENCY / DEFENSES ===
     const proficiency = sys.proficiency ?? 0;   // system.proficiency
     const evasion     = sys.evasion     ?? 0;   // system.evasion
-    const armorResource = sys.resources?.armor ?? {};
-    const armor = {
-      max: Number(armorResource.max ?? 0),
-      value: Number(armorResource.value ?? 0),
-      marks: Number(armorResource.max ?? 0) - Number(armorResource.value ?? 0), // Calculate marks taken
-      isReversed: !!armorResource.isReversed
-    };
+
+    // === ARMOR (from equipped armor item, not resources) ===
+    const equippedArmor = (this.actor?.items ?? []).find(item => 
+      item.type === "armor" && item.system?.equipped === true
+    );
+
+    let armor;
+    if (equippedArmor) {
+      const armorSys = equippedArmor.system;
+      const baseScore = Number(armorSys.baseScore ?? 0);
+      const marks = Number(armorSys.marks?.value ?? 0);
+      
+      armor = {
+        max: baseScore,           // Total armor slots
+        value: baseScore - marks, // Current armor (max - marks taken)
+        marks: marks,             // Damage marks taken
+        isReversed: false,        // Armor doesn't use isReversed like HP/Stress
+        name: equippedArmor.name,
+        itemId: equippedArmor.id,
+        hasArmor: true
+      };
+    } else {
+      // No equipped armor
+      armor = {
+        max: 0,
+        value: 0,
+        marks: 0,
+        isReversed: false,
+        name: "No Armor",
+        itemId: null,
+        hasArmor: false
+      };
+    }
+
 
     // === DAMAGE THRESHOLDS ===
     const thresholds = {
