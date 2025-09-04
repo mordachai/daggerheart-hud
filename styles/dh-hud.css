@@ -366,7 +366,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 /* Hope pips */
 .dhud-pips {
   position: absolute;
-  top: -8px;
+  top: -14px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
