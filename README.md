@@ -13,7 +13,7 @@
 - **Left click:** toggle wing menus with Traits, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout and Vault
 - **Double click:** opens the character sheet
 - **Click n' drag:** moves HUD around
-- **Right click:** opens context menu with _Toggle Conditions_
+- **Right click:** opens context menu with _Toggle Conditions_, _Long Rest_ and _Short Rest_ options
 
 #### Inside the wings menus:
 
@@ -50,6 +50,10 @@ You can hide Foundry's macro hotbar, change the vertical position at which the H
 
 ## Installation
 
+Look for "daggerheart hud" in Foundry's module page and install it 
+
+OR use the link below for a manual installation:
+
 **Manifest URL:**
 ```
 https://raw.githubusercontent.com/mordachai/daggerheart-hud/main/module.json
@@ -58,9 +62,6 @@ https://raw.githubusercontent.com/mordachai/daggerheart-hud/main/module.json
 **Requirements:**
 - Foundry VTT v13+
 - Daggerheart system
-
-## Known Issues
-
 
 ## License
 
