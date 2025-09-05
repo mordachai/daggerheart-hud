@@ -8,12 +8,21 @@
 
 ### HUD Mouse Controls:
 
-#### On the central part (in the portrait):
+#### On the Core:
 
-- **Left click:** toggle wing menus with Traits, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout and Vault
+##### Over the portrait:
+
+- **Left click:** toggle wing menus with Traits, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout, and Vault
 - **Double click:** opens the character sheet
 - **Click n' drag:** moves HUD around
 - **Right click:** opens context menu with _Toggle Conditions_, _Long Rest_ and _Short Rest_ options
+
+**Primary and Secondary Weapons** are always visible and at hand. Remember to select a target _BEFORE_ you click.
+
+#### In the resources:
+
+- **Hope:** Left-click goes until the selected pip, Right-click goes until the previous. Use Right-click to zero the bar.
+- **HP, Stress and Armor slots:** Left-click = **-1**, Right-click = **+1**
 
 #### Inside the wings menus:
 
@@ -24,8 +33,7 @@
 #### In the resources:
 
 - **Hope:** Left-click goes until the selected pip, Right-click goes until the previous. Use Right-click to zero the bar.
-- **HP and Stress:** Left-click = **-1**, Right-click = **+1**
-- **Armor slots:** Left-click = **-1**, Right-click = **+1**. If you don't have armor equipped, you will get a warning. 
+- **HP, Stress and Armor slots:** Left-click = **-1**, Right-click = **+1**
 
 ## Features
 
@@ -44,7 +52,7 @@ Do you like neat table pieces? Custom appearance for everyone? Crazy themes? Wel
 <img width="863" height="953" alt="image" src="https://github.com/user-attachments/assets/cd133071-b3a4-425c-8372-26358335f40a" />
 
 ### Other settings:
-You can hide Foundry's macro hotbar, change the vertical position at which the HUD appears, or entirely disable it, while the other players can keep theirs (GMs tell the players where ro disable it)
+You can hide Foundry's macro hotbar, change the vertical position at which the HUD appears, or entirely disable it, while the other players can keep theirs (GMs: tell the players where to disable it)
 
 <img width="789" height="690" alt="image" src="https://github.com/user-attachments/assets/e13ea1d6-726b-4cf4-9b3a-1c73011bfed0" />
 
