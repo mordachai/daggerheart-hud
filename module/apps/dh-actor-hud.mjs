@@ -700,19 +700,26 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
             this._showStatusGrid(x, y);
           }
         }
-        
-        // ADD THIS NEW SECTION HERE:
+
         if (action === 'short-rest' || action === 'long-rest') {
-          // Open the Daggerheart downtime dialog
           try {
             const DowntimeDialog = game.system.api.applications.dialogs.Downtime;
-            const dialog = new DowntimeDialog(this.actor);
+            let dialog;
+            
+            if (action === 'short-rest') {
+              // Pass ANY second parameter to get Short Rest
+              dialog = new DowntimeDialog(this.actor, 'anything');
+            } else {
+              // Pass NO second parameter to get Long Rest
+              dialog = new DowntimeDialog(this.actor);
+            }
+            
             dialog.render(true);
           } catch (error) {
             console.error("Error opening downtime dialog:", error);
             ui.notifications.error("Failed to open rest dialog");
           }
-        }
+        }        
         
         this._hideStatusContextMenu();
         return;
