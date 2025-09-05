@@ -257,19 +257,22 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   /* Temporary border to see the portrait boundaries */
   /* border: 2px solid green; */
 }
-
 .dhud-roll { 
   cursor: pointer;
-  border: 2px solid var(--dh-border); /* Add transparent border for consistent sizing */
-  border-radius: 4px; /* Optional: rounded corners */
-  padding: 4px; /* Small padding to prevent content from touching border */
-  display: inline-flex; /* Use flexbox for alignment */
-  align-items: center; /* Vertically center the icon */
-  justify-content: center; /* Horizontally center the icon */
-  transition: border-color 0.2s ease; /* Smooth transition for hover effect */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.dhud-roll:hover { 
+/* Specific styling for trait rolls only */
+.dhud-action-roll {
+  border: 2px solid var(--dh-border);
+  border-radius: 4px;
+  padding: 4px;
+  transition: border-color 0.2s ease;
+}
+
+.dhud-action-roll:hover { 
   border-color: var(--dh-accent); 
 }
 
