@@ -41,12 +41,12 @@
 ### HUD Theme Configurator:
 Do you like neat table pieces? Custom appearance for everyone? Crazy themes? Well, we got you fam!
 
-<img width="872" height="717" alt="image" src="https://github.com/user-attachments/assets/29d1bbe4-bd92-49a3-8b13-cb1c5a45228a" />
+<img width="863" height="953" alt="image" src="https://github.com/user-attachments/assets/cd133071-b3a4-425c-8372-26358335f40a" />
 
 ### Other settings:
 You can hide Foundry's macro hotbar, change the vertical position at which the HUD appears, or entirely disable it, while the other players can keep theirs (GMs tell the players where ro disable it)
 
-<img width="798" height="697" alt="image" src="https://github.com/user-attachments/assets/6bb65944-7452-4212-ae23-de4db51c8f02" />
+<img width="789" height="690" alt="image" src="https://github.com/user-attachments/assets/e13ea1d6-726b-4cf4-9b3a-1c73011bfed0" />
 
 ## Installation
 
