@@ -204,9 +204,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
   constructor({ actor, token } = {}, options = {}) {
     super(options);
-    console.debug("[DHUD] ctor", {
-      actorId: actor?.id, actorName: actor?.name, tokenId: token?.id
-    });
+    // console.debug("[DHUD] ctor", {
+    //   actorId: actor?.id, actorName: actor?.name, tokenId: token?.id
+    // });
     
     this.actor = actor ?? null;
     this.token = token ?? actor?.getActiveTokens()?.[0]?.document ?? null;
@@ -505,7 +505,24 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
 
       if (isUnarmed) {
-        if (Action?.execute) return await Action.execute({ source: actor, actionPath: "attack" });
+        const unarmedAttack = this.actor.system.usedUnarmed || this.actor.system.attack;
+        
+        try {
+          // Try the attack object's own methods first
+          if (typeof unarmedAttack.rollAction === "function") {
+            return await unarmedAttack.rollAction("attack");
+          }
+          if (typeof unarmedAttack.use === "function") {
+            return await unarmedAttack.use({ action: "attack" });
+          }
+          
+          return;
+          
+        } catch (err) {
+          console.error("[DHUD] Unarmed attack failed", err);
+        }
+        
+        // Only open sheet if everything else fails
         actor.sheet?.render(true, { focus: true });
         ui.notifications?.info("Open the Unarmed Attack and click Attack");
         return;
@@ -931,9 +948,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     }
 
-    // If none, show Unarmed from actor.system.attack
+    // If none, show Unarmed from actor.system.usedUnarmed or attack
     if (!primaryWeapon) {
-      const un = sys.attack;
+      const un = sys.usedUnarmed || sys.attack;
       if (un) {
         const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
         primaryWeapon = {
@@ -945,7 +962,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     }
 
-    // === SECONDARY WEAPON (prefer equipped marked secondary; else other equipped != primary; else Unarmed) ===
+    // === SECONDARY WEAPON ===
     let secondaryWeapon = null;
     {
       const items = this.actor?.items ?? [];
@@ -953,13 +970,22 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const equipped   = weaponsAll.filter(w => w.system?.equipped === true);
 
       const primaryId = primaryWeapon?.isUnarmed ? null : primaryWeapon?.id ?? null;
-
-      // 1) prefer an equipped weapon explicitly flagged as secondary
-      // 2) else any other equipped weapon that's not the primary
-      const pick =
-        equipped.find(w => w.system?.secondary === true) ??
-        equipped.find(w => w.id !== primaryId) ??
-        null;
+      
+      // Check if primary weapon is two-handed
+      const primaryWeaponItem = primaryId ? items.find(w => w.id === primaryId) : null;
+      const isTwoHanded = primaryWeaponItem?.system?.burden === "twoHanded";
+      
+      let pick = null;
+      
+      if (isTwoHanded && primaryWeaponItem) {
+        // For two-handed weapons, use the same weapon for both slots
+        pick = primaryWeaponItem;
+      } else {
+        // Original logic for one-handed weapons
+        pick = equipped.find(w => w.system?.secondary === true) ??
+              equipped.find(w => w.id !== primaryId) ??
+              null;
+      }
 
       if (pick) {
         secondaryWeapon = {
