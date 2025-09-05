@@ -8,6 +8,8 @@ export const S = {
   disableForMe: "disableForMe",
   hideHotbar: "hideHotbar",
   alwaysVisible: "alwaysVisible",
+  showTargetNotifications: "showTargetNotifications"
+
 };
 
 export function getSetting(key) {
@@ -52,6 +54,53 @@ export function registerSettings() {
     restricted: true
   });
 
+  // GM Ring Override Settings
+  game.settings.register(MOD, "gmRingOverride", {
+    name: "GM Ring Override Enabled",
+    hint: "When enabled, GM-defined rings override individual character rings",
+    scope: "world",
+    config: false, // Hidden from settings menu since it's controlled via the configurator
+    type: Boolean,
+    default: false
+  });
+
+  game.settings.register(MOD, "gmPortraitRing", {
+    name: "GM Global Portrait Ring",
+    hint: "Global portrait ring image path applied to all characters when override is enabled",
+    scope: "world",
+    config: false, // Hidden from settings menu since it's controlled via the configurator
+    type: String,
+    default: ""
+  });
+
+  game.settings.register(MOD, "gmWeaponsRing", {
+    name: "GM Global Weapons Ring", 
+    hint: "Global weapons ring image path applied to all characters when override is enabled",
+    scope: "world",
+    config: false, // Hidden from settings menu since it's controlled via the configurator
+    type: String,
+    default: ""
+  });
+
+  // GM Theme Override Settings
+  game.settings.register(MOD, "gmThemeOverride", {
+    name: "GM Theme Override Enabled",
+    hint: "When enabled, GM-defined theme overrides individual character themes",
+    scope: "world",
+    config: false, // Hidden from settings menu since it's controlled via the configurator
+    type: Boolean,
+    default: false
+  });
+
+  game.settings.register(MOD, "gmGlobalTheme", {
+    name: "GM Global Theme",
+    hint: "Global theme applied to all characters when override is enabled",
+    scope: "world",
+    config: false, // Hidden from settings menu since it's controlled via the configurator
+    type: String,
+    default: ""
+  });
+
   // HUD anchor placement (client)
   game.settings.register(MOD, S.bottomOffset, {
     name: "HUD Anchor: Bottom Offset (px)",
@@ -65,6 +114,16 @@ export function registerSettings() {
       // Recompute immediately via our resize handler
       window.dispatchEvent(new Event("resize"));
     }
+  });
+
+  // Show target notifications
+  game.settings.register(MOD, "showTargetNotifications", {
+    name: "Show Target Notifications",
+    hint: "Display notifications when no target is selected for attacks.",
+    scope: "client",
+    config: true,
+    type: Boolean,
+    default: true
   });
 
   // Per-user: hide the Foundry hotbar

@@ -162,11 +162,31 @@ async function setResource(actor, path, value, { min = 0, max = Number.MAX_SAFE_
   await actor.update(update);
 }
 
-export function getActorRingImageOrDefault(actor, kind) {
-  if (!actor) return "";
-  const flagKey = kind === "main" ? "ringPortrait" : "ringWeapons";
-  const v = actor.getFlag("daggerheart-hud", flagKey) || "";
-  return String(v || "").trim(); // no fallback to any GM/global setting
+function getActorThemeOrDefault(actor) {
+  // Check GM theme override first - this applies to ALL characters
+  const gmThemeOverride = game.settings.get("daggerheart-hud", "gmThemeOverride");
+  if (gmThemeOverride) {
+    const gmTheme = game.settings.get("daggerheart-hud", "gmGlobalTheme");
+    if (gmTheme) return gmTheme;
+  }
+
+  // Fall back to actor-specific flags only if GM override is disabled
+  return actor?.getFlag("daggerheart-hud", "colorScheme") || "default";
+}
+
+function getActorRingImageOrDefault(actor, type) {
+  // Check GM override first - this applies to ALL characters
+  const gmOverride = game.settings.get("daggerheart-hud", "gmRingOverride");
+  if (gmOverride) {
+    const gmRing = type === "main" 
+      ? game.settings.get("daggerheart-hud", "gmPortraitRing")
+      : game.settings.get("daggerheart-hud", "gmWeaponsRing");
+    if (gmRing) return gmRing;
+  }
+
+  // Fall back to actor-specific flags only if GM override is disabled
+  const flagKey = type === "main" ? "ringPortrait" : "ringWeapons";
+  return actor?.getFlag("daggerheart-hud", flagKey) || "";
 }
 
 
@@ -480,7 +500,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     try {
 
       const currentTargets = [...game.user.targets];
-      if (currentTargets.length === 0) {
+      if (currentTargets.length === 0 && getSetting(S.showTargetNotifications)) {
         ui.notifications?.info("No target selected — the attack will not auto-apply damage.");
       }
 
@@ -1385,7 +1405,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     // Initialize wings state immediately to prevent blinking
     if (!this._wingsInit) {
       const saved = (await game.user.getFlag("daggerheart-hud", "wings")) || "closed";
-    // Set wings state immediately on the root element before other rendering
+      // Set wings state immediately on the root element before other rendering
       setWingsState(root, saved);
       this._wingsState = saved;
       this._wingsInit = true;
@@ -1427,10 +1447,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       return `url("${abs}")`;
     }
 
-    // --- Theme: Actor flag only. Fallback to "default" if the theme isn’t defined in CSS.
+    // --- Theme: Use GM override logic
     const prefix = "dhud-theme-";
-    const actorSchemeRaw = this.actor ? (await this.actor.getFlag("daggerheart-hud", "colorScheme")) : "";
-    const scheme = (actorSchemeRaw || "default").trim() || "default";
+    const scheme = getActorThemeOrDefault(this.actor);
 
     // remove any previous theme classes
     for (const c of Array.from(root.classList)) {
@@ -1482,14 +1501,16 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         root.style.setProperty("--dhud-ring-main",  toRouteURL(mr));
         root.style.setProperty("--dhud-ring-weapon", toRouteURL(wr));
 
-        // theme
-        const scheme = (await this.actor.getFlag("daggerheart-hud", "colorScheme")) || "default";
+        // theme only - NO position changes
+        const scheme = getActorThemeOrDefault(this.actor);
         const prefix = "dhud-theme-";
-        root.classList.forEach(c => { if (c.startsWith(prefix)) root.classList.remove(c); });
+        Array.from(root.classList).forEach(c => { if (c.startsWith(prefix)) root.classList.remove(c); });
         root.classList.add(`${prefix}${scheme}`);
+        
+        // Don't touch any position-related styles here
       };
 
-      // Listen only to the Configurator’s saves
+      // Listen only to the Configurator's saves
       Hooks.on("daggerheart-hud:rings-updated",      this._reapplyAppearance);
       Hooks.on("daggerheart-hud:appearance-updated", this._reapplyAppearance);
 

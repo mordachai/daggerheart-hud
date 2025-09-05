@@ -1,5 +1,55 @@
 <div class="dh-hudrings-root">
   <div class="dh-hudrings">
+    
+    <!-- GM Override Section -->
+    <div class="gm-override-section">
+      <label class="gm-override-header">
+        <input type="checkbox" class="gm-override-checkbox" {{#if gmOverride.enabled}}checked{{/if}}>
+        <span>GM Global Override - Apply these settings to all characters</span>
+      </label>
+      
+      <div class="gm-override-controls" style="{{#unless gmOverride.enabled}}display: none;{{/unless}}">
+        
+        <!-- GM Theme Selection -->
+        <div class="gm-theme-section">
+          <label class="gm-theme-label">Global HUD Theme</label>
+          <select class="gm-theme-select">
+            <option value="">(use individual character themes)</option>
+            {{#each colorChoices}}
+              <option value="{{value}}" {{#if (eq value ../gmOverride.theme)}}selected{{/if}}>{{label}}</option>
+            {{/each}}
+          </select>
+        </div>
+
+        <!-- GM Ring Controls -->
+        <div class="previews">
+          <div class="preview-card">
+            <div class="title">Global Portrait Ring</div>
+            <div class="preview-box" data-target=".gm-path-portrait" title="Click to choose image">
+              <img class="preview gm-preview-portrait" src="{{gmOverride.portrait}}" alt="global portrait ring preview" />
+              <span class="placeholder">Search</span>
+            </div>
+            <div class="path-row">
+              <input type="text" class="path gm-path-portrait" value="{{gmOverride.portrait}}" placeholder="path/to/global-portrait-ring.png" />
+              <button type="button" class="clear-path" data-target=".gm-path-portrait" title="Clear">✕</button>
+            </div>
+          </div>
+
+          <div class="preview-card">
+            <div class="title">Global Weapons Ring</div>
+            <div class="preview-box" data-target=".gm-path-weapons" title="Click to choose image">
+              <img class="preview gm-preview-weapons" src="{{gmOverride.weapons}}" alt="global weapons ring preview" />
+              <span class="placeholder">Search</span>
+            </div>
+            <div class="path-row">
+              <input type="text" class="path gm-path-weapons" value="{{gmOverride.weapons}}" placeholder="path/to/global-weapons-ring.png" />
+              <button type="button" class="clear-path" data-target=".gm-path-weapons" title="Clear">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="cards">
       {{#if actors}}
         {{#each actors}}

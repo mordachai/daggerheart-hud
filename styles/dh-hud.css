@@ -896,6 +896,108 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   opacity: 1;
 }
 
+/* GM Override Section - New Classes Only */
+.gm-override-section {
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 2px solid var(--dh-border);
+  border-radius: 10px;
+  background: var(--dh-surface);
+}
+
+.gm-override-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--dh-accent);
+  cursor: pointer;
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.gm-override-header:hover {
+  background: var(--dh-border);
+}
+
+.gm-override-checkbox {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--dh-accent);
+}
+
+.gm-override-controls {
+  padding-top: 12px;
+  border-top: 1px solid var(--dh-border);
+  margin-top: 12px;
+}
+
+.gm-override-controls .preview-card .title {
+  color: var(--dh-accent);
+  font-weight: 600;
+}
+
+.gm-override-controls .path {
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  color: var(--dh-text);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.gm-override-controls .path:focus {
+  border-color: var(--dh-accent);
+  outline: none;
+}
+
+.gm-override-controls .clear-path {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--dh-border);
+  border-radius: 6px;
+  background: var(--dh-surface);
+  color: var(--dh-accent);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.gm-override-controls .clear-path:hover {
+  background: var(--dh-accent);
+  color: var(--dh-surface);
+}
+
+.gm-theme-section {
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid var(--dh-border);
+  border-radius: 6px;
+  background: var(--dh-surface);
+}
+
+.gm-theme-label {
+  display: block;
+  color: var(--dh-accent);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.gm-theme-select {
+  width: 100%;
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  color: var(--dh-text);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.gm-theme-select:focus {
+  border-color: var(--dh-accent);
+  outline: none;
+}
+
 
 /* ===== Responsivo ===== */
 @media (max-width: 980px) {

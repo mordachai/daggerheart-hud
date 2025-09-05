@@ -97,7 +97,6 @@ export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
     if (button.action === "save")   return this.#saveFromDOM();
   }
 
-  /** Add/remove theme class on a card so it previews the selected scheme. */
   _applyCardTheme(card) {
     const prefix = "dhud-theme-";
     // remove prior theme classes
@@ -107,36 +106,121 @@ export class HudRingsDialog extends HandlebarsApplicationMixin(DialogV2) {
     card.classList.add(prefix + val);
   }
 
-// Update the _prepareContext method in your HudRingsDialog class:
+  _bindImagePreviewsToSection(section) {
+    const inP = section.querySelector(".gm-path-portrait");
+    const inW = section.querySelector(".gm-path-weapons");
+    const imgP = section.querySelector(".gm-preview-portrait");
+    const imgW = section.querySelector(".gm-preview-weapons");
+    
+    const updP = () => { if (imgP) imgP.src = inP?.value || ""; };
+    const updW = () => { if (imgW) imgW.src = inW?.value || ""; };
+    
+    inP?.addEventListener("input", updP);
+    inP?.addEventListener("change", updP);
+    inW?.addEventListener("input", updW);
+    inW?.addEventListener("change", updW);
 
-async _prepareContext() {
-  // Only character actors (owner or not), sorted by name
-  const pcs = game.actors.contents
-    .filter(a => String(a?.type ?? "").toLowerCase() === "character")
-    .sort((a,b) => (a.name || "").localeCompare(b.name || ""));
+    // FilePicker bindings
+    section.querySelectorAll(".preview-box").forEach(box => {
+      box.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        const selector = box.getAttribute("data-target");
+        const target = selector ? section.querySelector(selector) : null;
+        const fp = new FP({
+          type: "image",
+          current: target?.value || "",
+          callback: (path) => {
+            if (!target) return;
+            target.value = path;
+            target.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+        });
+        fp.render(true);
+      });
+    });
 
-  const rows = await Promise.all(pcs.map(async (a) => {
-    // first non-GM owner label if any
-    const owners = game.users?.filter(u => !u.isGM && a.testUserPermission?.(u, "OWNER")) || [];
-    const playerLabel = owners.length ? owners[0].name : "Unassigned";
-    return {
-      id: a.id,
-      name: a.name,
-      playerLabel,
-      portrait:    await a.getFlag(FLAG_NS, "ringPortrait") || "",
-      weapons:     await a.getFlag(FLAG_NS, "ringWeapons")  || "",
-      colorScheme: await a.getFlag(FLAG_NS, "colorScheme")  || ""
-    };
-  }));
+    // Clear buttons
+    section.querySelectorAll(".clear-path").forEach(btn => {
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        const target = section.querySelector(btn.getAttribute("data-target"));
+        if (target) {
+          target.value = "";
+          target.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+      });
+    });
+  }
 
-  // Now this properly awaits the async function
-  const colorChoices = await getThemeChoicesFromCSS();
+  async _prepareContext() {
+    // Only character actors (owner or not), sorted by name
+    const pcs = game.actors.contents
+      .filter(a => String(a?.type ?? "").toLowerCase() === "character")
+      .sort((a,b) => (a.name || "").localeCompare(b.name || ""));
 
-  return { actors: rows, colorChoices };
+    const rows = await Promise.all(pcs.map(async (a) => {
+      // first non-GM owner label if any
+      const owners = game.users?.filter(u => !u.isGM && a.testUserPermission?.(u, "OWNER")) || [];
+      const playerLabel = owners.length ? owners[0].name : "Unassigned";
+      return {
+        id: a.id,
+        name: a.name,
+        playerLabel,
+        portrait:    await a.getFlag(FLAG_NS, "ringPortrait") || "",
+        weapons:     await a.getFlag(FLAG_NS, "ringWeapons")  || "",
+        colorScheme: await a.getFlag(FLAG_NS, "colorScheme")  || ""
+      };
+    }));
+
+    const colorChoices = await getThemeChoicesFromCSS();
+  
+  // Add GM override data
+  const gmOverride = {
+    enabled: game.settings.get(MODULE_ID, "gmRingOverride") || false,
+    portrait: game.settings.get(MODULE_ID, "gmPortraitRing") || "",
+    weapons: game.settings.get(MODULE_ID, "gmWeaponsRing") || "",
+    theme: game.settings.get(MODULE_ID, "gmGlobalTheme") || ""
+  };
+
+  return { actors: rows, colorChoices, gmOverride };
   }
 
   _onRender(_context, _parts) {
     const root = this.element;
+
+    // GM override checkbox toggle
+    const checkbox = root.querySelector(".gm-override-checkbox");
+    const controls = root.querySelector(".gm-override-controls");
+    checkbox?.addEventListener("change", () => {
+      controls.style.display = checkbox.checked ? "block" : "none";
+    });
+
+    // GM theme dropdown with live preview
+    const gmThemeSelect = root.querySelector(".gm-theme-select");
+    if (gmThemeSelect) {
+      // Set initial value
+      gmThemeSelect.value = game.settings.get(MODULE_ID, "gmGlobalTheme") || "";
+      
+      // Apply theme preview to GM section on change
+      gmThemeSelect.addEventListener("change", () => {
+        const gmSection = root.querySelector(".gm-override-section");
+        if (gmSection) {
+          this._applyGMThemePreview(gmSection, gmThemeSelect.value);
+        }
+      });
+      
+      // Apply initial theme preview
+      const gmSection = root.querySelector(".gm-override-section");
+      if (gmSection) {
+        this._applyGMThemePreview(gmSection, gmThemeSelect.value);
+      }
+    }
+
+    // GM override image previews
+    const gmSection = root.querySelector(".gm-override-controls");
+    if (gmSection) {
+      this._bindImagePreviewsToSection(gmSection);
+    }
 
     // initialize & bind once per card
     root.querySelectorAll(".card[data-actor-id]").forEach(card => {
@@ -202,8 +286,49 @@ async _prepareContext() {
     });
   }
 
+  _applyGMThemePreview(gmSection, themeValue) {
+    const prefix = "dhud-theme-";
+    // Remove any existing theme classes
+    Array.from(gmSection.classList).forEach(c => { 
+      if (c.startsWith(prefix)) gmSection.classList.remove(c); 
+    });
+    // Apply new theme class
+    const theme = (themeValue || "default").trim() || "default";
+    gmSection.classList.add(prefix + theme);
+  }
+
   async #saveFromDOM() {
     const root = this.element;
+
+    // Save GM override settings first
+    const gmEnabled = root.querySelector(".gm-override-checkbox")?.checked || false;
+    const gmPortrait = root.querySelector(".gm-path-portrait")?.value?.trim() || "";
+    const gmWeapons = root.querySelector(".gm-path-weapons")?.value?.trim() || "";
+    const gmTheme = root.querySelector(".gm-theme-select")?.value?.trim() || "";
+
+    // Validate GM override images if they exist
+    if (gmPortrait) {
+      try {
+        await loadTex(gmPortrait);
+      } catch (e) {
+        console.warn(`[Daggerheart HUD] Invalid GM portrait ring:`, gmPortrait, e);
+        ui.notifications.warn("Invalid GM portrait ring image.", { permanent: false });
+      }
+    }
+    if (gmWeapons) {
+      try {
+        await loadTex(gmWeapons);
+      } catch (e) {
+        console.warn(`[Daggerheart HUD] Invalid GM weapons ring:`, gmWeapons, e);
+        ui.notifications.warn("Invalid GM weapons ring image.", { permanent: false });
+      }
+    }
+
+    await game.settings.set(MODULE_ID, "gmRingOverride", gmEnabled);
+    await game.settings.set(MODULE_ID, "gmPortraitRing", gmPortrait);
+    await game.settings.set(MODULE_ID, "gmWeaponsRing", gmWeapons);
+    await game.settings.set(MODULE_ID, "gmThemeOverride", gmEnabled); // Use same checkbox for both
+    await game.settings.set(MODULE_ID, "gmGlobalTheme", gmTheme);
 
     // 1) validate non-empty paths first (portrait/weapons)
     const validations = [];
@@ -226,7 +351,6 @@ async _prepareContext() {
       const weapons  = String(card.querySelector(".path-weapons")?.value  ?? "").trim();
       const scheme   = String(card.querySelector("select.dh-color")?.value ?? "").trim();
 
-
       updatedIds.push(id);
       saves.push(this.#setOrClearFlag(actor, "ringPortrait", portrait));
       saves.push(this.#setOrClearFlag(actor, "ringWeapons",  weapons));
@@ -240,7 +364,7 @@ async _prepareContext() {
     ui.notifications.info("HUD images & colors saved.");
     this.close();
   }
-
+ 
   #warnInvalid(card, kind, path, err) {
     const name = card.querySelector(".char")?.textContent?.trim()
               || card.querySelector(".label")?.textContent?.trim()
@@ -260,7 +384,6 @@ async _prepareContext() {
   }
 }
 
-// Settings launcher helper
 export function openHudRingsDialog() {
   const app = new HudRingsDialog();
   app.render(true);
