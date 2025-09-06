@@ -36,23 +36,48 @@ function enableDragByRing(appEl, appInstance) {
     appEl.style.top  = `${startTop  + dy}px`;
   };
 
-  const onUp = () => {
+  const onUp = async () => {
     handle.style.cursor = "grab";
     window.removeEventListener("pointermove", onMove, true);
     window.removeEventListener("pointerup", onUp, true);
+
     if (didMove) {
       appInstance._justDraggedTs = Date.now();
-      
+
       // Save the user's preferred HUD position (not per-actor)
-      const rect = appEl.getBoundingClientRect();
-      game.user.setFlag("daggerheart-hud", "globalPosition", {
-        left: rect.left,
-        top: rect.top
-      });
+      try {
+        const rect = appEl.getBoundingClientRect();
+        // Clamp to viewport a bit so we don't persist negative coords
+        const left = Math.max(0, Math.round(rect.left));
+        const top  = Math.max(0, Math.round(rect.top));
+        await game.user.setFlag("daggerheart-hud", "globalPosition", { left, top });
+      } catch (err) {
+        console.warn("[DHUD] Failed to persist HUD position", err);
+      }
     }
+
     didMove = false;
-    requestAnimationFrame(() => { appInstance._isDragging = false; });
+
+    // Release dragging flag and then recompute panel direction (up/down)
+    requestAnimationFrame(() => {
+      appInstance._isDragging = false;
+
+      // If a tab is currently open, recompute its open direction now that position changed
+      try {
+        const shell    = appEl.querySelector(".dhud");
+        const openName = shell?.getAttribute("data-open");
+        if (openName) {
+          const panel = appEl.querySelector(`.dhud-panel[data-panel='${openName}']`);
+          if (panel && typeof setPanelOpenDirection === "function") {
+            setPanelOpenDirection(panel);
+          }
+        }
+      } catch (e) {
+        console.debug("[DHUD] setPanelOpenDirection after drag skipped", e);
+      }
+    });
   };
+
 
   const onDown = (ev) => {
     if (ev.button !== 0) return;
@@ -104,6 +129,43 @@ function setWingsState(rootEl, state /* "open" | "closed" */) {
     }
   });
 }
+
+/**
+ * Decide whether a tab panel should open up or down.
+ * Sets:
+ *   panel.dataset.openDir = "up" | "down"
+ *   panel.style.setProperty("--dhud-panel-maxh", "<px>")  (so it scrolls if tight)
+ */
+function setPanelOpenDirection(panel) {
+  if (!panel) return;
+
+  // Measure the tabwrap (panel’s offset parent is .dhud-tabwrap)
+  const wrap = panel.closest(".dhud-tabwrap") || panel.parentElement;
+  const rect = wrap.getBoundingClientRect();
+
+  const spaceAbove = rect.top;                                 // px to viewport top
+  const spaceBelow = window.innerHeight - rect.bottom;         // px to viewport bottom
+
+  // Estimate needed height: content’s natural height (capped)
+  // Using scrollHeight lets us respect the actual content size.
+  const contentHeight = panel.scrollHeight || 320;
+  const minRoom = 220;     // lower bound so short panels don’t jitter
+  const need = Math.max(minRoom, Math.min(contentHeight, 700));
+
+  // Choose direction
+  let dir;
+  if (spaceBelow >= need) dir = "down";
+  else if (spaceAbove >= need) dir = "up";
+  else dir = (spaceBelow >= spaceAbove) ? "down" : "up";
+
+  // Apply direction and max height
+  panel.setAttribute("data-open-dir", dir);
+  // Let CSS clamp the panel with a friendly margin to edges
+  const maxH = (dir === "down" ? Math.max(180, spaceBelow - 12) : Math.max(180, spaceAbove - 12));
+  panel.style.setProperty("--dhud-panel-maxh", `${maxH}px`);
+  panel.style.setProperty("--dhud-panel-gap", "6px"); // small visual gap below/above the tab
+}
+
 
 function attachDHUDToggles(root) {
   if (!root) return;
@@ -840,6 +902,28 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const traitKey = btn.dataset.trait;
       ui.chat?.processMessage?.(`/dr trait=${traitKey} reaction=true`);
     }, true);
+
+    // When a tab is clicked, after the DOM toggles, compute its open direction
+    rootEl.addEventListener("click", (ev) => {
+      const tabBtn = ev.target.closest(".dhud-tab");
+      if (!tabBtn) return;
+
+      // Which panel is paired with this tab?
+      const name = tabBtn.dataset.tab; // e.g., "traits"
+      const panel = rootEl.querySelector(`.dhud-panel[data-panel='${name}']`);
+      if (!panel) return;
+
+      // After toggler changes visibility, compute direction
+      requestAnimationFrame(() => {
+        // Only bother if this panel is actually open/visible in your current logic
+        const dhudShell = rootEl.querySelector(".dhud");
+        const openName = dhudShell?.getAttribute("data-open") || "";
+        if (openName !== name) return; // tab is closing or another opened
+
+        try { setPanelOpenDirection(panel); } catch (_) { /* no-op */ }
+      });
+    }, true);
+
     // -----------------------------------------------------------------------
 
     // MAIN CLICK HANDLER - All non-resource interactions
@@ -1586,7 +1670,26 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         });
       });
 
-      this._onResize = () => { if (!this._isDragging) applyPlacement(); };
+      // Replace your current resize handler with this:
+      this._onResize = () => {
+        if (this._isDragging) return;
+
+        // 1) keep your existing bottom/center placement logic
+        applyPlacement?.();
+
+        // 2) if a tab panel is open, recompute whether it should open up/down
+        const root  = this.element;
+        const shell = root?.querySelector(".dhud");
+        const openName = shell?.getAttribute("data-open");   // e.g., "traits", "inventory", etc.
+        if (!openName) return;
+
+        const panel = root.querySelector(`.dhud-panel[data-panel='${openName}']`);
+        if (panel && typeof setPanelOpenDirection === "function") {
+          setPanelOpenDirection(panel);
+        }
+      };
+
+      // (re)attach listener
       window.addEventListener("resize", this._onResize);
     }
 
@@ -1601,6 +1704,17 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
     // Delegated HUD interactions (ring, traits, weapons, exec, chat, move)
     this._bindDelegatedEvents();
+
+    // If a tab is open, compute its up/down direction AFTER layout paints
+    requestAnimationFrame(() => {
+      const shell = root.querySelector(".dhud");
+      const openName = shell?.getAttribute("data-open");
+      if (!openName) return;
+      const panel = root.querySelector(`.dhud-panel[data-panel='${openName}']`);
+      if (!panel || typeof setPanelOpenDirection !== "function") return;
+      requestAnimationFrame(() => setPanelOpenDirection(panel));
+    });
+
   }
 
   async close(opts) {

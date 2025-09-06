@@ -75,8 +75,9 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   left: 0; right: auto;
   bottom: calc(100% + .5rem);
   width: var(--panel-w);
-  max-height: 300px; overflow: auto;
   background: var(--dh-panel);
+  max-height: var(--dhud-panel-maxh, 300px); /* JS can set this per open */
+  overflow: auto;
   border: 2px solid var(--dh-border);
   border-radius: 12px;
   padding: .6rem .7rem;
@@ -92,6 +93,21 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   padding-bottom: 2px;
   border-bottom: 1px solid var(--dh-accent);
 }
+/* Vertical direction set by JS on the specific panel */
+.dhud-panel[data-open-dir="down"] {
+  /* open BELOW the tab header */
+  top: calc(100% + .5rem);
+  bottom: auto;
+  transform-origin: top center;
+}
+
+.dhud-panel[data-open-dir="up"] {
+  /* (optional explicit UP; matches your default) */
+  bottom: calc(100% + .5rem);
+  top: auto;
+  transform-origin: bottom center;
+}
+
 
 /* Open-state controlado por [data-open] no root */
 .dhud[data-open="traits"]    #panel-traits,
