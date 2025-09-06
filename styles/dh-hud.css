@@ -528,13 +528,15 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   position: absolute;
   top: 50%;
   transform: translateY(0%);
-  z-index: 3;          
-  width: 40px; height: 40px;
+  z-index: 3;
   display: grid; place-items: center;
-  font-weight: 800; font-size: .8rem;
+  font-weight: 800; font-size: .95rem;
+  font-variant-numeric: tabular-nums;
+  
 }
 
 .dhud-badge--left {
+  width: 30px; height: 40px;
   left: calc(var(--side-d) + var(--core-gap) - 20px + var(--badge-inset));
   background-image: url("/modules/daggerheart-hud/ui/shield.svg");
   background-repeat: no-repeat;
@@ -542,17 +544,48 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   background-size: contain;
 }
 .dhud-badge--right {
+  width: 40px; height: 40px;
   left: calc(var(--side-d) + var(--core-gap) + var(--circle-d) - 20px - var(--badge-inset));
   background-image: url("/modules/daggerheart-hud/ui/armor.svg");
   background-repeat: no-repeat;
   background-position: center;
-  background-size: contain;
+  background-size: auto;
   cursor: pointer;
 }
 
 .dhud-badge--right:hover {
   font-weight: 700;
   text-shadow: 0px 0px 3px var(--dh-pip-border);
+}
+
+.dhud-armor{
+  /* scales relative to the icon; tweak 0.9→1.0 to taste */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 1em;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.dhud-badge--right .dhud-armor-max{
+  position: absolute;
+  display:flex ;
+  align-items: center;
+  justify-content: center;
+  right: -3px;               
+  bottom: -3px;            
+  z-index: 4;
+  pointer-events: none;     
+  /* pill sizing & typography */
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--dh-accent);
+  border-radius: 50%;
+  font-size: 0.75em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--dh-surface);
 }
 
 /* ---- Wings open/close animation ---- */

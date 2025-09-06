@@ -298,7 +298,14 @@
     </div>
 
     <div class="dhud-badge dhud-badge--left" title="{{l 'DAGGERHEART.GENERAL.evasion'}}">{{evasion}}</div>
-    <div class="dhud-badge dhud-badge--right" title="{{l 'DAGGERHEART.GENERAL.armorScore'}}">{{armor.value}}/{{armor.max}}</div>
+    {{!-- <div class="dhud-badge dhud-badge--right" title="{{l 'DAGGERHEART.GENERAL.armorScore'}}">{{armor.value}}/{{armor.max}}</div> --}}
+    <div class="dhud-badge dhud-badge--right" title="{{l 'DAGGERHEART.GENERAL.armorScore'}}">
+      <span class="dhud-armor">
+        <span class="dhud-armor-value">{{armor.value}}</span>
+        <span class="dhud-armor-max">{{armor.max}}</span>
+      </span>
+    </div>
+
   </div>
 
   {{!-- =============== RIGHT WING (menus) =============== --}}

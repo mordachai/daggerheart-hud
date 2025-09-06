@@ -1,6 +1,6 @@
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W01A1ZN1)
 
-![Static Badge](https://img.shields.io/badge/Foundry_VTT-13-red?style=for-the-badge) ![Github All Releases](https://img.shields.io/github/downloads/mordachai/daggerheart-hud/total.svg?style=for-the-badge) ![GitHub Release](https://img.shields.io/github/v/release/mordachai/daggerheart-hud?display_name=release&style=for-the-badge&label=Current%20version)
+![Static Badge](https://img.shields.io/badge/Foundry_VTT-13-red?style=for-the-badge) ![Github All Releases](https://img.shields.io/github/downloads/mordachai/daggerheart-hud/total.svg?style=for-the-badge) ![GitHub Release](https://img.shields.io/github/v/release/mordachai/daggerheart-hud?display_name=tag&style=for-the-badge&label=Current%20version)
 
 # Daggerheart HUD
 

@@ -728,20 +728,20 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       if (armorEl) {
         ev.preventDefault();
         ev.stopPropagation();
-        
+
         const equippedArmor = (this.actor?.items ?? []).find(item => 
           item.type === "armor" && item.system?.equipped === true
         );
-        
+
         if (!equippedArmor) {
           ui.notifications?.warn("No equipped armor found");
           return;
         }
-        
+
         const currentMarks = Number(equippedArmor.system?.marks?.value ?? 0);
-        const baseScore = Number(equippedArmor.system?.baseScore ?? 0);
-        const newMarks = Math.min(baseScore, currentMarks + 1); // Add 1 mark (damage)
-        
+        const effectiveMax = Number(this.actor?.system?.armorScore ?? equippedArmor.system?.baseScore ?? 0);
+        const newMarks = Math.min(effectiveMax, currentMarks + 1); // Add 1 mark (damage), respect effects
+
         if (newMarks !== currentMarks) {
           try {
             await equippedArmor.update({ "system.marks.value": newMarks });
@@ -752,7 +752,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         }
         return;
       }
-        
+              
       }, true);
   }
 
@@ -1340,21 +1340,22 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       });
     }
 
-    // === ARMOR (from equipped armor item, not resources) ===
+    // === ARMOR (marks live on the equipped item; MAX comes from ACTOR (post-effects)) ===
     const equippedArmor = (this.actor?.items ?? []).find(item => 
       item.type === "armor" && item.system?.equipped === true
     );
 
     let armor;
     if (equippedArmor) {
-      const armorSys = equippedArmor.system;
-      const baseScore = Number(armorSys.baseScore ?? 0);
-      const rawMarks = Number(armorSys.marks?.value ?? 0);
-      const marks = Math.max(0, Math.min(baseScore, rawMarks));
-      
+      const armorSys    = equippedArmor.system;
+      const baseScore   = Number(armorSys.baseScore ?? 0);                
+      const effectiveMax= Math.max(0, Number(this.actor?.system?.armorScore ?? baseScore)); 
+      const rawMarks    = Number(armorSys.marks?.value ?? 0);
+      const marks       = Math.max(0, Math.min(effectiveMax, rawMarks));  
+
       armor = {
-        max: baseScore,           // Total armor slots
-        value: marks, // Current armor (max - marks taken)
+        max:   effectiveMax,      // Total armor slots (post-effects)
+        value: marks,             // We keep the inverted UX: value === DAMAGE MARKS
         marks: marks,             // Damage marks taken
         isReversed: false,        // Armor doesn't use isReversed like HP/Stress
         name: equippedArmor.name,
@@ -1362,17 +1363,17 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         hasArmor: true
       };
     } else {
-      // No equipped armor
       armor = {
         max: 0,
         value: 0,
         marks: 0,
         isReversed: false,
-        name: "No Armor",
+        name: "",
         itemId: null,
         hasArmor: false
       };
     }
+    context.armor = armor;
 
 
     // === DAMAGE THRESHOLDS ===
