@@ -18,18 +18,18 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud { background-color: var(--dhud-bg); }
 .dhud .accent { color: var(--dhud-accent); }
 
-/* ===== Remove “janela” e clipping do Application V2 ===== */
+/* ===== Remove window and clipping Application V2 ===== */
 .daggerheart-hud.window-app,
 .daggerheart-hud.application {
   border: 0 !important;
   box-shadow: none !important;
   background: transparent !important;
-  overflow: visible !important;      /* evita cortar popovers */
+  overflow: visible !important;
 }
 .daggerheart-hud .window-header { display: none !important; }
 .daggerheart-hud .window-content {
   background: transparent !important;
-  padding: 15px !important;
+  padding: 20px 10px !important;
   overflow: visible !important;
   backdrop-filter: blur(2px);
 }
@@ -40,7 +40,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud--layout {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto auto auto;
   align-items: center;
   gap: .75rem;
 }
@@ -284,13 +284,14 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  border: 1.5px solid var(--dh-border);
-  color: var(--dh-border);
+  border: 1.5px solid var(--dh-accent);
+  color: var(--dh-accent);
   background: transparent;
   margin-left: 0.35rem;
   flex: 0 0 auto;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  transition: background 120ms ease, color 120ms ease, opacity 120ms, border-color 120ms ease;
   cursor: pointer;
+  opacity: 0.65;
 }
 .dhud-acc summary .dhud-reaction-btn i {
   font-size: 12px;
@@ -303,6 +304,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   border-color: var(--dh-accent);
   color: var(--dh-surface);
   outline: none;
+  opacity: 1;
 }
 
 /* aproximação dos círculos laterais */
@@ -746,6 +748,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud:not([data-wings="open"]) .dhud-wing--left,
 .dhud:not([data-wings="open"]) .dhud-wing--right {
   /* Force wings to be hidden when not explicitly open */
+  display: none;
   opacity: 0;
   pointer-events: none;
   transform: scale(0.8);
@@ -755,6 +758,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud[data-wings="open"] .dhud-wing--left,
 .dhud[data-wings="open"] .dhud-wing--right {
   /* Wings visible when open */
+  display: flex;
   opacity: 1;
   pointer-events: auto;
   transform: scale(1);

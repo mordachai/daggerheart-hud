@@ -105,7 +105,6 @@ function setWingsState(rootEl, state /* "open" | "closed" */) {
   });
 }
 
-/** Toggler mínimo: abre/fecha um painel por vez; acordeões são nativos (<details>) */
 function attachDHUDToggles(root) {
   if (!root) return;
 
