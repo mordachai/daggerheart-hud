@@ -18,8 +18,19 @@
                   data-action="roll-trait"
                   data-trait="{{key}}"
                   title="{{l "DAGGERHEART.GENERAL.Roll.trait"}}: {{l name}}"></i>
+
                 <span class="title">{{name}}</span>
                 <span class="value">{{value}}</span>
+
+                {{!-- NEW: Reaction roll button --}}
+                <span class="dhud-reaction-btn"
+                      role="button"
+                      tabindex="0"
+                      title="{{l 'DAGGERHEART.GENERAL.Roll.reaction'}}: {{l name}}"
+                      data-action="roll-trait-reaction"
+                      data-trait="{{key}}">
+                  <i class="fa-solid fa-reply" aria-hidden="true"></i>
+                </span>
               </summary>
               <div class="acc-body">{{description}}</div>
             </details>

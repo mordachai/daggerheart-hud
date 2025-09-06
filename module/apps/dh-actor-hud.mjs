@@ -693,8 +693,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
         
       }, true);
-    }
-
+  }
 
   _bindDelegatedEvents() {
     const rootEl = this.element;
@@ -710,12 +709,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       if (portrait) {
         ev.preventDefault();
         ev.stopPropagation();
-        
-        // Convert viewport coordinates to HUD-relative coordinates
         const hudRect = this.element.getBoundingClientRect();
         const relativeX = ev.clientX - hudRect.left;
         const relativeY = ev.clientY - hudRect.top;
-        
         this._showStatusContextMenu(relativeX, relativeY);
         return;
       }
@@ -727,7 +723,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       if (contextItem) {
         stop(ev);
         const action = contextItem.dataset.action;
-        
+
         if (action === 'apply-status') {
           const menu = this.element.querySelector('#dhud-context-menu');
           if (menu) {
@@ -742,26 +738,19 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           try {
             const DowntimeDialog = game.system.api.applications.dialogs.Downtime;
             let dialog;
-            
-            if (action === 'short-rest') {
-              // Pass ANY second parameter to get Short Rest
-              dialog = new DowntimeDialog(this.actor, 'anything');
-            } else {
-              // Pass NO second parameter to get Long Rest
-              dialog = new DowntimeDialog(this.actor);
-            }
-            
+            dialog = (action === 'short-rest')
+              ? new DowntimeDialog(this.actor, 'anything') // Short Rest
+              : new DowntimeDialog(this.actor);            // Long Rest
             dialog.render(true);
           } catch (error) {
             console.error("Error opening downtime dialog:", error);
             ui.notifications.error("Failed to open rest dialog");
           }
-        }        
-        
+        }
+
         this._hideStatusContextMenu();
         return;
       }
-      
     }, true);
 
     // Status icon interactions
@@ -769,10 +758,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const statusIcon = ev.target.closest('.dhud-status-icon');
       if (statusIcon) {
         stop(ev);
-        
         const conditionId = statusIcon.dataset.conditionId;
         const isActive = this._isConditionActive(conditionId);
-        
         if (isActive) {
           await this._removeCondition(conditionId);
           statusIcon.classList.remove('active');
@@ -807,7 +794,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const contextMenu = clickedElement.closest('#dhud-context-menu, .dhud-context-menu');
       const statusGrid = clickedElement.closest('#dhud-status-grid, .dhud-status-grid');
       const withinHUD = this.element && this.element.contains(clickedElement);
-      
       if (!statusIcon && !contextMenu && !statusGrid && !withinHUD) {
         this._hideStatusContextMenu();
         this._hideStatusGrid();
@@ -822,19 +808,40 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       }
     });
 
-    // Double-click handler for portrait to open character sheet
+    // Double-click portrait to open character sheet
     rootEl.addEventListener("dblclick", async (ev) => {
       const portrait = ev.target.closest(".dhud-portrait, .dhud-portrait-img");
       if (portrait && this.actor) {
-        if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 300) {
-          return;
-        }
-        
+        if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 300) return;
         stop(ev);
         this.actor.sheet.render(true, { focus: true });
         return;
       }
     }, true);
+
+    // ---------- NEW: Block <summary> toggle for dice/value/reaction (register ONCE) ----------
+    rootEl.addEventListener("click", (ev) => {
+      const blocker = ev.target.closest("summary .icon, summary .value, summary .dhud-reaction-btn");
+      if (blocker) { ev.preventDefault(); ev.stopPropagation(); }
+    }, true);
+
+    rootEl.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Enter" && ev.key !== " ") return;
+      const blocker = ev.target.closest("summary .icon, summary .value, summary .dhud-reaction-btn");
+      if (blocker) { ev.preventDefault(); ev.stopPropagation(); }
+    }, true);
+
+    // Optional: keyboard activation for reaction chip
+    rootEl.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Enter" && ev.key !== " ") return;
+      const btn = ev.target.closest("[data-action='roll-trait-reaction']");
+      if (!btn) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
+      const traitKey = btn.dataset.trait;
+      ui.chat?.processMessage?.(`/dr trait=${traitKey} reaction=true`);
+    }, true);
+    // -----------------------------------------------------------------------
 
     // MAIN CLICK HANDLER - All non-resource interactions
     rootEl.addEventListener("click", async (ev) => {
@@ -845,10 +852,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const ring = ev.target.closest(".dhud-ring");
       if (ring) {
         const isInteractiveElement = ev.target.closest(".dhud-pips, .dhud-count, .dhud-badge, [data-action]");
-        if (isInteractiveElement) {
-          return;
-        }
-
+        if (isInteractiveElement) return;
         if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
         stop(ev);
         const shell = rootEl.querySelector(".dhud");
@@ -865,6 +869,16 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         stop(ev);
         const traitKey = traitBtn.dataset.trait;
         ui.chat?.processMessage?.(`/dr trait=${traitKey}`);
+        return;
+      }
+
+      // Reaction roll (immediate): /dr trait=<key> reaction=true
+      const reactBtn = ev.target.closest("[data-action='roll-trait-reaction']");
+      if (reactBtn) {
+        if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
+        stop(ev);
+        const traitKey = reactBtn.dataset.trait;
+        ui.chat?.processMessage?.(`/dr trait=${traitKey} reaction=true`);
         return;
       }
 
@@ -902,8 +916,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         if (item) await item.update({ "system.inVault": mvBtn.dataset.action === "to-vault" });
         return;
       }
-
-      
 
     }, true);
 

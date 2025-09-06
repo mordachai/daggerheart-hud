@@ -276,6 +276,35 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   border-color: var(--dh-accent); 
 }
 
+/* Reaction button chip */
+.dhud-acc summary .dhud-reaction-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1.5px solid var(--dh-border);
+  color: var(--dh-border);
+  background: transparent;
+  margin-left: 0.35rem;
+  flex: 0 0 auto;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  cursor: pointer;
+}
+.dhud-acc summary .dhud-reaction-btn i {
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
+.dhud-acc summary .dhud-reaction-btn:hover,
+.dhud-acc summary .dhud-reaction-btn:focus-visible {
+  background: var(--dh-accent);
+  border-color: var(--dh-accent);
+  color: var(--dh-surface);
+  outline: none;
+}
+
 /* aproximação dos círculos laterais */
 .dhud-core__leftcircle  { transform: translateX(var(--overlap)); }
 .dhud-core__rightcircle { transform: translateX(calc(-1 * var(--overlap))); }
