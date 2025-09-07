@@ -6,9 +6,9 @@
 
 <img width="1220" height="706" alt="image" src="https://github.com/user-attachments/assets/9c685e9b-39bb-4d2e-a282-ea7ff6af866f" />
 
-### HUD Mouse Controls:
+## HUD Mouse Controls:
 
-#### On the Core:
+### On the Core:
 
 ##### Over the portrait:
 
@@ -24,16 +24,11 @@
 - **Hope:** Left-click goes until the selected pip, Right-click goes until the previous. Use Right-click to zero the bar.
 - **HP, Stress and Armor slots:** Left-click = **-1**, Right-click = **+1**
 
-#### Inside the wings menus:
+### On the wings menus:
 
 - Clicking on a _icon_ **executes the roll**, if there is anything to roll
 - In the _title_ will **open the description** for the item, if there is any
 - Other options are _Send to Chat_, _Send to Vault_, and _Send to Loadout_
-
-#### In the resources:
-
-- **Hope:** Left-click goes until the selected pip, Right-click goes until the previous. Use Right-click to zero the bar.
-- **HP, Stress and Armor slots:** Left-click = **-1**, Right-click = **+1**
 
 ## Features
 
