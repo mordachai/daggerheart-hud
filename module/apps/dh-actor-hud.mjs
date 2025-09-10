@@ -931,6 +931,16 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const actor = this.actor;
       if (!actor) return;
 
+      // Handle death move button
+      const deathBtn = ev.target.closest("[data-action='death-move']");
+      if (deathBtn) {
+        stop(ev);
+        const DeathMove = game.system.api.applications.dialogs.DeathMove;
+        const dialog = new DeathMove(this.actor);
+        dialog.render(true);
+        return;
+      }
+
       // Ring toggle (wings) - only if NOT clicking on interactive elements
       const ring = ev.target.closest(".dhud-ring");
       if (ring) {
@@ -1289,6 +1299,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       max:   sys.resources?.hitPoints?.max   ?? 0,
       isReversed: !!sys.resources?.hitPoints?.isReversed
     };
+    
+    const isDying = hitPoints.value >= hitPoints.max; 
 
     const stress = {
       // system.resources.stress.{value,max,isReversed}
@@ -1477,6 +1489,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     return {
       actorName,
       portrait,
+      isDying,
       // hasRingArt,
 
       // resources
@@ -1517,6 +1530,15 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
     const root = this.element;
     if (!root) return;
+
+    // Apply dying state (btn, desaturate) 
+    const hpValue = this.actor?.system?.resources?.hitPoints?.value ?? 0;
+    const hpMax = this.actor?.system?.resources?.hitPoints?.max ?? 0;
+    if (hpValue >= hpMax) {
+      root.classList.add("dhud--dying");
+    } else {
+      root.classList.remove("dhud--dying");
+    }
 
     // Hide initially if we're going to restore a layout
     if (this._initiallyHidden) {

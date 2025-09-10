@@ -255,9 +255,18 @@
         <div class="dhud-portrait">
           <img class="dhud-portrait-img" src="{{portrait}}" alt="{{actorName}}">
         </div>
+
+        {{#if (gte hitPoints.value hitPoints.max)}}
+        <div class="dhud-death" 
+            role="button" 
+            tabindex="0"
+            data-action="death-move"
+            title="Death Move">
+        </div>
+        {{/if}}
         
         <div class="dhud-ring-overlay"></div>
-        
+       
         <div class="dhud-pips" aria-label="Hope">
           {{#each hopePips}}
             <span class="pip {{#if this.filled}}filled{{/if}}" data-index="{{@index}}"></span>

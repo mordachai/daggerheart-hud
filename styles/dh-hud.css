@@ -397,6 +397,34 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   box-shadow: 0 0 5px 2px #000;
 }
 
+.dhud-death {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px; 
+  height: 70px;
+  background-image: url("/modules/daggerheart-hud/ui/death.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 80% 80%;
+  cursor: pointer;
+  z-index: 10; /* Above portrait but below overlay if needed */
+}
+
+.dhud-death:hover {
+    filter: drop-shadow(0 1px 3px rgba(255, 255, 255));
+}
+
+.dhud--dying .dhud-portrait img,
+.dhud--dying .dhud-circle img,
+.dhud--dying .dhud-circle,
+.dhud--dying .dhud-ring,
+.dhud--dying .dhud-thresholds .chip,
+.dhud--dying .dhud-badge--right .dhud-armor-max {
+  filter: saturate(0.3) brightness(0.95);
+}
+
 .dhud-circle .item-icon {
   position: relative;
   width: 70%;

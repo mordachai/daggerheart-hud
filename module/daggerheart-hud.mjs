@@ -85,22 +85,47 @@ function createOrUpdateHUD(actor = null, token = null) {
 }
 
 Hooks.on("controlToken", async (token, controlled) => {
+  // Handle multiple token selection - only show HUD for single Daggerheart tokens
+  const controlledTokens = canvas.tokens?.controlled || [];
+  const daggerheartTokens = controlledTokens.filter(t => isDaggerheartPC(t));
+  
   if (controlled && isDaggerheartPC(token)) {
-    // Token selected - show HUD for that token
-    createOrUpdateHUD(token.actor, token.document);
-  } else if (!controlled) {
-    // Token deselected
-    if (game.user.isGM) {
-      // GMs: close the HUD when no token selected
+    // Only show HUD if this is the only controlled Daggerheart token
+    if (daggerheartTokens.length === 1) {
+      createOrUpdateHUD(token.actor, token.document);
+    } else {
+      // Multiple Daggerheart tokens selected - close HUD to avoid conflicts
       if (_hudApp) {
         _hudApp.close({ force: true });
         _hudApp = null;
       }
-    } else if (getSetting(S.alwaysVisible)) {
-      // Players: switch to their default character (if setting enabled)
-      createOrUpdateHUD();
+    }
+  } else if (!controlled) {
+    // Token deselected - check remaining controlled tokens
+    if (daggerheartTokens.length === 1) {
+      // Show HUD for the remaining single Daggerheart token
+      const remainingToken = daggerheartTokens[0];
+      createOrUpdateHUD(remainingToken.actor, remainingToken.document);
+    } else if (daggerheartTokens.length === 0) {
+      // No Daggerheart tokens selected
+      if (game.user.isGM) {
+        // GMs: close the HUD when no token selected
+        if (_hudApp) {
+          _hudApp.close({ force: true });
+          _hudApp = null;
+        }
+      } else if (getSetting(S.alwaysVisible)) {
+        // Players: switch to their default character (if setting enabled)
+        createOrUpdateHUD();
+      } else {
+        // Players with setting disabled: close HUD
+        if (_hudApp) {
+          _hudApp.close({ force: true });
+          _hudApp = null;
+        }
+      }
     } else {
-      // Players with setting disabled: close HUD
+      // Multiple Daggerheart tokens still selected - keep HUD closed
       if (_hudApp) {
         _hudApp.close({ force: true });
         _hudApp = null;
