@@ -506,18 +506,19 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   left: var(--hp-left);
   text-align: center;
 }
-.dhud-count--hp .value:hover{
-  font-weight: 700;
-  text-shadow: 0px 0px 3px var(--dh-pip-border);
-}
 .dhud-count--stress {
   top: var(--stress-top);
   right: var(--stress-right);
   text-align: center;
 }
+.dhud-count--hp .value:hover,
 .dhud-count--stress .value:hover{
   font-weight: 700;
   text-shadow: 0px 0px 3px var(--dh-pip-border);
+}
+.dhud-count--hp i,
+.dhud-count--stress i {
+  filter: drop-shadow(0px 0px 1px var(--dh-accent));
 }
 
 /* Thresholds:  */
