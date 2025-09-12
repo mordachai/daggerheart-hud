@@ -146,6 +146,22 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   flex: 0 0 auto;
 }
 
+.dhud-acc summary .icon.clickable {
+  cursor: pointer;
+  border: 2px solid var(--dh-pip-border);
+}
+
+.dhud-acc summary .icon.clickable:hover {
+  cursor: pointer;
+  border: 2px solid var(--dh-accent);
+}
+
+.dhud-acc summary .icon:not(.clickable) {
+  cursor: default;
+}
+
+
+
 /* Title takes remaining space, truncates with ellipsis if too long */
 .dhud-acc summary .title {
   flex: 1 1 auto;

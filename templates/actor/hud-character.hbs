@@ -31,6 +31,17 @@
                       data-trait="{{key}}">
                   <i class="fa-solid fa-reply" aria-hidden="true"></i>
                 </span>
+                {{!-- Custom buttons hook point --}}
+                {{#each ../customButtons.traits}}
+                <span class="dhud-custom-btn"
+                      role="button"
+                      tabindex="0"
+                      title="{{title}}"
+                      data-action="custom-{{id}}"
+                      data-trait="{{../key}}">
+                  <i class="{{icon}}"></i>
+                </span>
+                {{/each}}
               </summary>
               <div class="acc-body">{{description}}</div>
             </details>
@@ -84,7 +95,7 @@
           <li class="acc">
             <details>
               <summary>
-                <img class="icon"
+               <img class="icon{{#if hasActions}} clickable{{/if}}"
                     src="{{img}}"
                     alt=""
                     role="button"
@@ -118,7 +129,7 @@
           <li class="acc">
             <details>
               <summary>
-                <img class="icon"
+               <img class="icon{{#if hasActions}} clickable{{/if}}"
                     src="{{img}}"
                     alt=""
                     role="button"
@@ -157,7 +168,7 @@
           <li class="acc">
             <details>
               <summary>
-                <img class="icon"
+               <img class="icon{{#if hasActions}} clickable{{/if}}"
                     src="{{img}}"
                     alt=""
                     role="button"
@@ -191,7 +202,7 @@
           <li class="acc">
             <details>
               <summary>
-                <img class="icon"
+               <img class="icon{{#if hasActions}} clickable{{/if}}"
                     src="{{img}}"
                     alt=""
                     role="button"
@@ -207,6 +218,17 @@
                   data-action="to-chat"
                   data-item-id="{{id}}"
                   title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+                {{!-- Custom buttons hook point --}}
+                {{#each ../customButtons.inventory}}
+                <span class="dhud-custom-btn"
+                      role="button"
+                      tabindex="0"
+                      title="{{title}}"
+                      data-action="custom-{{id}}"
+                      data-trait="{{../key}}">
+                  <i class="{{icon}}"></i>
+                </span>
+                {{/each}}
               </summary>
               {{#if description}}
               <div class="acc-body">{{{description}}}</div>
@@ -334,7 +356,7 @@
           <li class="acc">
             <details>
               <summary>
-                <img class="icon"
+               <img class="icon{{#if hasActions}} clickable{{/if}}"
                     src="{{img}}"
                     alt=""
                     role="button"
@@ -368,7 +390,7 @@
           <li class="acc">
             <details>
               <summary>
-                <img class="icon"
+               <img class="icon{{#if hasActions}} clickable{{/if}}"
                     src="{{img}}"
                     alt=""
                     role="button"
@@ -414,7 +436,7 @@
         <li class="acc">
           <details>
             <summary>
-              <img class="icon"
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
                   src="{{img}}"
                   alt=""
                   role="button"
@@ -470,15 +492,17 @@
         <li class="acc">
           <details>
             <summary>
-              <img class="icon"
-                  src="{{img}}"
-                  alt=""
-                  role="button"
-                  tabindex="0"
-                  data-action="item-exec"
-                  data-item-id="{{id}}"
-                  data-actionpath="{{actionPath}}"
-                  title="{{name}}">
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
+              src="{{img}}"
+              alt=""
+              role="button"
+              tabindex="0"
+              {{#if hasActions}}
+                data-action="item-exec"
+                data-item-id="{{id}}"
+                data-actionpath="{{actionPath}}"
+              {{/if}}
+              title="{{name}}">
               <span class="title">{{name}}</span>
 
               <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>

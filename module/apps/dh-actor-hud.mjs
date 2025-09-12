@@ -202,6 +202,24 @@ function attachDHUDToggles(root) {
   });
 }
 
+// Function to detect if an item has actions (works with Foundry Collections)
+function itemHasActions(item) {
+  const actions = item.system?.actions;
+  if (!actions) return false;
+  
+  // Check if it's a Foundry Collection with size property
+  if (typeof actions.size === 'number') {
+    return actions.size > 0;
+  }
+  
+  // Fallback to standard object detection
+  if (typeof actions === 'object') {
+    return Object.keys(actions).length > 0;
+  }
+  
+  return false;
+}
+
 // ✅ APIs V2
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -250,7 +268,6 @@ function getActorRingImageOrDefault(actor, type) {
   return actor?.getFlag("daggerheart-hud", flagKey) || "";
 }
 
-
 export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: "daggerheart-hud",
@@ -264,13 +281,10 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
   };
 
   constructor({ actor, token } = {}, options = {}) {
-    super(options);
-    // console.debug("[DHUD] ctor", {
-    //   actorId: actor?.id, actorName: actor?.name, tokenId: token?.id
-    // });
-    
+    super(options);    
     this.actor = actor ?? null;
     this.token = token ?? actor?.getActiveTokens()?.[0]?.document ?? null;
+    this.customButtons = new Map(); 
   }  
 
   reattachDragHandlers() {
@@ -296,6 +310,21 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       ui.notifications?.error("Action failed (see console)");
     }
   }
+
+  // Custom buttoms
+  static registerCustomButton(config) {
+    const { id, section, icon, title, handler, condition } = config;
+    
+    if (!id || !section || !handler) {
+      console.warn("[DHUD] Invalid button config:", config);
+      return;
+    }
+    
+    // Store in global registry
+    if (!this._customButtons) this._customButtons = new Map();
+    this._customButtons.set(id, { section, icon, title, handler, condition });
+  }
+
   // === STATUS CONTEXT MENU METHODS ===
 
   _showStatusContextMenu(x, y) {
@@ -931,6 +960,19 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       const actor = this.actor;
       if (!actor) return;
 
+      // In your click handler
+      const customBtn = ev.target.closest("[data-action^='custom-']");
+      if (customBtn) {
+        stop(ev);
+        const buttonId = customBtn.dataset.action.replace('custom-', '');
+        const config = DaggerheartActorHUD._customButtons?.get(buttonId);
+        if (config) {
+          const traitKey = customBtn.dataset.trait;
+          await config.handler(this.actor, traitKey);
+        }
+        return;
+      }
+
       // Handle death move button
       const deathBtn = ev.target.closest("[data-action='death-move']");
       if (deathBtn) {
@@ -1015,514 +1057,547 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     this._delegatedBound = true;
   }
 
+
+
+
+
   async _prepareContext(_options) {
-    const actor = this.actor ?? null;
+  const actor = this.actor ?? null;
 
-    // Fallbacks
-    let actorName = "—";
-    let portrait  = "icons/svg/mystery-man.svg";
+  // Fallbacks
+  let actorName = "—";
+  let portrait  = "icons/svg/mystery-man.svg";
 
-    if (actor) {
-      actorName = actor.name ?? "—";
-      // Prefer the actor portrait; fall back to the prototype token’s texture if empty
-      const protoSrc = actor?.prototypeToken?.texture?.src;
-      portrait = (actor.img && actor.img.trim()) ? actor.img : (protoSrc || portrait);
-    }
+  if (actor) {
+    actorName = actor.name ?? "—";
+    // Prefer the actor portrait; fall back to the prototype token's texture if empty
+    const protoSrc = actor?.prototypeToken?.texture?.src;
+    portrait = (actor.img && actor.img.trim()) ? actor.img : (protoSrc || portrait);
+  }
 
-    // Canonical system root (guarded)
-    const sys = actor?.system ?? {};
+  // Canonical system root (guarded)
+  const sys = actor?.system ?? {};
 
-    // === PRIMARY WEAPON (only equipped & NOT secondary); else Unarmed ===
-    let primaryWeapon = null;
-    {
-      const items = this.actor?.items ?? [];
-      const weapons = items.filter(i => i.type === "weapon");
+  const customButtons = {
+    traits: [],
+    inventory: [],
+    // other sections...
+  };
 
-      // Only consider EQUIPPED weapons that are NOT marked as secondary
-      const equippedNonSecondary = weapons.filter(w => w.system?.equipped === true && w.system?.secondary !== true);
-
-      const pick = equippedNonSecondary[0] ?? null;
-
-      if (pick) {
-        primaryWeapon = {
-          id: pick.id,
-          name: pick.name,
-          img: pick.img || "icons/svg/sword.svg",
-          isUnarmed: false
-        };
+  // Collect custom buttons for each section
+  if (DaggerheartActorHUD._customButtons) {
+    for (const [id, config] of DaggerheartActorHUD._customButtons) {
+      if (config.section === "traits") {
+        // Check condition if provided
+        if (!config.condition || config.condition(this.actor)) {
+          customButtons.traits.push({ id, ...config });
+        }
       }
     }
+  }
 
-    // If none, show Unarmed from actor.system.usedUnarmed or attack
-    if (!primaryWeapon) {
-      const un = sys.usedUnarmed || sys.attack;
-      if (un) {
-        const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
-        primaryWeapon = {
-          id: null,
-          name: locName,
-          img: un.img || "icons/skills/melee/unarmed-punch-fist-yellow-red.webp",
-          isUnarmed: true
-        };
-      }
+  // === PRIMARY WEAPON (only equipped & NOT secondary); else Unarmed ===
+  let primaryWeapon = null;
+  {
+    const items = this.actor?.items ?? [];
+    const weapons = items.filter(i => i.type === "weapon");
+
+    // Only consider EQUIPPED weapons that are NOT marked as secondary
+    const equippedNonSecondary = weapons.filter(w => w.system?.equipped === true && w.system?.secondary !== true);
+
+    const pick = equippedNonSecondary[0] ?? null;
+
+    if (pick) {
+      primaryWeapon = {
+        id: pick.id,
+        name: pick.name,
+        img: pick.img || "icons/svg/sword.svg",
+        isUnarmed: false
+      };
+    }
+  }
+
+  // If none, show Unarmed from actor.system.usedUnarmed or attack
+  if (!primaryWeapon) {
+    const un = sys.usedUnarmed || sys.attack;
+    if (un) {
+      const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
+      primaryWeapon = {
+        id: null,
+        name: locName,
+        img: un.img || "icons/skills/melee/unarmed-punch-fist-yellow-red.webp",
+        isUnarmed: true
+      };
+    }
+  }
+
+  // === SECONDARY WEAPON ===
+  let secondaryWeapon = null;
+  {
+    const items = this.actor?.items ?? [];
+    const weaponsAll = items.filter(i => i.type === "weapon");
+    const equipped   = weaponsAll.filter(w => w.system?.equipped === true);
+
+    const primaryId = primaryWeapon?.isUnarmed ? null : primaryWeapon?.id ?? null;
+    
+    // Check if primary weapon is two-handed
+    const primaryWeaponItem = primaryId ? items.find(w => w.id === primaryId) : null;
+    const isTwoHanded = primaryWeaponItem?.system?.burden === "twoHanded";
+    
+    let pick = null;
+    
+    if (isTwoHanded && primaryWeaponItem) {
+      // For two-handed weapons, use the same weapon for both slots
+      pick = primaryWeaponItem;
+    } else {
+      // Original logic for one-handed weapons
+      pick = equipped.find(w => w.system?.secondary === true) ??
+            equipped.find(w => w.id !== primaryId) ??
+            null;
     }
 
-    // === SECONDARY WEAPON ===
-    let secondaryWeapon = null;
-    {
-      const items = this.actor?.items ?? [];
-      const weaponsAll = items.filter(i => i.type === "weapon");
-      const equipped   = weaponsAll.filter(w => w.system?.equipped === true);
-
-      const primaryId = primaryWeapon?.isUnarmed ? null : primaryWeapon?.id ?? null;
-      
-      // Check if primary weapon is two-handed
-      const primaryWeaponItem = primaryId ? items.find(w => w.id === primaryId) : null;
-      const isTwoHanded = primaryWeaponItem?.system?.burden === "twoHanded";
-      
-      let pick = null;
-      
-      if (isTwoHanded && primaryWeaponItem) {
-        // For two-handed weapons, use the same weapon for both slots
-        pick = primaryWeaponItem;
-      } else {
-        // Original logic for one-handed weapons
-        pick = equipped.find(w => w.system?.secondary === true) ??
-              equipped.find(w => w.id !== primaryId) ??
-              null;
-      }
-
-      if (pick) {
-        secondaryWeapon = {
-          id: pick.id,
-          name: pick.name,
-          img: pick.img || "icons/svg/shield.svg",
-          isUnarmed: false
-        };
-      }
+    if (pick) {
+      secondaryWeapon = {
+        id: pick.id,
+        name: pick.name,
+        img: pick.img || "icons/svg/shield.svg",
+        isUnarmed: false
+      };
     }
+  }
 
-    // If none, fall back to Unarmed
-    if (!secondaryWeapon) {
-      const un = sys.attack;
-      if (un) {
-        const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
-        secondaryWeapon = {
-          id: null,
-          name: locName,
-          img: un.img || "icons/skills/melee/unarmed-punch-fist-yellow-red.webp",
-          isUnarmed: true
-        };
-      }
+  // If none, fall back to Unarmed
+  if (!secondaryWeapon) {
+    const un = sys.attack;
+    if (un) {
+      const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
+      secondaryWeapon = {
+        id: null,
+        name: locName,
+        img: un.img || "icons/skills/melee/unarmed-punch-fist-yellow-red.webp",
+        isUnarmed: true
+      };
     }
+  }
 
-    // === ACTIVE STATUS EFFECTS ===
-    const activeStatuses = new Set();
-    const statusEffects = [];
+  // === ACTIVE STATUS EFFECTS ===
+  const activeStatuses = new Set();
+  const statusEffects = [];
 
-    for (const effect of (this.actor?.effects ?? [])) {
-      if (effect.disabled) continue;
-      
-      // Track which statuses are currently active
-      if (effect.statuses?.length) {
-        effect.statuses.forEach(status => activeStatuses.add(status));
-      }
-      
-      statusEffects.push({
-        id: effect.id,
-        name: effect.name,
-        img: effect.img || "icons/svg/aura.svg",
-        statuses: effect.statuses || [],
-        isTemporary: effect.duration?.rounds !== null || effect.duration?.turns !== null
-      });
+  for (const effect of (this.actor?.effects ?? [])) {
+    if (effect.disabled) continue;
+    
+    // Track which statuses are currently active
+    if (effect.statuses?.length) {
+      effect.statuses.forEach(status => activeStatuses.add(status));
     }
-
-    // === AVAILABLE CONDITIONS ===
-    const daggerheartConditions = [];
-    const genericConditions = [];
-
-    // Get Daggerheart-specific conditions first
-    const dhConditions = CONFIG.DH?.GENERAL?.conditions || {};
-    Object.values(dhConditions).forEach(condition => {
-      daggerheartConditions.push({
-        id: condition.id,
-        name: condition.name, // This is an i18n key
-        img: condition.img,
-        description: condition.description, // Also an i18n key
-        isActive: activeStatuses.has(condition.id),
-        source: 'daggerheart'
-      });
+    
+    statusEffects.push({
+      id: effect.id,
+      name: effect.name,
+      img: effect.img || "icons/svg/aura.svg",
+      statuses: effect.statuses || [],
+      isTemporary: effect.duration?.rounds !== null || effect.duration?.turns !== null
     });
+  }
 
-    // Only add generic Foundry conditions if the system setting allows it
-    const showGenericStatuses = game.settings.get('daggerheart', 'Appearance').showGenericStatusEffects;
-    if (showGenericStatuses) {
-      CONFIG.statusEffects
-        .filter(effect => !effect.systemEffect)
-        .forEach(effect => {
-          genericConditions.push({
-            id: effect.id,
-            name: effect.name, // i18n key
-            img: effect.img,
-            description: effect.description || "",
-            isActive: activeStatuses.has(effect.id),
-            source: 'foundry'
-          });
+  // === AVAILABLE CONDITIONS ===
+  const daggerheartConditions = [];
+  const genericConditions = [];
+
+  // Get Daggerheart-specific conditions first
+  const dhConditions = CONFIG.DH?.GENERAL?.conditions || {};
+  Object.values(dhConditions).forEach(condition => {
+    daggerheartConditions.push({
+      id: condition.id,
+      name: condition.name, // This is an i18n key
+      img: condition.img,
+      description: condition.description, // Also an i18n key
+      isActive: activeStatuses.has(condition.id),
+      source: 'daggerheart'
+    });
+  });
+
+  // Only add generic Foundry conditions if the system setting allows it
+  const showGenericStatuses = game.settings.get('daggerheart', 'Appearance').showGenericStatusEffects;
+  if (showGenericStatuses) {
+    CONFIG.statusEffects
+      .filter(effect => !effect.systemEffect)
+      .forEach(effect => {
+        genericConditions.push({
+          id: effect.id,
+          name: effect.name, // i18n key
+          img: effect.img,
+          description: effect.description || "",
+          isActive: activeStatuses.has(effect.id),
+          source: 'foundry'
         });
-    }
+      });
+  }
 
-    const availableConditions = [...daggerheartConditions, ...genericConditions];
+  const availableConditions = [...daggerheartConditions, ...genericConditions];
 
-    // === ANCESTRY / COMMUNITY FEATURES (correct filter: system.originItemType) ===
-    const ancestryFeatures = [];
-    const communityFeatures = [];
+  // === ANCESTRY / COMMUNITY FEATURES ===
+  const ancestryFeatures = [];
+  const communityFeatures = [];
 
-    for (const it of (this.actor?.items ?? [])) {
-      if (it.type !== "feature") continue;
+  for (const it of (this.actor?.items ?? [])) {
+    if (it.type !== "feature") continue;
 
-      const origin = it.system?.originItemType; // "ancestry" | "community" | "class" | "subclass" | etc.
-      if (origin !== "ancestry" && origin !== "community") continue;
+    const origin = it.system?.originItemType;
+    if (origin !== "ancestry" && origin !== "community") continue;
 
-      const entry = {
+    const hasActions = itemHasActions(it);
+
+    const entry = {
+      id: it.id,
+      name: it.name,
+      img: it.img || "icons/svg/aura.svg",
+      description: it.system?.description ?? "",
+      hasActions: hasActions,
+      actionPath: (() => {
+        const sys = it.system ?? {};
+        if (sys.actions && typeof sys.actions === "object") {
+          const first = Object.values(sys.actions)[0];
+          if (first?.systemPath) return first.systemPath;
+        }
+        return "use";
+      })()
+    };
+
+    if (origin === "ancestry") ancestryFeatures.push(entry);
+    else communityFeatures.push(entry);
+  }
+
+  // === CLASS / SUBCLASS FEATURES (originItemType) with TIER GATING FOR SUBCLASS ===
+  const classFeatures = [];
+  const subclassFeatures = [];
+
+  // 1) Determine allowed subclass identifiers from the actor's subclass featureState
+  //    featureState: 1 = foundation, 2 = specialization, 3 = mastery
+  const subclasses = (this.actor?.items ?? []).filter(i => i.type === "subclass");
+  let subclassTier = 0;
+  for (const sc of subclasses) {
+    const t = Number(sc.system?.featureState ?? 0);
+    if (t > subclassTier) subclassTier = t; // in case of multiclass, allow the highest
+  }
+
+  const allowedSubclassIds = new Set();
+  if (subclassTier >= 1) allowedSubclassIds.add("foundation");
+  if (subclassTier >= 2) allowedSubclassIds.add("specialization");
+  if (subclassTier >= 3) allowedSubclassIds.add("mastery");
+
+  // 2) Collect features, gating subclass ones by identifier
+  for (const it of (this.actor?.items ?? [])) {
+    if (it.type !== "feature") continue;
+    const origin = it.system?.originItemType;
+
+    const hasActions = itemHasActions(it);
+
+    if (origin === "class") {
+      classFeatures.push({
         id: it.id,
         name: it.name,
         img: it.img || "icons/svg/aura.svg",
         description: it.system?.description ?? "",
-        // An action hint if present; many features are passive, so this may be unused at click time
-        actionPath: (()=>{
-          const sys = it.system ?? {};
-          // system.actions is an object keyed by id in this system; pick the first action if any
-          if (sys.actions && typeof sys.actions === "object") {
-            const first = Object.values(sys.actions)[0];
-            if (first?.systemPath) return first.systemPath; // commonly "actions"
-          }
-          return "use"; // safe generic fallback
-        })()
-      };
-
-      if (origin === "ancestry") ancestryFeatures.push(entry);
-      else communityFeatures.push(entry);
-    }
-
-    // === CLASS / SUBCLASS FEATURES (originItemType) with TIER GATING FOR SUBCLASS ===
-    const classFeatures = [];
-    const subclassFeatures = [];
-
-    // 1) Determine allowed subclass identifiers from the actor's subclass featureState
-    //    featureState: 1 = foundation, 2 = specialization, 3 = mastery
-    const subclasses = (this.actor?.items ?? []).filter(i => i.type === "subclass");
-    let subclassTier = 0;
-    for (const sc of subclasses) {
-      const t = Number(sc.system?.featureState ?? 0);
-      if (t > subclassTier) subclassTier = t; // in case of multiclass, allow the highest
-    }
-
-    const allowedSubclassIds = new Set();
-    if (subclassTier >= 1) allowedSubclassIds.add("foundation");
-    if (subclassTier >= 2) allowedSubclassIds.add("specialization");
-    if (subclassTier >= 3) allowedSubclassIds.add("mastery");
-
-    // 2) Collect features, gating subclass ones by identifier
-    for (const it of (this.actor?.items ?? [])) {
-      if (it.type !== "feature") continue;
-      const origin = it.system?.originItemType; // "class" | "subclass" | ancestry | community | etc.
-
-      if (origin === "class") {
-        classFeatures.push({
-          id: it.id,
-          name: it.name,
-          img: it.img || "icons/svg/aura.svg",
-          description: it.system?.description ?? "",
-          actionPath: (() => {
-            const s = it.system ?? {};
-            if (s.actions && typeof s.actions === "object") {
-              const first = Object.values(s.actions)[0];
-              if (first?.systemPath) return first.systemPath;
-            }
-            return "use";
-          })()
-        });
-        continue;
-      }
-
-      if (origin === "subclass") {
-        const ident = (it.system?.identifier || "").toString().toLowerCase();
-        if (!allowedSubclassIds.has(ident)) continue; // GATE BY TIER
-
-        subclassFeatures.push({
-          id: it.id,
-          name: it.name,
-          img: it.img || "icons/svg/aura.svg",
-          description: it.system?.description ?? "",
-          actionPath: (() => {
-            const s = it.system ?? {};
-            if (s.actions && typeof s.actions === "object") {
-              const first = Object.values(s.actions)[0];
-              if (first?.systemPath) return first.systemPath;
-            }
-            return "use";
-          })()
-        });
-      }
-    }
-
-    // === Actor Domains (header label, localized) ===
-    const rawDomains = Array.isArray(sys.domains) ? sys.domains : [];
-    const domainsHeader = rawDomains
-      .map(d => String(d).trim())
-      .filter(Boolean)
-      .map(key => {
-        // Try i18n label: DAGGERHEART.GENERAL.Domain.<key>.label
-        const i18nKey = `DAGGERHEART.GENERAL.Domain.${key}.label`;
-        const loc = game.i18n?.localize?.(i18nKey);
-        if (loc && loc !== i18nKey) return loc; // localized OK
-        // Fallback: TitleCase the raw key
-        return key.charAt(0).toUpperCase() + key.slice(1);
-      })
-      .join(" & ") || null;
-
-    // (optional) if you want a tooltip with the concatenated descriptions:
-    const domainsHeaderTitle = rawDomains
-      .map(key => {
-        const dKey = String(key).trim();
-        const name = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.label`);
-        const desc = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.description`);
-        return (name && desc) ? `${name}: ${desc}` : null;
-      })
-      .filter(Boolean)
-      .join("\n") || "";
-
-    // === RESOURCES (exact system paths) ===
-    const hitPoints = {
-      // system.resources.hitPoints.{value,max,isReversed}
-      value: sys.resources?.hitPoints?.value ?? 0,
-      max:   sys.resources?.hitPoints?.max   ?? 0,
-      isReversed: !!sys.resources?.hitPoints?.isReversed
-    };
-    
-    const isDying = hitPoints.value >= hitPoints.max; 
-
-    const stress = {
-      // system.resources.stress.{value,max,isReversed}
-      value: sys.resources?.stress?.value ?? 0,
-      max:   sys.resources?.stress?.max   ?? 0,
-      isReversed: !!sys.resources?.stress?.isReversed
-    };
-
-    // === HOPE ===
-    const rawValue = sys.resources?.hope?.value ?? 0;
-    const rawMax   = sys.resources?.hope?.max   ?? 0;
-    const hopeMax  = Math.max(0, Number(rawMax));
-    const hopeValue= Math.min(hopeMax, Math.max(0, Number(rawValue)));
-
-    const hopePips = Array.from({ length: hopeMax }, (_, i) => ({
-      filled: i < hopeValue
-    }));
-
-    // === TRAITS (ordered + localized via i18n helper) ===
-    const TRAIT_ORDER = ["agility","strength","finesse","instinct","presence","knowledge"];
-
-    const traits = TRAIT_ORDER.map(key => {
-      const value = Number(sys.traits?.[key]?.value ?? 0);
-      const loc = Ltrait(key); // { name, verbs[], description }
-      return {
-        key,
-        name: loc.name,           // e.g., "Agility"
-        value,                    // e.g., 2
-        description: loc.description // e.g., "Sprint, Leap, Maneuver"
-      };
-    });
-
-    // === PROFICIENCY / DEFENSES ===
-    const proficiency = sys.proficiency ?? 0;
-    const evasion     = sys.evasion     ?? 0; 
-
-    // === EXPERIENCES ===
-    const experiences = [];
-    const rawExperiences = sys.experiences ?? {};
-    for (const [id, exp] of Object.entries(rawExperiences)) {
-      if (!exp || typeof exp !== 'object') continue;
-      experiences.push({
-        id: id,                           
-        key: id,                         
-        name: exp.name || "Unnamed",
-        value: Number(exp.value ?? 0),
-        core: !!exp.core,
-        description: exp.description || ""
-      });
-    }
-
-    // === ARMOR (marks live on the equipped item; MAX comes from ACTOR (post-effects)) ===
-    const equippedArmor = (this.actor?.items ?? []).find(item => 
-      item.type === "armor" && item.system?.equipped === true
-    );
-
-    let armor;
-    if (equippedArmor) {
-      const armorSys    = equippedArmor.system;
-      const baseScore   = Number(armorSys.baseScore ?? 0);                
-      const effectiveMax= Math.max(0, Number(this.actor?.system?.armorScore ?? baseScore)); 
-      const rawMarks    = Number(armorSys.marks?.value ?? 0);
-      const marks       = Math.max(0, Math.min(effectiveMax, rawMarks));  
-
-      armor = {
-        max:   effectiveMax,      // Total armor slots (post-effects)
-        value: marks,             // We keep the inverted UX: value === DAMAGE MARKS
-        marks: marks,             // Damage marks taken
-        isReversed: false,        // Armor doesn't use isReversed like HP/Stress
-        name: equippedArmor.name,
-        itemId: equippedArmor.id,
-        hasArmor: true
-      };
-    } else {
-      armor = {
-        max: 0,
-        value: 0,
-        marks: 0,
-        isReversed: false,
-        name: "",
-        itemId: null,
-        hasArmor: false
-      };
-    }
-    context.armor = armor;
-
-
-    // === DAMAGE THRESHOLDS ===
-    const thresholds = {
-      major:  sys.damageThresholds?.major  ?? 0,
-      severe: sys.damageThresholds?.severe ?? 0
-    };
-
-    // === RESISTANCE ===
-    const resistance = {
-      physical: {
-        resistance: !!sys.resistance?.physical?.resistance,
-        immunity:   !!sys.resistance?.physical?.immunity,
-        reduction:  sys.resistance?.physical?.reduction ?? 0
-      },
-      magical: {
-        resistance: !!sys.resistance?.magical?.resistance,
-        immunity:   !!sys.resistance?.magical?.immunity,
-        reduction:  sys.resistance?.magical?.reduction ?? 0
-      }
-    };
-
-    // === INVENTORY (for now: Consumables, Loot) ===
-    const invConsumables = [];
-    const invLoot        = [];
-
-    for (const it of (this.actor?.items ?? [])) {
-      if (it.type !== "consumable" && it.type !== "loot") continue;
-
-      const s = it.system ?? {};
-      const entry = {
-        id: it.id,
-        type: it.type,                       // "consumable" | "loot"
-        name: it.name,
-        img: it.img || "icons/svg/aura.svg",
-        qty: Number(s.quantity ?? 1),
-        description: s.description ?? "",
-        // action hint (some consumables can be "used")
+        hasActions: hasActions,
         actionPath: (() => {
-          if (it.type !== "consumable") return "";       // loot usually has no action
-          const sys = it.system ?? {};
-          if (sys.actionPath) return sys.actionPath;     // if system stores it plainly
-          if (sys.actions && typeof sys.actions === "object") {
-            const first = Object.values(sys.actions)[0];
-            return first?.systemPath || "use";
-          }
-          return "use";
-        })()
-      };
-
-      if (it.type === "consumable") invConsumables.push(entry);
-      if (it.type === "loot")       invLoot.push(entry);
-    }
-
-    // === DOMAIN CARDS (Loadout vs Vault) ===
-    // type: "domainCard"; system.inVault: boolean; system.domain: "blade" | "bone" | ...
-    const domainLoadout = [];
-    const domainVault   = [];
-
-    for (const it of (this.actor?.items ?? [])) {
-      if (it.type !== "domainCard") continue;
-
-      const s = it.system ?? {};
-      const entry = {
-        id: it.id,
-        name: it.name,
-        img: it.img || "icons/svg/aura.svg",
-        description: s.description ?? "",
-        recallCost: Number(s.recallCost ?? 0),
-        domain: (s.domain ?? "").toString(),   // e.g., "blade", "bone", "midnight"
-        inVault: !!s.inVault,
-        // If the system exposes actions, pick the first path; domain cards often have none
-        actionPath: (() => {
-          if (s.actionPath) return s.actionPath;
+          const s = it.system ?? {};
           if (s.actions && typeof s.actions === "object") {
             const first = Object.values(s.actions)[0];
-            return first?.systemPath || "use";
+            if (first?.systemPath) return first.systemPath;
           }
           return "use";
         })()
-      };
+      });
+      continue;
+    }
 
-      (entry.inVault ? domainVault : domainLoadout).push(entry);
-    }  
+    if (origin === "subclass") {
+      const ident = (it.system?.identifier || "").toString().toLowerCase();
+      if (!allowedSubclassIds.has(ident)) continue;
 
-    // === PARENT ITEMS: ancestry / community / class / subclass (for header captions) ===
-    const byType = (t) => (this.actor?.items ?? []).find(i => i.type === t) ?? null;
+      subclassFeatures.push({
+        id: it.id,
+        name: it.name,
+        img: it.img || "icons/svg/aura.svg",
+        description: it.system?.description ?? "",
+        hasActions: hasActions,
+        actionPath: (() => {
+          const s = it.system ?? {};
+          if (s.actions && typeof s.actions === "object") {
+            const first = Object.values(s.actions)[0];
+            if (first?.systemPath) return first.systemPath;
+          }
+          return "use";
+        })()
+      });
+    }
+  }
 
-    const ancestryItem  = byType("ancestry");
-    const communityItem = byType("community");
-    const classItem     = byType("class");
-    const subclassItem  = byType("subclass");
+  // === Actor Domains (header label, localized) ===
+  const rawDomains = Array.isArray(sys.domains) ? sys.domains : [];
+  const domainsHeader = rawDomains
+    .map(d => String(d).trim())
+    .filter(Boolean)
+    .map(key => {
+      // Try i18n label: DAGGERHEART.GENERAL.Domain.<key>.label
+      const i18nKey = `DAGGERHEART.GENERAL.Domain.${key}.label`;
+      const loc = game.i18n?.localize?.(i18nKey);
+      if (loc && loc !== i18nKey) return loc; // localized OK
+      // Fallback: TitleCase the raw key
+      return key.charAt(0).toUpperCase() + key.slice(1);
+    })
+    .join(" & ") || null;
 
-    const ancestryInfo  = ancestryItem  ? { id: ancestryItem.id,  name: ancestryItem.name,  img: ancestryItem.img  } : null;
-    const communityInfo = communityItem ? { id: communityItem.id, name: communityItem.name, img: communityItem.img } : null;
-    const classInfo     = classItem     ? { id: classItem.id,     name: classItem.name,     img: classItem.img     } : null;
-    const subclassInfo  = subclassItem  ? { id: subclassItem.id,  name: subclassItem.name,  img: subclassItem.img  } : null;
+  // (optional) if you want a tooltip with the concatenated descriptions:
+  const domainsHeaderTitle = rawDomains
+    .map(key => {
+      const dKey = String(key).trim();
+      const name = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.label`);
+      const desc = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.description`);
+      return (name && desc) ? `${name}: ${desc}` : null;
+    })
+    .filter(Boolean)
+    .join("\n") || "";
 
+  // === RESOURCES (exact system paths) ===
+  const hitPoints = {
+    // system.resources.hitPoints.{value,max,isReversed}
+    value: sys.resources?.hitPoints?.value ?? 0,
+    max:   sys.resources?.hitPoints?.max   ?? 0,
+    isReversed: !!sys.resources?.hitPoints?.isReversed
+  };
+  
+  const isDying = hitPoints.value >= hitPoints.max; 
 
-    // Return everything your HBS references today (+ a few future-safe keys)
+  const stress = {
+    // system.resources.stress.{value,max,isReversed}
+    value: sys.resources?.stress?.value ?? 0,
+    max:   sys.resources?.stress?.max   ?? 0,
+    isReversed: !!sys.resources?.stress?.isReversed
+  };
+
+  // === HOPE ===
+  const rawValue = sys.resources?.hope?.value ?? 0;
+  const rawMax   = sys.resources?.hope?.max   ?? 0;
+  const hopeMax  = Math.max(0, Number(rawMax));
+  const hopeValue= Math.min(hopeMax, Math.max(0, Number(rawValue)));
+
+  const hopePips = Array.from({ length: hopeMax }, (_, i) => ({
+    filled: i < hopeValue
+  }));
+
+  // === TRAITS (ordered + localized via i18n helper) ===
+  const TRAIT_ORDER = ["agility","strength","finesse","instinct","presence","knowledge"];
+
+  const traits = TRAIT_ORDER.map(key => {
+    const value = Number(sys.traits?.[key]?.value ?? 0);
+    const loc = Ltrait(key); // { name, verbs[], description }
     return {
-      actorName,
-      portrait,
-      isDying,
-      // hasRingArt,
+      key,
+      name: loc.name,           // e.g., "Agility"
+      value,                    // e.g., 2
+      description: loc.description // e.g., "Sprint, Leap, Maneuver"
+    };
+  });
 
-      // resources
-      hitPoints,
-      stress,
-      hope: { value: hopeValue, max: hopeMax },
-      hopePips,
+  // === PROFICIENCY / DEFENSES ===
+  const proficiency = sys.proficiency ?? 0;
+  const evasion     = sys.evasion     ?? 0; 
 
-      // defenses & scores
-      evasion,
-      armor,
-      thresholds,
-      proficiency,
-      experiences,
+  // === EXPERIENCES ===
+  const experiences = [];
+  const rawExperiences = sys.experiences ?? {};
+  for (const [id, exp] of Object.entries(rawExperiences)) {
+    if (!exp || typeof exp !== 'object') continue;
+    experiences.push({
+      id: id,                           
+      key: id,                         
+      name: exp.name || "Unnamed",
+      value: Number(exp.value ?? 0),
+      core: !!exp.core,
+      description: exp.description || ""
+    });
+  }
 
-      // traits & resistances (even if HBS doesn’t show yet, ready to use)
-      traits,
-      resistance,
+  // === ARMOR (marks live on the equipped item; MAX comes from ACTOR (post-effects)) ===
+  const equippedArmor = (this.actor?.items ?? []).find(item => 
+    item.type === "armor" && item.system?.equipped === true
+  );
 
-      // weapons
-      primaryWeapon,
-      secondaryWeapon,
-      ancestryFeatures, communityFeatures, classFeatures, subclassFeatures,
-      ancestryInfo, communityInfo, classInfo, subclassInfo,
-      invConsumables, invLoot,
-      domainLoadout, domainVault,domainsHeader, domainsHeaderTitle,
-      
-      //effects
-      statusEffects,
-      availableConditions,
-      showGenericStatusSection: showGenericStatuses
+  let armor;
+  if (equippedArmor) {
+    const armorSys    = equippedArmor.system;
+    const baseScore   = Number(armorSys.baseScore ?? 0);                
+    const effectiveMax= Math.max(0, Number(this.actor?.system?.armorScore ?? baseScore)); 
+    const rawMarks    = Number(armorSys.marks?.value ?? 0);
+    const marks       = Math.max(0, Math.min(effectiveMax, rawMarks));  
+
+    armor = {
+      max:   effectiveMax,      // Total armor slots (post-effects)
+      value: marks,             // We keep the inverted UX: value === DAMAGE MARKS
+      marks: marks,             // Damage marks taken
+      isReversed: false,        // Armor doesn't use isReversed like HP/Stress
+      name: equippedArmor.name,
+      itemId: equippedArmor.id,
+      hasArmor: true
+    };
+  } else {
+    armor = {
+      max: 0,
+      value: 0,
+      marks: 0,
+      isReversed: false,
+      name: "",
+      itemId: null,
+      hasArmor: false
     };
   }
+
+  // === DAMAGE THRESHOLDS ===
+  const thresholds = {
+    major:  sys.damageThresholds?.major  ?? 0,
+    severe: sys.damageThresholds?.severe ?? 0
+  };
+
+  // === RESISTANCE ===
+  const resistance = {
+    physical: {
+      resistance: !!sys.resistance?.physical?.resistance,
+      immunity:   !!sys.resistance?.physical?.immunity,
+      reduction:  sys.resistance?.physical?.reduction ?? 0
+    },
+    magical: {
+      resistance: !!sys.resistance?.magical?.resistance,
+      immunity:   !!sys.resistance?.magical?.immunity,
+      reduction:  sys.resistance?.magical?.reduction ?? 0
+    }
+  };
+
+  // === INVENTORY ===
+  const invConsumables = [];
+  const invLoot = [];
+
+  for (const it of (this.actor?.items ?? [])) {
+    if (it.type !== "consumable" && it.type !== "loot") continue;
+
+    const hasActions = itemHasActions(it);
+
+    const entry = {
+      id: it.id,
+      type: it.type,
+      name: it.name,
+      img: it.img || "icons/svg/aura.svg",
+      qty: Number(it.system?.quantity ?? 1),
+      description: it.system?.description ?? "",
+      hasActions: hasActions,
+      actionPath: (() => {
+        if (it.type !== "consumable") return "";
+        const sys = it.system ?? {};
+        if (sys.actionPath) return sys.actionPath;
+        if (sys.actions && typeof sys.actions === "object") {
+          const first = Object.values(sys.actions)[0];
+          return first?.systemPath || "use";
+        }
+        return "use";
+      })()
+    };
+
+    if (it.type === "consumable") invConsumables.push(entry);
+    if (it.type === "loot") invLoot.push(entry);
+  }
+
+  // === DOMAIN CARDS ===
+  const domainLoadout = [];
+  const domainVault = [];
+
+  for (const it of (this.actor?.items ?? [])) {
+    if (it.type !== "domainCard") continue;
+
+    const isInVault = !!it.system?.inVault;
+    // Cards in vault should not be clickable for actions
+    const hasActions = isInVault ? false : itemHasActions(it);
+
+    const entry = {
+      id: it.id,
+      name: it.name,
+      img: it.img || "icons/svg/aura.svg",
+      description: it.system?.description ?? "",
+      hasActions: hasActions,
+      recallCost: Number(it.system?.recallCost ?? 0),
+      domain: (it.system?.domain ?? "").toString(),
+      inVault: isInVault,
+      actionPath: (() => {
+        const s = it.system ?? {};
+        if (s.actionPath) return s.actionPath;
+        if (s.actions && typeof s.actions === "object") {
+          const first = Object.values(s.actions)[0];
+          return first?.systemPath || "use";
+        }
+        return "use";
+      })()
+    };
+
+    (entry.inVault ? domainVault : domainLoadout).push(entry);
+  }
+
+  // === PARENT ITEMS: ancestry / community / class / subclass (for header captions) ===
+  const byType = (t) => (this.actor?.items ?? []).find(i => i.type === t) ?? null;
+
+  const ancestryItem  = byType("ancestry");
+  const communityItem = byType("community");
+  const classItem     = byType("class");
+  const subclassItem  = byType("subclass");
+
+  const ancestryInfo  = ancestryItem  ? { id: ancestryItem.id,  name: ancestryItem.name,  img: ancestryItem.img  } : null;
+  const communityInfo = communityItem ? { id: communityItem.id, name: communityItem.name, img: communityItem.img } : null;
+  const classInfo     = classItem     ? { id: classItem.id,     name: classItem.name,     img: classItem.img     } : null;
+  const subclassInfo  = subclassItem  ? { id: subclassItem.id,  name: subclassItem.name,  img: subclassItem.img  } : null;
+
+  // Return everything your HBS references today (+ a few future-safe keys)
+  return {
+    actorName,
+    portrait,
+    isDying,
+    // hasRingArt,
+
+    // resources
+    hitPoints,
+    stress,
+    hope: { value: hopeValue, max: hopeMax },
+    hopePips,
+
+    // defenses & scores
+    evasion,
+    armor,
+    thresholds,
+    proficiency,
+    experiences,
+
+    // traits & resistances (even if HBS doesn't show yet, ready to use)
+    traits,
+    resistance,
+
+    // weapons
+    primaryWeapon,
+    secondaryWeapon,
+    ancestryFeatures, communityFeatures, classFeatures, subclassFeatures,
+    ancestryInfo, communityInfo, classInfo, subclassInfo,
+    invConsumables, invLoot,
+    domainLoadout, domainVault,domainsHeader, domainsHeaderTitle,
+    
+    //effects
+    statusEffects,
+    availableConditions,
+    showGenericStatusSection: showGenericStatuses,
+    
+    //custom buttons
+    customButtons
+  };
+}
+
+
 
   async _onRender() {
     // Respect per-user disable toggle

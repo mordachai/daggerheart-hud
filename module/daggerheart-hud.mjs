@@ -20,6 +20,14 @@ Hooks.once("ready", async () => {
   await foundry.applications.handlebars.loadTemplates(DHUD.templates);
 });
 
+// Register custom buttons
+Hooks.once("ready", async () => {
+  await foundry.applications.handlebars.loadTemplates(DHUD.templates);
+  
+  // Emit hook for custom button registration
+  Hooks.callAll("daggerheart-hud:registerButtons");
+});
+
 let _hudApp;
 
 const isDaggerheartPC = (token) => {

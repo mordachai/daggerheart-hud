@@ -7,7 +7,7 @@
 /* When you add a new theme, update the comment above with the new name */
 
 :where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-default {
-  --dh-accent: #f2c24b; --dh-surface: #15161a; --dh-border: rgba(255, 255, 255, 0.12); --dh-pip-border: #f2c34b;
+  --dh-accent: #f2c24b; --dh-surface: #15161a; --dh-border: rgba(255, 255, 255, 0.12); --dh-pip-border: #f2c34bc7;
 }
 
 :where(body, .daggerheart-hud, .dh-hudrings .cards .card).dhud-theme-shadowveil {
