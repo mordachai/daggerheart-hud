@@ -1052,250 +1052,222 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         return;
       }
 
+      // Quantity change buttons
+      const qtyBtn = ev.target.closest("[data-action='qty-change']");
+      if (qtyBtn) {
+        stop(ev);
+        const itemId = qtyBtn.dataset.itemId;
+        const delta = parseInt(qtyBtn.dataset.delta);
+        const item = actor.items.get(itemId);
+        if (item) {
+          const newQty = Math.max(0, (item.system.quantity || 0) + delta);
+          await item.update({"system.quantity": newQty});
+        }
+        return;
+      }
+
+      // Quantity input changes
+      const qtyInput = ev.target.closest(".dhud-qty-input");
+      if (qtyInput) {
+        const itemId = qtyInput.dataset.itemId;
+        const newQty = Math.max(0, parseInt(qtyInput.value) || 0);
+        const item = actor.items.get(itemId);
+        if (item && newQty !== item.system.quantity) {
+          await item.update({"system.quantity": newQty});
+        }
+        return;
+      }
+
     }, true);
 
     this._delegatedBound = true;
   }
 
+  async _prepareContext(_options) { 
+    const actor = this.actor ?? null;
 
+    // Fallbacks
+    let actorName = "—";
+    let portrait  = "icons/svg/mystery-man.svg";
 
+    if (actor) {
+      actorName = actor.name ?? "—";
+      // Prefer the actor portrait; fall back to the prototype token's texture if empty
+      const protoSrc = actor?.prototypeToken?.texture?.src;
+      portrait = (actor.img && actor.img.trim()) ? actor.img : (protoSrc || portrait);
+    }
 
+    // Canonical system root (guarded)
+    const sys = actor?.system ?? {};
 
-  async _prepareContext(_options) {
-  const actor = this.actor ?? null;
+    const customButtons = {
+      traits: [],
+      inventory: [],
+      // other sections...
+    };
 
-  // Fallbacks
-  let actorName = "—";
-  let portrait  = "icons/svg/mystery-man.svg";
-
-  if (actor) {
-    actorName = actor.name ?? "—";
-    // Prefer the actor portrait; fall back to the prototype token's texture if empty
-    const protoSrc = actor?.prototypeToken?.texture?.src;
-    portrait = (actor.img && actor.img.trim()) ? actor.img : (protoSrc || portrait);
-  }
-
-  // Canonical system root (guarded)
-  const sys = actor?.system ?? {};
-
-  const customButtons = {
-    traits: [],
-    inventory: [],
-    // other sections...
-  };
-
-  // Collect custom buttons for each section
-  if (DaggerheartActorHUD._customButtons) {
-    for (const [id, config] of DaggerheartActorHUD._customButtons) {
-      if (config.section === "traits") {
-        // Check condition if provided
-        if (!config.condition || config.condition(this.actor)) {
-          customButtons.traits.push({ id, ...config });
+    // Collect custom buttons for each section
+    if (DaggerheartActorHUD._customButtons) {
+      for (const [id, config] of DaggerheartActorHUD._customButtons) {
+        if (config.section === "traits") {
+          // Check condition if provided
+          if (!config.condition || config.condition(this.actor)) {
+            customButtons.traits.push({ id, ...config });
+          }
         }
       }
     }
-  }
 
-  // === PRIMARY WEAPON (only equipped & NOT secondary); else Unarmed ===
-  let primaryWeapon = null;
-  {
-    const items = this.actor?.items ?? [];
-    const weapons = items.filter(i => i.type === "weapon");
+    // === PRIMARY WEAPON (only equipped & NOT secondary); else Unarmed ===
+    let primaryWeapon = null;
+    {
+      const items = this.actor?.items ?? [];
+      const weapons = items.filter(i => i.type === "weapon");
 
-    // Only consider EQUIPPED weapons that are NOT marked as secondary
-    const equippedNonSecondary = weapons.filter(w => w.system?.equipped === true && w.system?.secondary !== true);
+      // Only consider EQUIPPED weapons that are NOT marked as secondary
+      const equippedNonSecondary = weapons.filter(w => w.system?.equipped === true && w.system?.secondary !== true);
 
-    const pick = equippedNonSecondary[0] ?? null;
+      const pick = equippedNonSecondary[0] ?? null;
 
-    if (pick) {
-      primaryWeapon = {
-        id: pick.id,
-        name: pick.name,
-        img: pick.img || "icons/svg/sword.svg",
-        isUnarmed: false
-      };
-    }
-  }
-
-  // If none, show Unarmed from actor.system.usedUnarmed or attack
-  if (!primaryWeapon) {
-    const un = sys.usedUnarmed || sys.attack;
-    if (un) {
-      const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
-      primaryWeapon = {
-        id: null,
-        name: locName,
-        img: un.img || "icons/skills/melee/unarmed-punch-fist-yellow-red.webp",
-        isUnarmed: true
-      };
-    }
-  }
-
-  // === SECONDARY WEAPON ===
-  let secondaryWeapon = null;
-  {
-    const items = this.actor?.items ?? [];
-    const weaponsAll = items.filter(i => i.type === "weapon");
-    const equipped   = weaponsAll.filter(w => w.system?.equipped === true);
-
-    const primaryId = primaryWeapon?.isUnarmed ? null : primaryWeapon?.id ?? null;
-    
-    // Check if primary weapon is two-handed
-    const primaryWeaponItem = primaryId ? items.find(w => w.id === primaryId) : null;
-    const isTwoHanded = primaryWeaponItem?.system?.burden === "twoHanded";
-    
-    let pick = null;
-    
-    if (isTwoHanded && primaryWeaponItem) {
-      // For two-handed weapons, use the same weapon for both slots
-      pick = primaryWeaponItem;
-    } else {
-      // Original logic for one-handed weapons
-      pick = equipped.find(w => w.system?.secondary === true) ??
-            equipped.find(w => w.id !== primaryId) ??
-            null;
+      if (pick) {
+        primaryWeapon = {
+          id: pick.id,
+          name: pick.name,
+          img: pick.img || "icons/svg/sword.svg",
+          isUnarmed: false
+        };
+      }
     }
 
-    if (pick) {
-      secondaryWeapon = {
-        id: pick.id,
-        name: pick.name,
-        img: pick.img || "icons/svg/shield.svg",
-        isUnarmed: false
-      };
+    // If none, show Unarmed from actor.system.usedUnarmed or attack
+    if (!primaryWeapon) {
+      const un = sys.usedUnarmed || sys.attack;
+      if (un) {
+        const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
+        primaryWeapon = {
+          id: null,
+          name: locName,
+          img: un.img || "icons/skills/melee/unarmed-punch-fist-yellow-red.webp",
+          isUnarmed: true
+        };
+      }
     }
-  }
 
-  // If none, fall back to Unarmed
-  if (!secondaryWeapon) {
-    const un = sys.attack;
-    if (un) {
-      const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
-      secondaryWeapon = {
-        id: null,
-        name: locName,
-        img: un.img || "icons/skills/melee/unarmed-punch-fist-yellow-red.webp",
-        isUnarmed: true
-      };
+    // === SECONDARY WEAPON ===
+    let secondaryWeapon = null;
+    {
+      const items = this.actor?.items ?? [];
+      const weaponsAll = items.filter(i => i.type === "weapon");
+      const equipped   = weaponsAll.filter(w => w.system?.equipped === true);
+
+      const primaryId = primaryWeapon?.isUnarmed ? null : primaryWeapon?.id ?? null;
+      
+      // Check if primary weapon is two-handed
+      const primaryWeaponItem = primaryId ? items.find(w => w.id === primaryId) : null;
+      const isTwoHanded = primaryWeaponItem?.system?.burden === "twoHanded";
+      
+      let pick = null;
+      
+      if (isTwoHanded && primaryWeaponItem) {
+        // For two-handed weapons, use the same weapon for both slots
+        pick = primaryWeaponItem;
+      } else {
+        // Original logic for one-handed weapons
+        pick = equipped.find(w => w.system?.secondary === true) ??
+              equipped.find(w => w.id !== primaryId) ??
+              null;
+      }
+
+      if (pick) {
+        secondaryWeapon = {
+          id: pick.id,
+          name: pick.name,
+          img: pick.img || "icons/svg/shield.svg",
+          isUnarmed: false
+        };
+      }
     }
-  }
 
-  // === ACTIVE STATUS EFFECTS ===
-  const activeStatuses = new Set();
-  const statusEffects = [];
-
-  for (const effect of (this.actor?.effects ?? [])) {
-    if (effect.disabled) continue;
-    
-    // Track which statuses are currently active
-    if (effect.statuses?.length) {
-      effect.statuses.forEach(status => activeStatuses.add(status));
+    // If none, fall back to Unarmed
+    if (!secondaryWeapon) {
+      const un = sys.attack;
+      if (un) {
+        const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
+        secondaryWeapon = {
+          id: null,
+          name: locName,
+          img: un.img || "icons/skills/melee/unarmed-punch-fist-yellow-red.webp",
+          isUnarmed: true
+        };
+      }
     }
-    
-    statusEffects.push({
-      id: effect.id,
-      name: effect.name,
-      img: effect.img || "icons/svg/aura.svg",
-      statuses: effect.statuses || [],
-      isTemporary: effect.duration?.rounds !== null || effect.duration?.turns !== null
+
+    // === ACTIVE STATUS EFFECTS ===
+    const activeStatuses = new Set();
+    const statusEffects = [];
+
+    for (const effect of (this.actor?.effects ?? [])) {
+      if (effect.disabled) continue;
+      
+      // Track which statuses are currently active
+      if (effect.statuses?.length) {
+        effect.statuses.forEach(status => activeStatuses.add(status));
+      }
+      
+      statusEffects.push({
+        id: effect.id,
+        name: effect.name,
+        img: effect.img || "icons/svg/aura.svg",
+        statuses: effect.statuses || [],
+        isTemporary: effect.duration?.rounds !== null || effect.duration?.turns !== null
+      });
+    }
+
+    // === AVAILABLE CONDITIONS ===
+    const daggerheartConditions = [];
+    const genericConditions = [];
+
+    // Get Daggerheart-specific conditions first
+    const dhConditions = CONFIG.DH?.GENERAL?.conditions || {};
+    Object.values(dhConditions).forEach(condition => {
+      daggerheartConditions.push({
+        id: condition.id,
+        name: condition.name, // This is an i18n key
+        img: condition.img,
+        description: condition.description, // Also an i18n key
+        isActive: activeStatuses.has(condition.id),
+        source: 'daggerheart'
+      });
     });
-  }
 
-  // === AVAILABLE CONDITIONS ===
-  const daggerheartConditions = [];
-  const genericConditions = [];
-
-  // Get Daggerheart-specific conditions first
-  const dhConditions = CONFIG.DH?.GENERAL?.conditions || {};
-  Object.values(dhConditions).forEach(condition => {
-    daggerheartConditions.push({
-      id: condition.id,
-      name: condition.name, // This is an i18n key
-      img: condition.img,
-      description: condition.description, // Also an i18n key
-      isActive: activeStatuses.has(condition.id),
-      source: 'daggerheart'
-    });
-  });
-
-  // Only add generic Foundry conditions if the system setting allows it
-  const showGenericStatuses = game.settings.get('daggerheart', 'Appearance').showGenericStatusEffects;
-  if (showGenericStatuses) {
-    CONFIG.statusEffects
-      .filter(effect => !effect.systemEffect)
-      .forEach(effect => {
-        genericConditions.push({
-          id: effect.id,
-          name: effect.name, // i18n key
-          img: effect.img,
-          description: effect.description || "",
-          isActive: activeStatuses.has(effect.id),
-          source: 'foundry'
+    // Only add generic Foundry conditions if the system setting allows it
+    const showGenericStatuses = game.settings.get('daggerheart', 'Appearance').showGenericStatusEffects;
+    if (showGenericStatuses) {
+      CONFIG.statusEffects
+        .filter(effect => !effect.systemEffect)
+        .forEach(effect => {
+          genericConditions.push({
+            id: effect.id,
+            name: effect.name, // i18n key
+            img: effect.img,
+            description: effect.description || "",
+            isActive: activeStatuses.has(effect.id),
+            source: 'foundry'
+          });
         });
-      });
-  }
+    }
 
-  const availableConditions = [...daggerheartConditions, ...genericConditions];
+    const availableConditions = [...daggerheartConditions, ...genericConditions];
 
-  // === ANCESTRY / COMMUNITY FEATURES ===
-  const ancestryFeatures = [];
-  const communityFeatures = [];
 
-  for (const it of (this.actor?.items ?? [])) {
-    if (it.type !== "feature") continue;
-
-    const origin = it.system?.originItemType;
-    if (origin !== "ancestry" && origin !== "community") continue;
-
-    const hasActions = itemHasActions(it);
-
-    const entry = {
-      id: it.id,
-      name: it.name,
-      img: it.img || "icons/svg/aura.svg",
-      description: it.system?.description ?? "",
-      hasActions: hasActions,
-      actionPath: (() => {
-        const sys = it.system ?? {};
-        if (sys.actions && typeof sys.actions === "object") {
-          const first = Object.values(sys.actions)[0];
-          if (first?.systemPath) return first.systemPath;
-        }
-        return "use";
-      })()
-    };
-
-    if (origin === "ancestry") ancestryFeatures.push(entry);
-    else communityFeatures.push(entry);
-  }
-
-  // === CLASS / SUBCLASS FEATURES (originItemType) with TIER GATING FOR SUBCLASS ===
-  const classFeatures = [];
-  const subclassFeatures = [];
-
-  // 1) Determine allowed subclass identifiers from the actor's subclass featureState
-  //    featureState: 1 = foundation, 2 = specialization, 3 = mastery
-  const subclasses = (this.actor?.items ?? []).filter(i => i.type === "subclass");
-  let subclassTier = 0;
-  for (const sc of subclasses) {
-    const t = Number(sc.system?.featureState ?? 0);
-    if (t > subclassTier) subclassTier = t; // in case of multiclass, allow the highest
-  }
-
-  const allowedSubclassIds = new Set();
-  if (subclassTier >= 1) allowedSubclassIds.add("foundation");
-  if (subclassTier >= 2) allowedSubclassIds.add("specialization");
-  if (subclassTier >= 3) allowedSubclassIds.add("mastery");
-
-  // 2) Collect features, gating subclass ones by identifier
-  for (const it of (this.actor?.items ?? [])) {
-    if (it.type !== "feature") continue;
-    const origin = it.system?.originItemType;
-
-    const hasActions = itemHasActions(it);
-
-    if (origin === "class") {
-      classFeatures.push({
+    // === MISCELLANEOUS FEATURES ===
+    const miscFeatures = [];
+    for (const it of (this.actor?.items ?? [])) {
+      if (it.type !== "feature") continue;
+      if (it.system?.originItemType) continue; // Skip ancestry/community/class/subclass
+      
+      const hasActions = itemHasActions(it);
+      miscFeatures.push({
         id: it.id,
         name: it.name,
         img: it.img || "icons/svg/aura.svg",
@@ -1305,300 +1277,376 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           const s = it.system ?? {};
           if (s.actions && typeof s.actions === "object") {
             const first = Object.values(s.actions)[0];
-            if (first?.systemPath) return first.systemPath;
+            return first?.systemPath || "use";
           }
           return "use";
         })()
       });
-      continue;
     }
 
-    if (origin === "subclass") {
-      const ident = (it.system?.identifier || "").toString().toLowerCase();
-      if (!allowedSubclassIds.has(ident)) continue;
+    
+    // === ANCESTRY / COMMUNITY FEATURES ===
+    const ancestryFeatures = [];
+    const communityFeatures = [];
 
-      subclassFeatures.push({
+    for (const it of (this.actor?.items ?? [])) {
+      if (it.type !== "feature") continue;
+
+      const origin = it.system?.originItemType;
+      if (origin !== "ancestry" && origin !== "community") continue;
+
+      const hasActions = itemHasActions(it);
+
+      const entry = {
         id: it.id,
         name: it.name,
         img: it.img || "icons/svg/aura.svg",
         description: it.system?.description ?? "",
         hasActions: hasActions,
         actionPath: (() => {
-          const s = it.system ?? {};
-          if (s.actions && typeof s.actions === "object") {
-            const first = Object.values(s.actions)[0];
+          const sys = it.system ?? {};
+          if (sys.actions && typeof sys.actions === "object") {
+            const first = Object.values(sys.actions)[0];
             if (first?.systemPath) return first.systemPath;
           }
           return "use";
         })()
-      });
+      };
+
+      if (origin === "ancestry") ancestryFeatures.push(entry);
+      else communityFeatures.push(entry);
     }
-  }
 
-  // === Actor Domains (header label, localized) ===
-  const rawDomains = Array.isArray(sys.domains) ? sys.domains : [];
-  const domainsHeader = rawDomains
-    .map(d => String(d).trim())
-    .filter(Boolean)
-    .map(key => {
-      // Try i18n label: DAGGERHEART.GENERAL.Domain.<key>.label
-      const i18nKey = `DAGGERHEART.GENERAL.Domain.${key}.label`;
-      const loc = game.i18n?.localize?.(i18nKey);
-      if (loc && loc !== i18nKey) return loc; // localized OK
-      // Fallback: TitleCase the raw key
-      return key.charAt(0).toUpperCase() + key.slice(1);
-    })
-    .join(" & ") || null;
+    // === CLASS / SUBCLASS FEATURES (originItemType) with TIER GATING FOR SUBCLASS ===
+    const classFeatures = [];
+    const subclassFeatures = [];
 
-  // (optional) if you want a tooltip with the concatenated descriptions:
-  const domainsHeaderTitle = rawDomains
-    .map(key => {
-      const dKey = String(key).trim();
-      const name = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.label`);
-      const desc = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.description`);
-      return (name && desc) ? `${name}: ${desc}` : null;
-    })
-    .filter(Boolean)
-    .join("\n") || "";
+    // 1) Determine allowed subclass identifiers from the actor's subclass featureState
+    //    featureState: 1 = foundation, 2 = specialization, 3 = mastery
+    const subclasses = (this.actor?.items ?? []).filter(i => i.type === "subclass");
+    let subclassTier = 0;
+    for (const sc of subclasses) {
+      const t = Number(sc.system?.featureState ?? 0);
+      if (t > subclassTier) subclassTier = t; // in case of multiclass, allow the highest
+    }
 
-  // === RESOURCES (exact system paths) ===
-  const hitPoints = {
-    // system.resources.hitPoints.{value,max,isReversed}
-    value: sys.resources?.hitPoints?.value ?? 0,
-    max:   sys.resources?.hitPoints?.max   ?? 0,
-    isReversed: !!sys.resources?.hitPoints?.isReversed
-  };
-  
-  const isDying = hitPoints.value >= hitPoints.max; 
+    const allowedSubclassIds = new Set();
+    if (subclassTier >= 1) allowedSubclassIds.add("foundation");
+    if (subclassTier >= 2) allowedSubclassIds.add("specialization");
+    if (subclassTier >= 3) allowedSubclassIds.add("mastery");
 
-  const stress = {
-    // system.resources.stress.{value,max,isReversed}
-    value: sys.resources?.stress?.value ?? 0,
-    max:   sys.resources?.stress?.max   ?? 0,
-    isReversed: !!sys.resources?.stress?.isReversed
-  };
+    // 2) Collect features, gating subclass ones by identifier
+    for (const it of (this.actor?.items ?? [])) {
+      if (it.type !== "feature") continue;
+      const origin = it.system?.originItemType;
 
-  // === HOPE ===
-  const rawValue = sys.resources?.hope?.value ?? 0;
-  const rawMax   = sys.resources?.hope?.max   ?? 0;
-  const hopeMax  = Math.max(0, Number(rawMax));
-  const hopeValue= Math.min(hopeMax, Math.max(0, Number(rawValue)));
+      const hasActions = itemHasActions(it);
 
-  const hopePips = Array.from({ length: hopeMax }, (_, i) => ({
-    filled: i < hopeValue
-  }));
+      if (origin === "class") {
+        classFeatures.push({
+          id: it.id,
+          name: it.name,
+          img: it.img || "icons/svg/aura.svg",
+          description: it.system?.description ?? "",
+          hasActions: hasActions,
+          actionPath: (() => {
+            const s = it.system ?? {};
+            if (s.actions && typeof s.actions === "object") {
+              const first = Object.values(s.actions)[0];
+              if (first?.systemPath) return first.systemPath;
+            }
+            return "use";
+          })()
+        });
+        continue;
+      }
 
-  // === TRAITS (ordered + localized via i18n helper) ===
-  const TRAIT_ORDER = ["agility","strength","finesse","instinct","presence","knowledge"];
+      if (origin === "subclass") {
+        const ident = (it.system?.identifier || "").toString().toLowerCase();
+        if (!allowedSubclassIds.has(ident)) continue;
 
-  const traits = TRAIT_ORDER.map(key => {
-    const value = Number(sys.traits?.[key]?.value ?? 0);
-    const loc = Ltrait(key); // { name, verbs[], description }
-    return {
-      key,
-      name: loc.name,           // e.g., "Agility"
-      value,                    // e.g., 2
-      description: loc.description // e.g., "Sprint, Leap, Maneuver"
+        subclassFeatures.push({
+          id: it.id,
+          name: it.name,
+          img: it.img || "icons/svg/aura.svg",
+          description: it.system?.description ?? "",
+          hasActions: hasActions,
+          actionPath: (() => {
+            const s = it.system ?? {};
+            if (s.actions && typeof s.actions === "object") {
+              const first = Object.values(s.actions)[0];
+              if (first?.systemPath) return first.systemPath;
+            }
+            return "use";
+          })()
+        });
+      }
+    }
+
+    // === Actor Domains (header label, localized) ===
+    const rawDomains = Array.isArray(sys.domains) ? sys.domains : [];
+    const domainsHeader = rawDomains
+      .map(d => String(d).trim())
+      .filter(Boolean)
+      .map(key => {
+        // Try i18n label: DAGGERHEART.GENERAL.Domain.<key>.label
+        const i18nKey = `DAGGERHEART.GENERAL.Domain.${key}.label`;
+        const loc = game.i18n?.localize?.(i18nKey);
+        if (loc && loc !== i18nKey) return loc; // localized OK
+        // Fallback: TitleCase the raw key
+        return key.charAt(0).toUpperCase() + key.slice(1);
+      })
+      .join(" & ") || null;
+
+    // (optional) if you want a tooltip with the concatenated descriptions:
+    const domainsHeaderTitle = rawDomains
+      .map(key => {
+        const dKey = String(key).trim();
+        const name = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.label`);
+        const desc = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.description`);
+        return (name && desc) ? `${name}: ${desc}` : null;
+      })
+      .filter(Boolean)
+      .join("\n") || "";
+
+    // === RESOURCES (exact system paths) ===
+    const hitPoints = {
+      // system.resources.hitPoints.{value,max,isReversed}
+      value: sys.resources?.hitPoints?.value ?? 0,
+      max:   sys.resources?.hitPoints?.max   ?? 0,
+      isReversed: !!sys.resources?.hitPoints?.isReversed
     };
-  });
+    
+    const isDying = hitPoints.value >= hitPoints.max; 
 
-  // === PROFICIENCY / DEFENSES ===
-  const proficiency = sys.proficiency ?? 0;
-  const evasion     = sys.evasion     ?? 0; 
+    const stress = {
+      // system.resources.stress.{value,max,isReversed}
+      value: sys.resources?.stress?.value ?? 0,
+      max:   sys.resources?.stress?.max   ?? 0,
+      isReversed: !!sys.resources?.stress?.isReversed
+    };
 
-  // === EXPERIENCES ===
-  const experiences = [];
-  const rawExperiences = sys.experiences ?? {};
-  for (const [id, exp] of Object.entries(rawExperiences)) {
-    if (!exp || typeof exp !== 'object') continue;
-    experiences.push({
-      id: id,                           
-      key: id,                         
-      name: exp.name || "Unnamed",
-      value: Number(exp.value ?? 0),
-      core: !!exp.core,
-      description: exp.description || ""
+    // === HOPE ===
+    const rawValue = sys.resources?.hope?.value ?? 0;
+    const rawMax   = sys.resources?.hope?.max   ?? 0;
+    const hopeMax  = Math.max(0, Number(rawMax));
+    const hopeValue= Math.min(hopeMax, Math.max(0, Number(rawValue)));
+
+    const hopePips = Array.from({ length: hopeMax }, (_, i) => ({
+      filled: i < hopeValue
+    }));
+
+    // === TRAITS (ordered + localized via i18n helper) ===
+    const TRAIT_ORDER = ["agility","strength","finesse","instinct","presence","knowledge"];
+
+    const traits = TRAIT_ORDER.map(key => {
+      const value = Number(sys.traits?.[key]?.value ?? 0);
+      const loc = Ltrait(key); // { name, verbs[], description }
+      return {
+        key,
+        name: loc.name,           // e.g., "Agility"
+        value,                    // e.g., 2
+        description: loc.description // e.g., "Sprint, Leap, Maneuver"
+      };
     });
-  }
 
-  // === ARMOR (marks live on the equipped item; MAX comes from ACTOR (post-effects)) ===
-  const equippedArmor = (this.actor?.items ?? []).find(item => 
-    item.type === "armor" && item.system?.equipped === true
-  );
+    // === PROFICIENCY / DEFENSES ===
+    const proficiency = sys.proficiency ?? 0;
+    const evasion     = sys.evasion     ?? 0; 
 
-  let armor;
-  if (equippedArmor) {
-    const armorSys    = equippedArmor.system;
-    const baseScore   = Number(armorSys.baseScore ?? 0);                
-    const effectiveMax= Math.max(0, Number(this.actor?.system?.armorScore ?? baseScore)); 
-    const rawMarks    = Number(armorSys.marks?.value ?? 0);
-    const marks       = Math.max(0, Math.min(effectiveMax, rawMarks));  
-
-    armor = {
-      max:   effectiveMax,      // Total armor slots (post-effects)
-      value: marks,             // We keep the inverted UX: value === DAMAGE MARKS
-      marks: marks,             // Damage marks taken
-      isReversed: false,        // Armor doesn't use isReversed like HP/Stress
-      name: equippedArmor.name,
-      itemId: equippedArmor.id,
-      hasArmor: true
-    };
-  } else {
-    armor = {
-      max: 0,
-      value: 0,
-      marks: 0,
-      isReversed: false,
-      name: "",
-      itemId: null,
-      hasArmor: false
-    };
-  }
-
-  // === DAMAGE THRESHOLDS ===
-  const thresholds = {
-    major:  sys.damageThresholds?.major  ?? 0,
-    severe: sys.damageThresholds?.severe ?? 0
-  };
-
-  // === RESISTANCE ===
-  const resistance = {
-    physical: {
-      resistance: !!sys.resistance?.physical?.resistance,
-      immunity:   !!sys.resistance?.physical?.immunity,
-      reduction:  sys.resistance?.physical?.reduction ?? 0
-    },
-    magical: {
-      resistance: !!sys.resistance?.magical?.resistance,
-      immunity:   !!sys.resistance?.magical?.immunity,
-      reduction:  sys.resistance?.magical?.reduction ?? 0
+    // === EXPERIENCES ===
+    const experiences = [];
+    const rawExperiences = sys.experiences ?? {};
+    for (const [id, exp] of Object.entries(rawExperiences)) {
+      if (!exp || typeof exp !== 'object') continue;
+      experiences.push({
+        id: id,                           
+        key: id,                         
+        name: exp.name || "Unnamed",
+        value: Number(exp.value ?? 0),
+        core: !!exp.core,
+        description: exp.description || ""
+      });
     }
-  };
 
-  // === INVENTORY ===
-  const invConsumables = [];
-  const invLoot = [];
+    // === ARMOR (marks live on the equipped item; MAX comes from ACTOR (post-effects)) ===
+    const equippedArmor = (this.actor?.items ?? []).find(item => 
+      item.type === "armor" && item.system?.equipped === true
+    );
 
-  for (const it of (this.actor?.items ?? [])) {
-    if (it.type !== "consumable" && it.type !== "loot") continue;
+    let armor;
+    if (equippedArmor) {
+      const armorSys    = equippedArmor.system;
+      const baseScore   = Number(armorSys.baseScore ?? 0);                
+      const effectiveMax= Math.max(0, Number(this.actor?.system?.armorScore ?? baseScore)); 
+      const rawMarks    = Number(armorSys.marks?.value ?? 0);
+      const marks       = Math.max(0, Math.min(effectiveMax, rawMarks));  
 
-    const hasActions = itemHasActions(it);
+      armor = {
+        max:   effectiveMax,      // Total armor slots (post-effects)
+        value: marks,             // We keep the inverted UX: value === DAMAGE MARKS
+        marks: marks,             // Damage marks taken
+        isReversed: false,        // Armor doesn't use isReversed like HP/Stress
+        name: equippedArmor.name,
+        itemId: equippedArmor.id,
+        hasArmor: true
+      };
+    } else {
+      armor = {
+        max: 0,
+        value: 0,
+        marks: 0,
+        isReversed: false,
+        name: "",
+        itemId: null,
+        hasArmor: false
+      };
+    }
 
-    const entry = {
-      id: it.id,
-      type: it.type,
-      name: it.name,
-      img: it.img || "icons/svg/aura.svg",
-      qty: Number(it.system?.quantity ?? 1),
-      description: it.system?.description ?? "",
-      hasActions: hasActions,
-      actionPath: (() => {
-        if (it.type !== "consumable") return "";
-        const sys = it.system ?? {};
-        if (sys.actionPath) return sys.actionPath;
-        if (sys.actions && typeof sys.actions === "object") {
-          const first = Object.values(sys.actions)[0];
-          return first?.systemPath || "use";
-        }
-        return "use";
-      })()
+    // === DAMAGE THRESHOLDS ===
+    const thresholds = {
+      major:  sys.damageThresholds?.major  ?? 0,
+      severe: sys.damageThresholds?.severe ?? 0
     };
 
-    if (it.type === "consumable") invConsumables.push(entry);
-    if (it.type === "loot") invLoot.push(entry);
-  }
-
-  // === DOMAIN CARDS ===
-  const domainLoadout = [];
-  const domainVault = [];
-
-  for (const it of (this.actor?.items ?? [])) {
-    if (it.type !== "domainCard") continue;
-
-    const isInVault = !!it.system?.inVault;
-    // Cards in vault should not be clickable for actions
-    const hasActions = isInVault ? false : itemHasActions(it);
-
-    const entry = {
-      id: it.id,
-      name: it.name,
-      img: it.img || "icons/svg/aura.svg",
-      description: it.system?.description ?? "",
-      hasActions: hasActions,
-      recallCost: Number(it.system?.recallCost ?? 0),
-      domain: (it.system?.domain ?? "").toString(),
-      inVault: isInVault,
-      actionPath: (() => {
-        const s = it.system ?? {};
-        if (s.actionPath) return s.actionPath;
-        if (s.actions && typeof s.actions === "object") {
-          const first = Object.values(s.actions)[0];
-          return first?.systemPath || "use";
-        }
-        return "use";
-      })()
+    // === RESISTANCE ===
+    const resistance = {
+      physical: {
+        resistance: !!sys.resistance?.physical?.resistance,
+        immunity:   !!sys.resistance?.physical?.immunity,
+        reduction:  sys.resistance?.physical?.reduction ?? 0
+      },
+      magical: {
+        resistance: !!sys.resistance?.magical?.resistance,
+        immunity:   !!sys.resistance?.magical?.immunity,
+        reduction:  sys.resistance?.magical?.reduction ?? 0
+      }
     };
 
-    (entry.inVault ? domainVault : domainLoadout).push(entry);
+    // === INVENTORY ===
+    const invConsumables = [];
+    const invLoot = [];
+
+    for (const it of (this.actor?.items ?? [])) {
+      if (it.type !== "consumable" && it.type !== "loot") continue;
+
+      const hasActions = itemHasActions(it);
+
+      const entry = {
+        id: it.id,
+        type: it.type,
+        name: it.name,
+        img: it.img || "icons/svg/aura.svg",
+        qty: Number(it.system?.quantity ?? 0),
+        description: it.system?.description ?? "",
+        hasActions: hasActions,
+        actionPath: (() => {
+          if (it.type !== "consumable") return "";
+          const sys = it.system ?? {};
+          if (sys.actionPath) return sys.actionPath;
+          if (sys.actions && typeof sys.actions === "object") {
+            const first = Object.values(sys.actions)[0];
+            return first?.systemPath || "use";
+          }
+          return "use";
+        })()
+      };
+
+      if (it.type === "consumable") invConsumables.push(entry);
+      if (it.type === "loot") invLoot.push(entry);
+    }
+
+    // === DOMAIN CARDS ===
+    const domainLoadout = [];
+    const domainVault = [];
+
+    for (const it of (this.actor?.items ?? [])) {
+      if (it.type !== "domainCard") continue;
+
+      const isInVault = !!it.system?.inVault;
+      // Cards in vault should not be clickable for actions
+      const hasActions = isInVault ? false : itemHasActions(it);
+
+      const entry = {
+        id: it.id,
+        name: it.name,
+        img: it.img || "icons/svg/aura.svg",
+        description: it.system?.description ?? "",
+        hasActions: hasActions,
+        recallCost: Number(it.system?.recallCost ?? 0),
+        domain: (it.system?.domain ?? "").toString(),
+        inVault: isInVault,
+        actionPath: (() => {
+          const s = it.system ?? {};
+          if (s.actionPath) return s.actionPath;
+          if (s.actions && typeof s.actions === "object") {
+            const first = Object.values(s.actions)[0];
+            return first?.systemPath || "use";
+          }
+          return "use";
+        })()
+      };
+
+      (entry.inVault ? domainVault : domainLoadout).push(entry);
+    }
+
+    // === PARENT ITEMS: ancestry / community / class / subclass (for header captions) ===
+    const byType = (t) => (this.actor?.items ?? []).find(i => i.type === t) ?? null;
+
+    const ancestryItem  = byType("ancestry");
+    const communityItem = byType("community");
+    const classItem     = byType("class");
+    const subclassItem  = byType("subclass");
+
+    const ancestryInfo  = ancestryItem  ? { id: ancestryItem.id,  name: ancestryItem.name,  img: ancestryItem.img  } : null;
+    const communityInfo = communityItem ? { id: communityItem.id, name: communityItem.name, img: communityItem.img } : null;
+    const classInfo     = classItem     ? { id: classItem.id,     name: classItem.name,     img: classItem.img     } : null;
+    const subclassInfo  = subclassItem  ? { id: subclassItem.id,  name: subclassItem.name,  img: subclassItem.img  } : null;
+
+    // Return everything your HBS references today (+ a few future-safe keys)
+    return {
+      actorName,
+      portrait,
+      isDying,
+      // hasRingArt,
+
+      // resources
+      hitPoints,
+      stress,
+      hope: { value: hopeValue, max: hopeMax },
+      hopePips,
+
+      // defenses & scores
+      evasion,
+      armor,
+      thresholds,
+      proficiency,
+      experiences,
+
+      //features
+      miscFeatures,
+
+      // traits & resistances (even if HBS doesn't show yet, ready to use)
+      traits,
+      resistance,
+
+      // weapons
+      primaryWeapon,
+      secondaryWeapon,
+      ancestryFeatures, communityFeatures, classFeatures, subclassFeatures,
+      ancestryInfo, communityInfo, classInfo, subclassInfo,
+      invConsumables, invLoot,
+      domainLoadout, domainVault,domainsHeader, domainsHeaderTitle,
+      
+      //effects
+      statusEffects,
+      availableConditions,
+      showGenericStatusSection: showGenericStatuses,
+      
+      //custom buttons
+      customButtons
+    };
   }
-
-  // === PARENT ITEMS: ancestry / community / class / subclass (for header captions) ===
-  const byType = (t) => (this.actor?.items ?? []).find(i => i.type === t) ?? null;
-
-  const ancestryItem  = byType("ancestry");
-  const communityItem = byType("community");
-  const classItem     = byType("class");
-  const subclassItem  = byType("subclass");
-
-  const ancestryInfo  = ancestryItem  ? { id: ancestryItem.id,  name: ancestryItem.name,  img: ancestryItem.img  } : null;
-  const communityInfo = communityItem ? { id: communityItem.id, name: communityItem.name, img: communityItem.img } : null;
-  const classInfo     = classItem     ? { id: classItem.id,     name: classItem.name,     img: classItem.img     } : null;
-  const subclassInfo  = subclassItem  ? { id: subclassItem.id,  name: subclassItem.name,  img: subclassItem.img  } : null;
-
-  // Return everything your HBS references today (+ a few future-safe keys)
-  return {
-    actorName,
-    portrait,
-    isDying,
-    // hasRingArt,
-
-    // resources
-    hitPoints,
-    stress,
-    hope: { value: hopeValue, max: hopeMax },
-    hopePips,
-
-    // defenses & scores
-    evasion,
-    armor,
-    thresholds,
-    proficiency,
-    experiences,
-
-    // traits & resistances (even if HBS doesn't show yet, ready to use)
-    traits,
-    resistance,
-
-    // weapons
-    primaryWeapon,
-    secondaryWeapon,
-    ancestryFeatures, communityFeatures, classFeatures, subclassFeatures,
-    ancestryInfo, communityInfo, classInfo, subclassInfo,
-    invConsumables, invLoot,
-    domainLoadout, domainVault,domainsHeader, domainsHeaderTitle,
-    
-    //effects
-    statusEffects,
-    availableConditions,
-    showGenericStatusSection: showGenericStatuses,
-    
-    //custom buttons
-    customButtons
-  };
-}
-
-
-
   async _onRender() {
     // Respect per-user disable toggle
     if (getSetting(S.disableForMe)) { this.close(); return; }

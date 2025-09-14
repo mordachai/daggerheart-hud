@@ -178,7 +178,14 @@
                     data-actionpath="{{actionPath}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
-                {{#if qty}}<span class="qty">x{{qty}}</span>{{/if}}
+                {{#if qty}}
+                <span class="dhud-qty-container">
+                  <span class="dhud-qty-btn dhud-qty-minus" data-action="qty-change" data-delta="-1" data-item-id="{{id}}">-</span>
+                  <input class="dhud-qty-input" type="number" value="{{qty}}" min="0" data-item-id="{{id}}">
+                  <span class="dhud-qty-btn dhud-qty-plus" data-action="qty-change" data-delta="+1" data-item-id="{{id}}">+</span>
+                </span>
+                {{/if}}
+                {{!-- {{#if qty}}<span class="qty">x{{qty}}</span>{{/if}} --}}
                 <i class="far fa-comment chat"
                   role="button"
                   tabindex="0"
@@ -211,7 +218,13 @@
                     data-item-id="{{id}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
-                {{#if qty}}<span class="qty">x{{qty}}</span>{{/if}}
+                {{#if qty}}
+                <span class="dhud-qty-container">
+                  <span class="dhud-qty-btn dhud-qty-minus" data-action="qty-change" data-delta="-1" data-item-id="{{id}}">-</span>
+                  <input class="dhud-qty-input" type="number" value="{{qty}}" min="0" data-item-id="{{id}}">
+                  <span class="dhud-qty-btn dhud-qty-plus" data-action="qty-change" data-delta="+1" data-item-id="{{id}}">+</span>
+                </span>
+                {{/if}}
                 <i class="far fa-comment chat"
                   role="button"
                   tabindex="0"
@@ -339,7 +352,7 @@
 
   </div>
 
-  {{!-- =============== RIGHT WING (menus) =============== --}}
+{{!-- =============== RIGHT WING (menus) =============== --}}
   <div class="dhud-wing dhud-wing--right">
     {{!-- CLASS --}}
     <div class="dhud-tabwrap dhud-tabwrap--right">
@@ -417,126 +430,161 @@
       </div>
     </div>
 
-  {{!-- DOMAINS / LOADOUT --}}
-  <div class="dhud-tabwrap dhud-tabwrap--right">
-    <div class="dhud-tab" role="button" tabindex="0"
-        data-tab="loadout" aria-controls="panel-loadout" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.loadout"}}</div>
+    {{!-- DOMAINS / LOADOUT --}}
+    <div class="dhud-tabwrap dhud-tabwrap--right">
+      <div class="dhud-tab" role="button" tabindex="0"
+          data-tab="loadout" aria-controls="panel-loadout" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.loadout"}}</div>
 
-    <div id="panel-loadout" class="dhud-panel dhud-panel--domains" data-panel="loadout" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.loadout"}}">
-      <header>
-      {{l "DAGGERHEART.GENERAL.Domain.plural"}}
-      {{#if domainsHeader}}:
-        <span class="dhud-domains-header" {{#if domainsHeaderTitle}}title="{{domainsHeaderTitle}}"{{/if}}>
-          {{domainsHeader}}
-        </span>
-      {{/if}}
-      </header>
-      <ul class="dhud-acc">
-        {{#each domainLoadout}}
-        <li class="acc">
-          <details>
-            <summary>
-             <img class="icon{{#if hasActions}} clickable{{/if}}"
-                  src="{{img}}"
-                  alt=""
+      <div id="panel-loadout" class="dhud-panel dhud-panel--domains" data-panel="loadout" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.loadout"}}">
+        <header>
+        {{l "DAGGERHEART.GENERAL.Domain.plural"}}
+        {{#if domainsHeader}}:
+          <span class="dhud-domains-header" {{#if domainsHeaderTitle}}title="{{domainsHeaderTitle}}"{{/if}}>
+            {{domainsHeader}}
+          </span>
+        {{/if}}
+        </header>
+        <ul class="dhud-acc">
+          {{#each domainLoadout}}
+          <li class="acc">
+            <details>
+              <summary>
+               <img class="icon{{#if hasActions}} clickable{{/if}}"
+                    src="{{img}}"
+                    alt=""
+                    role="button"
+                    tabindex="0"
+                    data-action="item-exec"
+                    data-item-id="{{id}}"
+                    data-actionpath="{{actionPath}}"
+                    title="{{name}}">
+                <span class="title">{{name}}</span>
+
+                <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
+
+                {{!-- move to vault --}}
+                <i class="fas fa-arrow-down move"
                   role="button"
                   tabindex="0"
+                  data-action="to-vault"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToVault'}}"></i>
+
+                {{!-- send to chat --}}
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.SendToChat'}}"></i>
+              </summary>
+
+              <div class="acc-body">
+                <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
+                  <strong>Domain</strong>: {{domain}}</p>
+                {{{description}}}
+              </div>
+            </details>
+          </li>
+          {{else}}
+          <li class="acc"></li>
+          {{/each}}
+        </ul>
+
+        {{!-- VAULT SECTION (moved inside Loadout) --}}
+        <header>{{l "DAGGERHEART.GENERAL.Tabs.vault"}}</header>
+        <ul class="dhud-acc">
+          {{#each domainVault}}
+          <li class="acc">
+            <details>
+              <summary>
+               <img class="icon{{#if hasActions}} clickable{{/if}}"
+                src="{{img}}"
+                alt=""
+                role="button"
+                tabindex="0"
+                {{#if hasActions}}
                   data-action="item-exec"
                   data-item-id="{{id}}"
                   data-actionpath="{{actionPath}}"
-                  title="{{name}}">
-              <span class="title">{{name}}</span>
+                {{/if}}
+                title="{{name}}">
+                <span class="title">{{name}}</span>
 
-              <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
+                <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
 
-              {{!-- move to vault --}}
-              <i class="fas fa-arrow-down move"
-                role="button"
-                tabindex="0"
-                data-action="to-vault"
-                data-item-id="{{id}}"
-                title="{{l 'DAGGERHEART.UI.Tooltip.sendToVault'}}"></i>
+                {{!-- move to loadout --}}
+                <i class="fas fa-arrow-up move"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-loadout"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToLoadout'}}"></i>
 
-              {{!-- send to chat --}}
-              <i class="far fa-comment chat"
-                role="button"
-                tabindex="0"
-                data-action="to-chat"
-                data-item-id="{{id}}"
-                title="{{l 'DAGGERHEART.UI.Tooltip.SendToChat'}}"></i>
-            </summary>
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.SendToChat'}}"></i>
+              </summary>
 
-            <div class="acc-body">
-              <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
-                <strong>Domain</strong>: {{domain}}</p>
-              {{{description}}}
-            </div>
-          </details>
-        </li>
-        {{else}}
-        <li class="acc"></li>
-        {{/each}}
-      </ul>
+              <div class="acc-body">
+                <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
+                  <strong>Domain</strong>: {{domain}}</p>
+                {{{description}}}
+              </div>
+            </details>
+          </li>
+          {{else}}
+          <li class="acc"></li>
+          {{/each}}
+        </ul>
+      </div>
     </div>
-  </div>
 
-  {{!-- VAULT (separate tab) --}}
-  <div class="dhud-tabwrap dhud-tabwrap--right">
-    <div class="dhud-tab" role="button" tabindex="0"
-        data-tab="vault" aria-controls="panel-vault" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.vault"}}</div>
 
-    <div id="panel-vault" class="dhud-panel dhud-panel--vault" data-panel="vault" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.vault"}}">
-      <header>{{l "DAGGERHEART.GENERAL.Tabs.vault"}}</header>
-      <ul class="dhud-acc">
-        {{#each domainVault}}
-        <li class="acc">
-          <details>
-            <summary>
-             <img class="icon{{#if hasActions}} clickable{{/if}}"
-              src="{{img}}"
-              alt=""
-              role="button"
-              tabindex="0"
-              {{#if hasActions}}
-                data-action="item-exec"
-                data-item-id="{{id}}"
-                data-actionpath="{{actionPath}}"
-              {{/if}}
-              title="{{name}}">
-              <span class="title">{{name}}</span>
+    {{!-- FEATURES --}}
+    <div class="dhud-tabwrap dhud-tabwrap--right">
+      <div class="dhud-tab" role="button" tabindex="0"
+          data-tab="features" aria-controls="panel-features" aria-expanded="false">{{l 'DAGGERHEART.GENERAL.Tabs.features'}}</div>
 
-              <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
-
-              {{!-- move to loadout --}}
-              <i class="fas fa-arrow-up move"
-                role="button"
-                tabindex="0"
-                data-action="to-loadout"
-                data-item-id="{{id}}"
-                title="{{l 'DAGGERHEART.UI.Tooltip.sendToLoadout'}}"></i>
-
-              <i class="far fa-comment chat"
-                role="button"
-                tabindex="0"
-                data-action="to-chat"
-                data-item-id="{{id}}"
-                title="{{l 'DAGGERHEART.UI.Tooltip.SendToChat'}}"></i>
-            </summary>
-
-            <div class="acc-body">
-              <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
-                <strong>Domain</strong>: {{domain}}</p>
-              {{{description}}}
-            </div>
-          </details>
-        </li>
-        {{else}}
-        <li class="acc"></li>
-        {{/each}}
-      </ul>
+      <div id="panel-features" class="dhud-panel dhud-panel--features" data-panel="features" role="dialog" aria-label="{{l 'DAGGERHEART.GENERAL.Tabs.features'}}">
+        <header>{{l 'DAGGERHEART.GENERAL.Tabs.features'}}</header>
+        <ul class="dhud-acc">
+          {{#each miscFeatures}}
+          <li class="acc">
+            <details>
+              <summary>
+              <img class="icon{{#if hasActions}} clickable{{/if}}"
+                    src="{{img}}"
+                    alt=""
+                    role="button"
+                    tabindex="0"
+                    data-action="item-exec"
+                    data-item-id="{{id}}"
+                    data-actionpath="{{actionPath}}"
+                    title="{{name}}">
+                <span class="title">{{name}}</span>
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+              </summary>
+              <div class="acc-body">{{{description}}}</div>
+            </details>
+          </li>
+          {{else}}
+          <li class="acc">Empty</li>
+          {{/each}}
+        </ul>
+      </div>
     </div>
+
+
   </div>
-</div>
 
 {{!-- =============== CONTEXT MENU & STATUS GRID =============== --}}
   

@@ -116,7 +116,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud[data-open="domains"]   #panel-domains,
 .dhud[data-open="class"]     #panel-class,
 .dhud[data-open="loadout"]   #panel-loadout,
-.dhud[data-open="vault"]     #panel-vault { display: block; }
+.dhud[data-open="features"]   #panel-features { display: block; }
 
 /* ===== Accordion (itens dos painéis) ===== */
 .dhud-acc { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem;  }
@@ -189,7 +189,41 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   margin-left: 0.4rem;
 }
 
-/* ===== Core (anel central e círculos laterais) ===== */
+/* Quantity buttons */
+.dhud-qty-container {
+  display: inline-flex;
+  align-items: center;
+}
+
+.dhud-qty-btn {
+  opacity: 0;
+  cursor: pointer;
+  padding: 2px 4px;
+  color: var(--dh-accent);
+  font-size: 18px;
+  font-weight: 700;
+  transition: opacity 120ms ease;
+}
+
+.dhud-qty-container:hover .dhud-qty-btn {
+  opacity: 1.0;
+}
+
+.dhud-qty-input {
+  width: 30px;
+  text-align: center;
+  border: 2px solid var(--dh-border);
+  border-radius: 5px;
+  background: none;
+  color: var(--dh-text);
+  padding: 1px 2px;
+}
+
+.dhud-qty-input:hover {
+  border: 2px solid var(--dh-pip-border);
+}
+
+/* ===== Core (Central ring and circle for weapons) ===== */
 .dhud-core {
   /* tamanhos principais */
   --circle-d: 110px;
