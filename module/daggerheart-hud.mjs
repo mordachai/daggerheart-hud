@@ -328,10 +328,6 @@ Hooks.on("createItem", (item) => {
 Hooks.on("updateItem", (item, changes) => {
   const parent = item?.parent;
   if (_hudApp?.actor && parent && parent.id === _hudApp.actor.id) {
-    console.log("[DHUD HOOK DEBUG] Item updated:", item.name);
-    console.log("[DHUD HOOK DEBUG] Changes:", changes);
-    console.log("[DHUD HOOK DEBUG] _updatingQuantity flag:", _hudApp._updatingQuantity);
-    
     // Skip re-render during quantity updates OR if only system fields changed (ignore _stats and _id)
     const systemKeys = Object.keys(changes).filter(key => !key.startsWith('_'));
     const isOnlySystemChange = systemKeys.length === 1 && systemKeys[0] === 'system';
@@ -344,17 +340,10 @@ Hooks.on("updateItem", (item, changes) => {
       )
     );
     
-    console.log("[DHUD HOOK DEBUG] systemKeys:", systemKeys);
-    console.log("[DHUD HOOK DEBUG] isOnlySystemChange:", isOnlySystemChange);
-    console.log("[DHUD HOOK DEBUG] isSimpleResourceUpdate:", isSimpleResourceUpdate);
-    console.log("[DHUD HOOK DEBUG] Will skip re-render:", _hudApp._updatingQuantity || isSimpleResourceUpdate);
-    
     if (_hudApp._updatingQuantity || isSimpleResourceUpdate) {
-      console.log("[DHUD HOOK DEBUG] Skipping re-render");
       return;
     }
     
-    console.log("[DHUD HOOK DEBUG] Triggering re-render");
     dhudRequestRender();
   }
 });
