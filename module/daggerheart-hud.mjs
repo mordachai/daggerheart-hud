@@ -325,9 +325,38 @@ Hooks.on("createItem", (item) => {
   if (_hudApp?.actor && parent && parent.id === _hudApp.actor.id) dhudRequestRender();
 });
 
-Hooks.on("updateItem", (item, _changes) => {
+Hooks.on("updateItem", (item, changes) => {
   const parent = item?.parent;
-  if (_hudApp?.actor && parent && parent.id === _hudApp.actor.id) dhudRequestRender();
+  if (_hudApp?.actor && parent && parent.id === _hudApp.actor.id) {
+    console.log("[DHUD HOOK DEBUG] Item updated:", item.name);
+    console.log("[DHUD HOOK DEBUG] Changes:", changes);
+    console.log("[DHUD HOOK DEBUG] _updatingQuantity flag:", _hudApp._updatingQuantity);
+    
+    // Skip re-render during quantity updates OR if only system fields changed (ignore _stats and _id)
+    const systemKeys = Object.keys(changes).filter(key => !key.startsWith('_'));
+    const isOnlySystemChange = systemKeys.length === 1 && systemKeys[0] === 'system';
+    
+    const isSimpleResourceUpdate = isOnlySystemChange && (
+      Object.keys(changes.system).length === 1 && (
+        changes.system.quantity !== undefined ||
+        (changes.system.uses && Object.keys(changes.system.uses).length === 1 && changes.system.uses.value !== undefined) ||
+        (changes.system.resource && Object.keys(changes.system.resource).length === 1 && changes.system.resource.value !== undefined)
+      )
+    );
+    
+    console.log("[DHUD HOOK DEBUG] systemKeys:", systemKeys);
+    console.log("[DHUD HOOK DEBUG] isOnlySystemChange:", isOnlySystemChange);
+    console.log("[DHUD HOOK DEBUG] isSimpleResourceUpdate:", isSimpleResourceUpdate);
+    console.log("[DHUD HOOK DEBUG] Will skip re-render:", _hudApp._updatingQuantity || isSimpleResourceUpdate);
+    
+    if (_hudApp._updatingQuantity || isSimpleResourceUpdate) {
+      console.log("[DHUD HOOK DEBUG] Skipping re-render");
+      return;
+    }
+    
+    console.log("[DHUD HOOK DEBUG] Triggering re-render");
+    dhudRequestRender();
+  }
 });
 
 Hooks.on("deleteItem", (item) => {

@@ -105,6 +105,18 @@
                     data-actionpath="{{actionPath}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
+                {{#with (getResourceInfo this)}}
+                <span class="dhud-qty-container">
+                  {{#if editable}}
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{else}}
+                    <span class="dhud-qty-readonly">{{value}}</span>
+                  {{/if}}
+                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                </span>
+                {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
                   tabindex="0"
@@ -139,6 +151,18 @@
                     data-actionpath="{{actionPath}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
+                {{#with (getResourceInfo this)}}
+                <span class="dhud-qty-container">
+                  {{#if editable}}
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{else}}
+                    <span class="dhud-qty-readonly">{{value}}</span>
+                  {{/if}}
+                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                </span>
+                {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
                   tabindex="0"
@@ -178,13 +202,18 @@
                     data-actionpath="{{actionPath}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
-                {{#if qty}}
+                {{#with (getResourceInfo this)}}
                 <span class="dhud-qty-container">
-                  <span class="dhud-qty-btn dhud-qty-minus" data-action="qty-change" data-delta="-1" data-item-id="{{id}}">-</span>
-                  <input class="dhud-qty-input" type="number" value="{{qty}}" min="0" data-item-id="{{id}}">
-                  <span class="dhud-qty-btn dhud-qty-plus" data-action="qty-change" data-delta="+1" data-item-id="{{id}}">+</span>
+                  {{#if editable}}
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{else}}
+                    <span class="dhud-qty-readonly">{{value}}</span>
+                  {{/if}}
+                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
                 </span>
-                {{/if}}
+                {{/with}}
                 {{!-- {{#if qty}}<span class="qty">x{{qty}}</span>{{/if}} --}}
                 <i class="far fa-comment chat"
                   role="button"
@@ -218,13 +247,18 @@
                     data-item-id="{{id}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
-                {{#if qty}}
+                {{#with (getResourceInfo this)}}
                 <span class="dhud-qty-container">
-                  <span class="dhud-qty-btn dhud-qty-minus" data-action="qty-change" data-delta="-1" data-item-id="{{id}}">-</span>
-                  <input class="dhud-qty-input" type="number" value="{{qty}}" min="0" data-item-id="{{id}}">
-                  <span class="dhud-qty-btn dhud-qty-plus" data-action="qty-change" data-delta="+1" data-item-id="{{id}}">+</span>
+                  {{#if editable}}
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{else}}
+                    <span class="dhud-qty-readonly">{{value}}</span>
+                  {{/if}}
+                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
                 </span>
-                {{/if}}
+                {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
                   tabindex="0"
@@ -379,6 +413,18 @@
                     data-actionpath="{{actionPath}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
+                {{#with (getResourceInfo this)}}
+                <span class="dhud-qty-container">
+                  {{#if editable}}
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{else}}
+                    <span class="dhud-qty-readonly">{{value}}</span>
+                  {{/if}}
+                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                </span>
+                {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
                   tabindex="0"
@@ -413,6 +459,18 @@
                     data-actionpath="{{actionPath}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
+                {{#with (getResourceInfo this)}}
+                <span class="dhud-qty-container">
+                  {{#if editable}}
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{else}}
+                    <span class="dhud-qty-readonly">{{value}}</span>
+                  {{/if}}
+                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                </span>
+                {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
                   tabindex="0"
@@ -459,6 +517,19 @@
                     data-actionpath="{{actionPath}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
+
+                {{#with (getResourceInfo this)}}
+                <span class="dhud-qty-container">
+                  {{#if editable}}
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{else}}
+                    <span class="dhud-qty-readonly">{{value}}</span>
+                  {{/if}}
+                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                </span>
+                {{/with}}
 
                 <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
 
@@ -566,6 +637,18 @@
                     data-actionpath="{{actionPath}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
+              {{#with (getResourceInfo this)}}
+              <span class="dhud-qty-container">
+                {{#if editable}}
+                  <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                  <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                  <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                {{else}}
+                  <span class="dhud-qty-readonly">{{value}}</span>
+                {{/if}}
+                {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+              </span>
+              {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
                   tabindex="0"

@@ -659,12 +659,12 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         const bind = valueEl.dataset.bind;
         if (bind === "hp") {
           const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
-          await bumpResource(actor, "system.resources.hitPoints.value", -1, { min: 0, max });
+          await bumpResource(actor, "system.resources.hitPoints.value", +1, { min: 0, max });
           return;
         }
         if (bind === "stress") {
           const max = Number(this.actor.system?.resources?.stress?.max ?? 0);
-          await bumpResource(actor, "system.resources.stress.value", -1, { min: 0, max });
+          await bumpResource(actor, "system.resources.stress.value", +1, { min: 0, max });
           return;
         }
       }
@@ -697,7 +697,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         }
         
         const currentMarks = Number(equippedArmor.system?.marks?.value ?? 0);
-        const newMarks = Math.max(0, currentMarks - 1); // Remove 1 mark (repair)
+        const newMarks = Math.max(0, currentMarks + 1); // Remove 1 mark (repair)
         
         if (newMarks !== currentMarks) {
           try {
@@ -730,12 +730,12 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         const bind = valueEl.dataset.bind;
         if (bind === "hp") {
           const max = Number(this.actor.system?.resources?.hitPoints?.max ?? 0);
-          await bumpResource(actor, "system.resources.hitPoints.value", +1, { min: 0, max });
+          await bumpResource(actor, "system.resources.hitPoints.value", -1, { min: 0, max });
           return;
         }
         if (bind === "stress") {
           const max = Number(this.actor.system?.resources?.stress?.max ?? 0);
-          await bumpResource(actor, "system.resources.stress.value", +1, { min: 0, max });
+          await bumpResource(actor, "system.resources.stress.value", -1, { min: 0, max });
           return;
         }
       }      
@@ -769,7 +769,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
         const currentMarks = Number(equippedArmor.system?.marks?.value ?? 0);
         const effectiveMax = Number(this.actor?.system?.armorScore ?? equippedArmor.system?.baseScore ?? 0);
-        const newMarks = Math.min(effectiveMax, currentMarks + 1); // Add 1 mark (damage), respect effects
+        const newMarks = Math.min(effectiveMax, currentMarks - 1); // Add 1 mark (damage), respect effects
 
         if (newMarks !== currentMarks) {
           try {
@@ -1052,32 +1052,113 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         return;
       }
 
-      // Quantity change buttons
-      const qtyBtn = ev.target.closest("[data-action='qty-change']");
-      if (qtyBtn) {
+      // Universal resource change
+      const universalBtn = ev.target.closest("[data-action='universal-change']");
+      if (universalBtn) {
         stop(ev);
-        const itemId = qtyBtn.dataset.itemId;
-        const delta = parseInt(qtyBtn.dataset.delta);
+        const itemId = universalBtn.dataset.itemId;
+        const field = universalBtn.dataset.field;
+        const delta = parseInt(universalBtn.dataset.delta);
         const item = actor.items.get(itemId);
+        
         if (item) {
-          const newQty = Math.max(0, (item.system.quantity || 0) + delta);
-          await item.update({"system.quantity": newQty});
+          this._updatingQuantity = true;
+          
+          try {
+            // Generic approach - handle any field path
+            const current = foundry.utils.getProperty(item.system, field) || 0;
+            let newVal = Math.max(0, current + delta);
+            
+            // Check for max constraint by examining the field path
+            let maxVal = null;
+            if (field === "uses.value" && item.system.uses?.max) {
+              maxVal = parseInt(item.system.uses.max);
+            } else if (field.includes("uses.value") && field.startsWith("actions.")) {
+              // Extract action ID and check its max
+              const actionId = field.split('.')[1];
+              const action = item.system.actions?.get?.(actionId) || item.system.actions?.[actionId];
+              if (action?.uses?.max) {
+                maxVal = parseInt(action.uses.max);
+              }
+            } else if (field === "resource.value" && item.system.resource?.max) {
+              maxVal = parseInt(item.system.resource.max);
+            }
+            
+            // Apply max constraint if there's a max value
+            if (maxVal && !isNaN(maxVal) && maxVal > 0) {
+              newVal = Math.min(newVal, maxVal);
+            }
+            
+            // Check if this is an action-level uses that should use the system API
+            if (field.startsWith('actions.') && field.includes('.uses.value') && delta < 0) {
+              // Try to use the item's .use() method for consuming action uses
+              const hasActions = item.system.actions?.size > 0;
+              if (hasActions) {
+                try {
+                  await item.use();
+                } catch (useError) {
+                  // Fallback to manual update
+                  await item.update({[`system.${field}`]: newVal});
+                }
+              } else {
+                await item.update({[`system.${field}`]: newVal});
+              }
+            } else {
+              // Standard property update for all other cases
+              await item.update({[`system.${field}`]: newVal});
+            }
+            
+          } catch (err) {
+            console.error("[DHUD] Failed to update resource", err);
+            ui.notifications?.error("Failed to update resource");
+          } finally {
+            // Update the input field to show the new value immediately
+            const input = rootEl.querySelector(`.dhud-qty-input[data-item-id="${itemId}"][data-field="${field}"]`);
+            if (input) {
+              const updatedValue = foundry.utils.getProperty(item.system, field);
+              input.value = updatedValue;
+            }
+            
+            this._updatingQuantity = false;
+          }
         }
         return;
       }
 
-      // Quantity input changes
+    }, true);
+
+    // Quantity input changes (separate event listener for typing)
+    rootEl.addEventListener('input', async (ev) => {
       const qtyInput = ev.target.closest(".dhud-qty-input");
       if (qtyInput) {
         const itemId = qtyInput.dataset.itemId;
-        const newQty = Math.max(0, parseInt(qtyInput.value) || 0);
-        const item = actor.items.get(itemId);
-        if (item && newQty !== item.system.quantity) {
-          await item.update({"system.quantity": newQty});
+        const field = qtyInput.dataset.field;
+        const newVal = Math.max(0, parseInt(qtyInput.value) || 0);
+        const item = this.actor.items.get(itemId);
+        
+        if (item && newVal !== foundry.utils.getProperty(item.system, field)) {
+          this._updatingQuantity = true;
+          
+          // Apply max constraint for limited resources
+          let constrainedVal = newVal;
+          if (field === "uses.value") {
+            const max = parseInt(item.system.uses.max) || 0;
+            constrainedVal = Math.min(newVal, max);
+          } else if (field === "resource.value") {
+            const max = parseInt(item.system.resource.max) || 0;
+            constrainedVal = Math.min(newVal, max);
+          }
+          
+          await item.update({[`system.${field}`]: constrainedVal});
+          
+          // Update input if value was constrained
+          if (constrainedVal !== newVal) {
+            qtyInput.value = constrainedVal;
+          }
+          
+          this._updatingQuantity = false;
         }
-        return;
       }
-
     }, true);
 
     this._delegatedBound = true;
@@ -1303,6 +1384,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         img: it.img || "icons/svg/aura.svg",
         description: it.system?.description ?? "",
         hasActions: hasActions,
+        system: it.system,
         actionPath: (() => {
           const sys = it.system ?? {};
           if (sys.actions && typeof sys.actions === "object") {
@@ -1349,6 +1431,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           img: it.img || "icons/svg/aura.svg",
           description: it.system?.description ?? "",
           hasActions: hasActions,
+          system: it.system,
           actionPath: (() => {
             const s = it.system ?? {};
             if (s.actions && typeof s.actions === "object") {
@@ -1371,6 +1454,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           img: it.img || "icons/svg/aura.svg",
           description: it.system?.description ?? "",
           hasActions: hasActions,
+          system: it.system,
           actionPath: (() => {
             const s = it.system ?? {};
             if (s.actions && typeof s.actions === "object") {
@@ -1540,6 +1624,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         qty: Number(it.system?.quantity ?? 0),
         description: it.system?.description ?? "",
         hasActions: hasActions,
+        system: it.system,
         actionPath: (() => {
           if (it.type !== "consumable") return "";
           const sys = it.system ?? {};
@@ -1576,6 +1661,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         recallCost: Number(it.system?.recallCost ?? 0),
         domain: (it.system?.domain ?? "").toString(),
         inVault: isInVault,
+        system: it.system,
         actionPath: (() => {
           const s = it.system ?? {};
           if (s.actionPath) return s.actionPath;
@@ -1647,6 +1733,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       customButtons
     };
   }
+  
   async _onRender() {
     // Respect per-user disable toggle
     if (getSetting(S.disableForMe)) { this.close(); return; }
