@@ -187,6 +187,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud-acc summary .chat {
   flex: 0 0 auto;
   margin-left: 0.4rem;
+  cursor: pointer;
 }
 
 /* Quantity buttons */
@@ -222,6 +223,46 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud-qty-input:hover {
   border: 2px solid var(--dh-pip-border);
 }
+
+.dhud-inline-roll,
+.dhud-inline-dr {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .1rem .35rem;
+  border-radius: .25rem;
+  background: var(--dh-surface);
+  color: var(--dh-accent);
+  cursor: pointer;
+  user-select: none;
+}
+.dhud-inline-roll i, .dhud-inline-dr i { opacity: .9; }
+
+.dhud-inline-roll:hover,
+.dhud-inline-dr:hover {
+  background: var(--dh-pip-border);
+  color: var(--dhud-accent);
+}
+
+.dhud .content-link {
+  background: var(--dh-surface);
+  border: 2px solid var(--dh-border);
+  border-radius: 4px;
+  padding: .1rem .35rem;
+  color: var(--dh-accent);
+  cursor: grab;
+  text-shadow: none;
+}
+
+.dhud .content-link:hover {
+  border: 2px solid var(--dh-accent);
+  color: var(--dh-text);
+  text-shadow: none;
+}
+
+.dhud .content-link i { color: var(--dh-accent); }
+.dhud .content-link:hover i { color: var(--dh-text); }
+
 
 /* ===== Core (Central ring and circle for weapons) ===== */
 .dhud-core {

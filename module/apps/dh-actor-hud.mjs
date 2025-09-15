@@ -3,6 +3,8 @@
 import { L, Lpath, Ltrait } from "../helpers/i18n.mjs";
 import { sendItemToChat } from "../helpers/chat-utils.mjs";
 import { getSetting, S } from "../settings.mjs";
+import { enrichItemDescription, toHudInlineButtons } from "../helpers/inline-rolls.mjs";
+
 
 function placeAtBottom(appEl, offsetPx = 110) {
   if (!appEl?.getBoundingClientRect) return;
@@ -911,7 +913,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
     // ---------- NEW: Block <summary> toggle for dice/value/reaction (register ONCE) ----------
     rootEl.addEventListener("click", (ev) => {
-      const blocker = ev.target.closest("summary .icon, summary .value, summary .dhud-reaction-btn");
+      const blocker = ev.target.closest("summary .icon, summary .value, summary .dhud-reaction-btn, summary .dhud-inline-roll, summary .dhud-inline-dr");
       if (blocker) { ev.preventDefault(); ev.stopPropagation(); }
     }, true);
 
@@ -952,6 +954,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         try { setPanelOpenDirection(panel); } catch (_) { /* no-op */ }
       });
     }, true);
+
+    
 
     // -----------------------------------------------------------------------
 
@@ -1122,6 +1126,29 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
             this._updatingQuantity = false;
           }
         }
+        return;
+      }
+
+      // Inline standard roll button (from [[/r ...]])
+      const inlineBtn = ev.target.closest("[data-action='inline-roll']");
+      if (inlineBtn) {
+        ev.preventDefault(); ev.stopPropagation();
+        const formula = inlineBtn.dataset.formula;
+        if (formula) {
+          const speaker = ChatMessage.getSpeaker({ actor: this.actor });
+          const roll = await (new Roll(formula)).roll({ async: true });
+          await roll.toMessage({ speaker, flavor: `${this.actor.name}: ${formula}` });
+        }
+        return;
+      }
+
+      // Inline duality (from [[/dr ...]])
+      const dualityBtn = ev.target.closest("[data-action='inline-duality']");
+      if (dualityBtn) {
+        ev.preventDefault(); ev.stopPropagation();
+        const params = dualityBtn.dataset.params || "";
+        const speaker = ChatMessage.getSpeaker({ actor: this.actor });
+        await ChatMessage.create({ speaker, content: `/dr ${params}` });
         return;
       }
 
@@ -1352,7 +1379,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         id: it.id,
         name: it.name,
         img: it.img || "icons/svg/aura.svg",
-        description: it.system?.description ?? "",
+        description: it.system?.description ?? "", // optional raw
+        descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
         hasActions: hasActions,
         actionPath: (() => {
           const s = it.system ?? {};
@@ -1382,7 +1410,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         id: it.id,
         name: it.name,
         img: it.img || "icons/svg/aura.svg",
-        description: it.system?.description ?? "",
+        description: it.system?.description ?? "", // optional raw
+        descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
         hasActions: hasActions,
         system: it.system,
         actionPath: (() => {
@@ -1429,7 +1458,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           id: it.id,
           name: it.name,
           img: it.img || "icons/svg/aura.svg",
-          description: it.system?.description ?? "",
+          description: it.system?.description ?? "", // optional raw
+          descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
           hasActions: hasActions,
           system: it.system,
           actionPath: (() => {
@@ -1452,7 +1482,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           id: it.id,
           name: it.name,
           img: it.img || "icons/svg/aura.svg",
-          description: it.system?.description ?? "",
+          description: it.system?.description ?? "", // optional raw
+          descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
           hasActions: hasActions,
           system: it.system,
           actionPath: (() => {
@@ -1622,7 +1653,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         name: it.name,
         img: it.img || "icons/svg/aura.svg",
         qty: Number(it.system?.quantity ?? 0),
-        description: it.system?.description ?? "",
+        description: it.system?.description ?? "", // optional raw
+        descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
         hasActions: hasActions,
         system: it.system,
         actionPath: (() => {
@@ -1656,7 +1688,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         id: it.id,
         name: it.name,
         img: it.img || "icons/svg/aura.svg",
-        description: it.system?.description ?? "",
+        description: it.system?.description ?? "", // optional raw
+        descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
         hasActions: hasActions,
         recallCost: Number(it.system?.recallCost ?? 0),
         domain: (it.system?.domain ?? "").toString(),
