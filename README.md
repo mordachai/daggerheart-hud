@@ -12,7 +12,7 @@
 
 ##### Over the portrait:
 
-- **Left click:** toggle wing menus with Traits, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout, and Vault
+- **Left click:** toggle wing menus with Traits, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout (Vault inside), and Features
 - **Double click:** opens the character sheet
 - **Click n' drag:** moves HUD around
 - **Right click:** opens context menu with _Toggle Conditions_, _Long Rest_ and _Short Rest_ options
