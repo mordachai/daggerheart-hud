@@ -683,27 +683,36 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         return;
       }
 
-      // ARMOR: left click = repair (remove marks)
+      // ARMOR: left click = add a mark (damage), clamp to max
       const armorEl = ev.target.closest(".dhud-badge--right");
       if (armorEl) {
         ev.preventDefault();
         ev.stopPropagation();
-        
-        const equippedArmor = (this.actor?.items ?? []).find(item => 
-          item.type === "armor" && item.system?.equipped === true
+
+        const equippedArmor = (this.actor?.items ?? []).find(
+          (item) => item.type === "armor" && item.system?.equipped === true
         );
-        
+
         if (!equippedArmor) {
           ui.notifications?.warn("No equipped armor found");
           return;
         }
-        
-        const currentMarks = Number(equippedArmor.system?.marks?.value ?? 0);
-        const newMarks = Math.max(0, currentMarks + 1); // Remove 1 mark (repair)
-        
-        if (newMarks !== currentMarks) {
+
+        const current = Math.max(0, Number(equippedArmor.system?.marks?.value ?? 0));
+        const maxMarks = Math.max(
+          0,
+          Number(
+            equippedArmor.system?.marks?.max ??
+              this.actor?.system?.armorScore ??
+              equippedArmor.system?.baseScore ??
+              0
+          )
+        );
+
+        const next = Math.min(maxMarks, current + 1);
+        if (next !== current) {
           try {
-            await equippedArmor.update({ "system.marks.value": newMarks });
+            await equippedArmor.update({ "system.marks.value": next });
           } catch (err) {
             console.error("[DHUD] Failed to update armor", err);
             ui.notifications?.error("Failed to update armor");
@@ -711,7 +720,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         }
         return;
       }
-
 
     }, true);
 
@@ -754,14 +762,14 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         return;
       }
 
-      // ARMOR: right click = damage (add marks)
+      // ARMOR: right click = remove a mark (repair), clamp to 0
       const armorEl = ev.target.closest(".dhud-badge--right");
       if (armorEl) {
         ev.preventDefault();
         ev.stopPropagation();
 
-        const equippedArmor = (this.actor?.items ?? []).find(item => 
-          item.type === "armor" && item.system?.equipped === true
+        const equippedArmor = (this.actor?.items ?? []).find(
+          (item) => item.type === "armor" && item.system?.equipped === true
         );
 
         if (!equippedArmor) {
@@ -769,13 +777,12 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           return;
         }
 
-        const currentMarks = Number(equippedArmor.system?.marks?.value ?? 0);
-        const effectiveMax = Number(this.actor?.system?.armorScore ?? equippedArmor.system?.baseScore ?? 0);
-        const newMarks = Math.min(effectiveMax, currentMarks - 1); // Add 1 mark (damage), respect effects
+        const current = Math.max(0, Number(equippedArmor.system?.marks?.value ?? 0));
+        const next = Math.max(0, current - 1);
 
-        if (newMarks !== currentMarks) {
+        if (next !== current) {
           try {
-            await equippedArmor.update({ "system.marks.value": newMarks });
+            await equippedArmor.update({ "system.marks.value": next });
           } catch (err) {
             console.error("[DHUD] Failed to update armor", err);
             ui.notifications?.error("Failed to update armor");
