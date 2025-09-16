@@ -209,6 +209,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   font-size: 0.85rem;
   padding: 6px 2px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: justify;
 }
 
 /* Small chips stay inline and non-wrapping */
@@ -348,43 +349,30 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   font-size: 1.2rem;
   line-height: 1;
   color: var(--dh-surface);
-  text-shadow: 0 0 5px var(--dh-accent);
-
+  text-shadow: 0 0 5px var(--dh-text);
 }
 
-/* "Used" styling toggle */
-.dhud-dicechip.used .dhud-dicechip-bg { filter: grayscale(100%) brightness(0.7); }
-.dhud-dicechip.used .dhud-dicechip-value { opacity: .6; text-decoration: line-through; }
-
-.dhud-dicechip { cursor: pointer; }
-.dhud-dicechip:hover .dhud-dicechip-bg { filter: brightness(1.4); }
-
-/* "X" overlay on used dice (Font Awesome) */
-.dhud-dicechip.used::before {
-  content: "❌";               /* fa-xmark glyph (close/X) */
-  font-weight: 700;               /* solid */
+/* position the X icon */
+.dhud-dicechip-x {
   position: absolute;
-  inset: 0;                       /* center overlay */
-  display: flex;
+  inset: 0;
+  display: none;
   align-items: center;
   justify-content: center;
   pointer-events: none;
   z-index: 2;
-  font-size: 1.5rem;                /* tweak as you like */
-  text-shadow: 0 1px 2px rgba(0,0,0,.35);
+  font-size: 1.6rem;
+  color: var(--dh-accent);
 }
 
-/* ensure value stays visible but subdued when used */
-.dhud-dicechip.used .dhud-dicechip-value {
-  opacity: .55;
+.dhud-dicechip-x:hover {
+  text-shadow: 0 1px 3px var(--dh-accent);
 }
 
-/* keep your existing grayscale/brightness on the bg if you like */
-.dhud-dicechip.used .dhud-dicechip-bg {
-  filter: grayscale(100%) brightness(0.7);
-}
-
-
+/* "Used" styling toggle */
+.dhud-dicechip.used .dhud-dicechip-x { display: flex; }
+.dhud-dicechip.used .dhud-dicechip-bg { filter: grayscale(100%) brightness(0.7); }
+.dhud-dicechip:hover .dhud-dicechip-bg { filter: brightness(1.4); }
 
 
 /* ===== Core (Central ring and circle for weapons) ===== */
