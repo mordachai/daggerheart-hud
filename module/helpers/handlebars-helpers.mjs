@@ -16,36 +16,31 @@ export function registerDHUDHelpers() {
   function getResourceInfo(item) {
     const sys = item.system || {};
     
-    // Helper function to determine if a resource should be user-editable
+    // Helper: should this resource be user-editable?
     function determineIfEditable(item, field) {
       // Domain cards - read-only (system manages them)
       if (item.type === "domainCard") return false;
-      
       // Action-level uses - read-only (system manages through actions)
       if (field.startsWith("actions.")) return false;
-      
       // Simple counters without fixed max - user-editable
       if (field === "resource.value" && (!item.system.resource.max || item.system.resource.max === "")) return true;
-      
       // Regular resources with max - user-editable
       if (field === "resource.value" || field === "quantity") return true;
-      
       // Item-level uses - read-only if they have actions, editable if they don't
       if (field === "uses.value") {
         return !item.system.actions || item.system.actions.size === 0;
       }
-      
       return true; // Default to editable
     }
-    
-    // Helper function to resolve computed max values
+
+    // Helper: resolve computed max values (supports @actor.path style)
     function resolveMaxValue(maxString, item) {
       if (!maxString || maxString === "") return null;
-      
-      if (maxString.startsWith("@")) {
-        // Computed field - resolve it using the actor's data
+      if (typeof maxString === "number") return maxString;
+
+      if (typeof maxString === "string" && maxString.startsWith("@")) {
         try {
-          const actor = item.parent; // Get the parent actor
+          const actor = item.parent;
           if (actor) {
             const resolvedMax = foundry.utils.getProperty(actor, maxString.substring(1));
             return parseInt(resolvedMax) || null;
@@ -55,68 +50,103 @@ export function registerDHUDHelpers() {
           return null;
         }
       } else {
-        // Static number
         return parseInt(maxString) || null;
       }
       return null;
     }
-    
-    // Check quantity (consumables/loot)
+
+    // Quantity (consumables/loot)
     if (sys.quantity !== null && sys.quantity !== undefined) {
       const field = "quantity";
-      return { 
-        field, 
-        value: sys.quantity, 
-        max: null, 
+      return {
+        field,
+        value: sys.quantity,
+        max: null,
         editable: determineIfEditable(item, field)
       };
     }
-    
-    // Check item-level uses (features with limited uses)
+
+    // Item-level uses (features with limited uses) — display SPENT (unchanged)
     if (sys.uses?.max !== null && sys.uses?.max !== undefined && sys.uses.max !== "") {
       const maxVal = resolveMaxValue(sys.uses.max, item);
       if (maxVal && maxVal > 0) {
         const field = "uses.value";
-        return { 
-          field, 
-          value: sys.uses.value || 0, 
+        return {
+          field,
+          value: sys.uses.value || 0,   // SPENT
           max: maxVal,
           editable: determineIfEditable(item, field)
         };
       }
     }
-    
-    // Check action-level uses
-    if (sys.actions && typeof sys.actions === 'object') {
+
+    // for diceValue
+    if (sys.resource?.type === "diceValue") {
+      const dieFaces = String(sys.resource.dieFaces || "d12").toLowerCase(); // e.g., "d4","d12"
+      const statesObj = sys.resource.diceStates || {};
+
+      // Build dice array from diceStates in numeric key order
+      let dice = Object.entries(statesObj)
+        .map(([k, s]) => ({
+          key: k,
+          value: Number(s?.value ?? 0),
+          used: Boolean(s?.used === true)
+        }))
+        .sort((a, b) => Number(a.key) - Number(b.key));
+
+      // If no diceStates, fall back to a single die using resource.value
+      if (dice.length === 0) {
+        dice = [{
+          key: "0",
+          value: Number(sys.resource.value ?? 0),
+          used: Boolean(sys.resource.used === true)
+        }];
+      }
+
+      return {
+        displayType: "diceValues",
+        field: null,       // read-only from HUD
+        dieFaces,          // "d4","d6","d8","d10","d12","d20"
+        dice,              // [{ key, value, used }, ...] (length can be 1)
+        max: null,
+        editable: false
+      };
+    }
+
+
+    // Action-level uses — DISPLAY AVAILABLE (max - spent), keep field pointing to SPENT
+    if (sys.actions && typeof sys.actions === "object") {
       const actions = sys.actions.contents || Object.values(sys.actions);
       for (const action of actions) {
-        if (action.uses?.max !== null && action.uses?.max !== undefined && action.uses.max !== "") {
+        if (action?.uses?.max !== null && action.uses.max !== undefined && action.uses.max !== "") {
           const maxVal = resolveMaxValue(action.uses.max, item);
           if (maxVal && maxVal > 0) {
             const field = `actions.${action._id}.uses.value`;
-            return { 
-              field, 
-              value: action.uses.value || 0, 
+            const spent = Math.max(0, Number(action.uses.value || 0));
+            const available = Math.max(0, maxVal - spent);
+            return {
+              field,                     // still updates the SPENT field
+              value: available,          // DISPLAY AVAILABLE
               max: maxVal,
-              editable: determineIfEditable(item, field)
+              editable: determineIfEditable(item, field) // stays read-only for actions
             };
           }
         }
       }
     }
-    
-    // Check item-level resource (including those without fixed max)
+
+    // Item-level resource (including those without fixed max)
     if (sys.resource && (sys.resource.value !== null && sys.resource.value !== undefined)) {
       const maxVal = resolveMaxValue(sys.resource.max, item);
       const field = "resource.value";
-      return { 
-        field, 
-        value: sys.resource.value || 0, 
-        max: maxVal, // Now properly resolved
+      return {
+        field,
+        value: sys.resource.value || 0,
+        max: maxVal,
         editable: determineIfEditable(item, field)
       };
     }
-    
+
     return null;
   }
 

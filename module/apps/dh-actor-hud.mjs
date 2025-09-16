@@ -920,7 +920,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
     // ---------- NEW: Block <summary> toggle for dice/value/reaction (register ONCE) ----------
     rootEl.addEventListener("click", (ev) => {
-      const blocker = ev.target.closest("summary .icon, summary .value, summary .dhud-reaction-btn, summary .dhud-inline-roll, summary .dhud-inline-dr");
+      const blocker = ev.target.closest("summary .icon, summary .value, summary .dhud-reaction-btn, summary .dhud-inline-roll, summary .dhud-inline-dr, summary .dhud-dicechip");
       if (blocker) { ev.preventDefault(); ev.stopPropagation(); }
     }, true);
 
@@ -1157,6 +1157,60 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         const speaker = ChatMessage.getSpeaker({ actor: this.actor });
         await ChatMessage.create({ speaker, content: `/dr ${params}` });
         return;
+      }
+
+      // Toggle diceValue "used" state (click on the die chip)
+      {
+        const chip = ev.target.closest(".dhud-dicechip");
+        if (chip) {
+          stop(ev);
+          const idxStr = String(chip.dataset.index ?? "");
+          const itemId = chip.dataset.itemId;
+          if (!idxStr || !itemId) return;
+
+          const item = actor.items.get(itemId);
+          if (!item) return;
+
+          // Duplicate current resource and diceStates (object OR array)
+          const res = foundry.utils.duplicate(item.system?.resource ?? {});
+          let states = res.diceStates ?? {};
+
+          // Normalize: allow array or object, but we will write back in the same shape
+          const wasArray = Array.isArray(states);
+          const getState = (k) => (wasArray ? states[Number(k)] : states[k]);
+
+          // Ensure the target entry exists
+          const current = getState(idxStr) ?? { value: Number(res.value ?? 0), used: false };
+          const nextUsed = !Boolean(current.used);
+
+          // Optimistic UI
+          chip.classList.toggle("used", nextUsed);
+          chip.setAttribute("aria-pressed", nextUsed ? "true" : "false");
+
+          // Mutate the duplicate
+          if (wasArray) {
+            const i = Number(idxStr);
+            if (!states[i]) states[i] = current;
+            states[i].used = nextUsed;
+          } else {
+            if (!states[idxStr]) states[idxStr] = current;
+            states[idxStr].used = nextUsed;
+          }
+
+          try {
+            // Force-write the entire diceStates blob so the sheet definitely sees it
+            await item.update({ "system.resource.diceStates": states }, { diff: false });
+            // (Optional) If you want immediate sheet reflect even on other clients:
+            // item.sheet?.render(false);
+          } catch (err) {
+            console.error("[DHUD] Failed toggling dice used", err);
+            ui.notifications?.error("Failed to update die state");
+            // Revert optimistic UI
+            chip.classList.toggle("used", !nextUsed);
+            chip.setAttribute("aria-pressed", (!nextUsed) ? "true" : "false");
+          }
+          return;
+        }
       }
 
     }, true);

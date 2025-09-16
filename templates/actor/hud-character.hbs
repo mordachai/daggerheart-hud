@@ -106,16 +106,31 @@
                     title="{{name}}">
                 <span class="title">{{name}}</span>
                 {{#with (getResourceInfo this)}}
-                <span class="dhud-qty-container">
-                  {{#if editable}}
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{#if (eq displayType "diceValues")}}
+                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                      {{#each dice}}
+                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                              data-index="{{key}}"
+                              data-item-id="{{../../id}}"
+                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                          <span class="dhud-dicechip-value">{{value}}</span>
+                        </span>
+                      {{/each}}
+                    </span>
                   {{else}}
-                    <span class="dhud-qty-readonly">{{value}}</span>
+                    <span class="dhud-qty-container">
+                      {{#if editable}}
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                      {{else}}
+                        <span class="dhud-qty-readonly">{{value}}</span>
+                      {{/if}}
+                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                    </span>
                   {{/if}}
-                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                </span>
                 {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
@@ -152,16 +167,31 @@
                     title="{{name}}">
                 <span class="title">{{name}}</span>
                 {{#with (getResourceInfo this)}}
-                <span class="dhud-qty-container">
-                  {{#if editable}}
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{#if (eq displayType "diceValues")}}
+                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                      {{#each dice}}
+                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                              data-index="{{key}}"
+                              data-item-id="{{../../id}}"
+                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                          <span class="dhud-dicechip-value">{{value}}</span>
+                        </span>
+                      {{/each}}
+                    </span>
                   {{else}}
-                    <span class="dhud-qty-readonly">{{value}}</span>
+                    <span class="dhud-qty-container">
+                      {{#if editable}}
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                      {{else}}
+                        <span class="dhud-qty-readonly">{{value}}</span>
+                      {{/if}}
+                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                    </span>
                   {{/if}}
-                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                </span>
                 {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
@@ -203,16 +233,31 @@
                     title="{{name}}">
                 <span class="title">{{name}}</span>
                 {{#with (getResourceInfo this)}}
-                <span class="dhud-qty-container">
-                  {{#if editable}}
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{#if (eq displayType "diceValues")}}
+                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                      {{#each dice}}
+                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                              data-index="{{key}}"
+                              data-item-id="{{../../id}}"
+                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                          <span class="dhud-dicechip-value">{{value}}</span>
+                        </span>
+                      {{/each}}
+                    </span>
                   {{else}}
-                    <span class="dhud-qty-readonly">{{value}}</span>
+                    <span class="dhud-qty-container">
+                      {{#if editable}}
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                      {{else}}
+                        <span class="dhud-qty-readonly">{{value}}</span>
+                      {{/if}}
+                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                    </span>
                   {{/if}}
-                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                </span>
                 {{/with}}
                 {{!-- {{#if qty}}<span class="qty">x{{qty}}</span>{{/if}} --}}
                 <i class="far fa-comment chat"
@@ -248,16 +293,31 @@
                     title="{{name}}">
                 <span class="title">{{name}}</span>
                 {{#with (getResourceInfo this)}}
-                <span class="dhud-qty-container">
-                  {{#if editable}}
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{#if (eq displayType "diceValues")}}
+                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                      {{#each dice}}
+                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                              data-index="{{key}}"
+                              data-item-id="{{../../id}}"
+                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                          <span class="dhud-dicechip-value">{{value}}</span>
+                        </span>
+                      {{/each}}
+                    </span>
                   {{else}}
-                    <span class="dhud-qty-readonly">{{value}}</span>
+                    <span class="dhud-qty-container">
+                      {{#if editable}}
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                      {{else}}
+                        <span class="dhud-qty-readonly">{{value}}</span>
+                      {{/if}}
+                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                    </span>
                   {{/if}}
-                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                </span>
                 {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
@@ -414,16 +474,31 @@
                     title="{{name}}">
                 <span class="title">{{name}}</span>
                 {{#with (getResourceInfo this)}}
-                <span class="dhud-qty-container">
-                  {{#if editable}}
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{#if (eq displayType "diceValues")}}
+                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                      {{#each dice}}
+                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                              data-index="{{key}}"
+                              data-item-id="{{../../id}}"
+                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                          <span class="dhud-dicechip-value">{{value}}</span>
+                        </span>
+                      {{/each}}
+                    </span>
                   {{else}}
-                    <span class="dhud-qty-readonly">{{value}}</span>
+                    <span class="dhud-qty-container">
+                      {{#if editable}}
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                      {{else}}
+                        <span class="dhud-qty-readonly">{{value}}</span>
+                      {{/if}}
+                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                    </span>
                   {{/if}}
-                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                </span>
                 {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
@@ -460,16 +535,31 @@
                     title="{{name}}">
                 <span class="title">{{name}}</span>
                 {{#with (getResourceInfo this)}}
-                <span class="dhud-qty-container">
-                  {{#if editable}}
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{#if (eq displayType "diceValues")}}
+                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                      {{#each dice}}
+                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                              data-index="{{key}}"
+                              data-item-id="{{../../id}}"
+                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                          <span class="dhud-dicechip-value">{{value}}</span>
+                        </span>
+                      {{/each}}
+                    </span>
                   {{else}}
-                    <span class="dhud-qty-readonly">{{value}}</span>
+                    <span class="dhud-qty-container">
+                      {{#if editable}}
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                      {{else}}
+                        <span class="dhud-qty-readonly">{{value}}</span>
+                      {{/if}}
+                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                    </span>
                   {{/if}}
-                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                </span>
                 {{/with}}
                 <i class="far fa-comment chat"
                   role="button"
@@ -519,16 +609,31 @@
                 <span class="title">{{name}}</span>
 
                 {{#with (getResourceInfo this)}}
-                <span class="dhud-qty-container">
-                  {{#if editable}}
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                    <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                    <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                  {{#if (eq displayType "diceValues")}}
+                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                      {{#each dice}}
+                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                              data-index="{{key}}"
+                              data-item-id="{{../../id}}"
+                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                          <span class="dhud-dicechip-value">{{value}}</span>
+                        </span>
+                      {{/each}}
+                    </span>
                   {{else}}
-                    <span class="dhud-qty-readonly">{{value}}</span>
+                    <span class="dhud-qty-container">
+                      {{#if editable}}
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                      {{else}}
+                        <span class="dhud-qty-readonly">{{value}}</span>
+                      {{/if}}
+                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                    </span>
                   {{/if}}
-                  {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                </span>
                 {{/with}}
 
                 <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
@@ -637,18 +742,34 @@
                     data-actionpath="{{actionPath}}"
                     title="{{name}}">
                 <span class="title">{{name}}</span>
-              {{#with (getResourceInfo this)}}
-              <span class="dhud-qty-container">
-                {{#if editable}}
-                  <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                  <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                  <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
-                {{else}}
-                  <span class="dhud-qty-readonly">{{value}}</span>
-                {{/if}}
-                {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-              </span>
-              {{/with}}
+                {{#with (getResourceInfo this)}}
+                  {{#if (eq displayType "diceValues")}}
+                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                      {{#each dice}}
+                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                              data-index="{{key}}"
+                              data-item-id="{{../../id}}"
+                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                          <span class="dhud-dicechip-value">{{value}}</span>
+                        </span>
+                      {{/each}}
+                    </span>
+                  {{else}}
+                    <span class="dhud-qty-container">
+                      {{#if editable}}
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                      {{else}}
+                        <span class="dhud-qty-readonly">{{value}}</span>
+                      {{/if}}
+                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                    </span>
+                  {{/if}}
+                {{/with}}
+
                 <i class="far fa-comment chat"
                   role="button"
                   tabindex="0"

@@ -231,6 +231,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud-acc summary .move:hover,
 .dhud-acc summary .chat:hover {
   opacity: 1.0;
+  color: var(--dh-accent);
   text-shadow: 0 0 2px var(--dh-pip-border);
 }
 
@@ -313,6 +314,77 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 
 .dhud .content-link i {font-size: 0.8rem; color: #f2c24b; }
 .dhud .content-link:hover i { color: var(--dh-accent); }
+
+.dhud-dicegroup {
+  display: inline-flex;
+  gap: .25rem;
+  margin-left: .35rem;
+  vertical-align: middle;
+}
+
+.dhud-dicechip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  user-select: none;
+}
+
+.dhud-dicechip-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: .85;
+  pointer-events: none;
+  border: none;
+}
+
+.dhud-dicechip-value {
+  position: relative;
+  font-weight: 700;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--dh-surface);
+  text-shadow: 0 0 5px var(--dh-accent);
+
+}
+
+/* "Used" styling toggle */
+.dhud-dicechip.used .dhud-dicechip-bg { filter: grayscale(100%) brightness(0.7); }
+.dhud-dicechip.used .dhud-dicechip-value { opacity: .6; text-decoration: line-through; }
+
+.dhud-dicechip { cursor: pointer; }
+.dhud-dicechip:hover .dhud-dicechip-bg { filter: brightness(1.4); }
+
+/* "X" overlay on used dice (Font Awesome) */
+.dhud-dicechip.used::before {
+  content: "❌";               /* fa-xmark glyph (close/X) */
+  font-weight: 700;               /* solid */
+  position: absolute;
+  inset: 0;                       /* center overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+  font-size: 1.5rem;                /* tweak as you like */
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+/* ensure value stays visible but subdued when used */
+.dhud-dicechip.used .dhud-dicechip-value {
+  opacity: .55;
+}
+
+/* keep your existing grayscale/brightness on the bg if you like */
+.dhud-dicechip.used .dhud-dicechip-bg {
+  filter: grayscale(100%) brightness(0.7);
+}
+
+
 
 
 /* ===== Core (Central ring and circle for weapons) ===== */
