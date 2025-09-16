@@ -185,7 +185,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   flex: 1 1 auto;
   min-width: 0; 
   font-size: 0.9rem;
-  white-space: nowrap;
+  /* white-space: nowrap; */
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
