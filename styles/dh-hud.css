@@ -152,6 +152,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud-acc details[open] {
   border-color: var(--dh-pip-border);
 }
+
 .dhud-acc .icon {
   display: inline-flex;
   align-items: center;
