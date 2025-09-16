@@ -86,12 +86,14 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   z-index: 500;                /* sobre o app */
 }
 .dhud-tabwrap--right .dhud-panel { left: auto; right: 0; }
+
 .dhud-panel header {
   font-weight: 900;
-  margin-bottom: .5rem;
-  margin: 10px 5px;
+  margin-bottom: .55rem;
+  margin: 10px 0px;
   padding-bottom: 2px;
   border-bottom: 1px solid var(--dh-accent);
+  text-transform: uppercase;
 }
 /* Vertical direction set by JS on the specific panel */
 .dhud-panel[data-open-dir="down"] {
@@ -125,13 +127,31 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud-acc summary {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.7rem;
   flex-wrap: nowrap;   
-  padding: 4px 8px;
-  border: 1px solid var(--dh-border);
-  border-radius: 4px;
+  position: relative;
 }
 
+.dhud-acc details[open] summary::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 2px;
+  background-color: var(--dh-border) 
+}
+
+.dhud-acc details {
+  padding: 4px 8px;
+  border: 1px solid var(--dh-border);
+  border-radius: 0.25rem;
+}
+
+.dhud-acc details[open] {
+  border-color: var(--dh-pip-border);
+}
 .dhud-acc .icon {
   display: inline-flex;
   align-items: center;
@@ -142,7 +162,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 
 /* Icon stays fixed size */
 .dhud-acc summary .icon {
-  width: 24px; height: 24px;
+  /* width: 24px; height: 24px; */
   flex: 0 0 auto;
 }
 
@@ -160,19 +180,34 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   cursor: default;
 }
 
-
-
 /* Title takes remaining space, truncates with ellipsis if too long */
 .dhud-acc summary .title {
   flex: 1 1 auto;
   min-width: 0; 
+  font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+  opacity: 0.9;
+  transition: opacity ease-in-out 120ms;
 }
 
 .dhud-acc summary .title:hover {
+  opacity: 1.0;
   text-shadow: 0 0 2px var(--dh-pip-border);
+}
+
+.dhud-acc details[open] summary .title {
+  opacity: 1.0;
+  font-weight: 700;
+}
+
+.dhud .acc-body {
+  color: var(--dh-text);
+  font-size: 0.85rem;
+  padding: 6px 2px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Small chips stay inline and non-wrapping */
@@ -188,6 +223,14 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   flex: 0 0 auto;
   margin-left: 0.4rem;
   cursor: pointer;
+  opacity: 0.8;
+  transition: opacity ease-in-out 120ms;
+}
+
+.dhud-acc summary .move:hover,
+.dhud-acc summary .chat:hover {
+  opacity: 1.0;
+  text-shadow: 0 0 2px var(--dh-pip-border);
 }
 
 /* Quantity buttons */
@@ -245,23 +288,30 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 }
 
 .dhud .content-link {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-end;
+  width: fit-content;
+  gap: 3px;
   background: var(--dh-surface);
-  border: 2px solid var(--dh-border);
+  border: 1px solid #f2c24b;
   border-radius: 4px;
-  padding: .1rem .35rem;
-  color: var(--dh-accent);
+  padding: 2px 6px;
+  color: var(--dh-text);
   cursor: grab;
   text-shadow: none;
 }
 
 .dhud .content-link:hover {
-  border: 2px solid var(--dh-accent);
-  color: var(--dh-text);
+  border: 1px solid var(--dh-accent);
+  color: var(--dh-accent);
   text-shadow: none;
 }
 
-.dhud .content-link i { color: var(--dh-accent); }
-.dhud .content-link:hover i { color: var(--dh-text); }
+.dhud .content-link i {font-size: 0.8rem; color: #f2c24b; }
+.dhud .content-link:hover i { color: var(--dh-accent); }
 
 
 /* ===== Core (Central ring and circle for weapons) ===== */
