@@ -212,6 +212,14 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   text-align: justify;
 }
 
+.dhud-spellcast {
+  margin-left: 0.35rem;
+  font-size: 0.95em;
+  vertical-align: middle;
+  opacity: 0.95;
+  color: var(--dh-accent);
+}
+
 /* Small chips stay inline and non-wrapping */
 .dhud-acc summary .qty,
 .dhud-acc summary .recall {

@@ -19,7 +19,13 @@
                   data-trait="{{key}}"
                   title="{{l "DAGGERHEART.GENERAL.Roll.trait"}}: {{l name}}"></i>
 
-                <span class="title">{{name}}</span>
+                <span class="title">
+                  {{name}}
+                  {{#if isSpellcasting}}
+                    <i class="fa-solid fa-wand-sparkles dhud-spellcast" aria-hidden="true" title="{{l 'DAGGERHEART.ITEMS.Subclass.spellcastingTrait'}}: {{name}}"></i>
+                  {{/if}}
+                </span>
+
                 <span class="value">{{value}}</span>
 
                 {{!-- NEW: Reaction roll button --}}

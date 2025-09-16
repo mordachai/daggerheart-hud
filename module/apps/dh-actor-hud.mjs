@@ -1612,6 +1612,14 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       filled: i < hopeValue
     }));
 
+    // Determine the spellcasting trait key (prefer subclass, then class)
+    let spellcastingTraitKey = null;
+    if (this.actor?.items) {
+      const subclass = this.actor.items.find(i => i.type === "subclass" && i.system?.spellcastingTrait);
+      const klass    = this.actor.items.find(i => i.type === "class"    && i.system?.spellcastingTrait);
+      spellcastingTraitKey = subclass?.system?.spellcastingTrait || klass?.system?.spellcastingTrait || null;
+    }
+
     // === TRAITS (ordered + localized via i18n helper) ===
     const TRAIT_ORDER = ["agility","strength","finesse","instinct","presence","knowledge"];
 
@@ -1622,7 +1630,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         key,
         name: loc.name,           // e.g., "Agility"
         value,                    // e.g., 2
-        description: loc.description // e.g., "Sprint, Leap, Maneuver"
+        description: loc.description, // e.g., "Sprint, Leap, Maneuver"
+        isSpellcasting: key === spellcastingTraitKey
       };
     });
 
