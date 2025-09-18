@@ -113,7 +113,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 
 /* Open-state controlado por [data-open] no root */
 .dhud[data-open="traits"]    #panel-traits,
-.dhud[data-open="ancestry"]  #panel-ancestry,
+.dhud[data-open="heritage"]  #panel-heritage,
 .dhud[data-open="inventory"] #panel-inventory,
 .dhud[data-open="domains"]   #panel-domains,
 .dhud[data-open="class"]     #panel-class,
