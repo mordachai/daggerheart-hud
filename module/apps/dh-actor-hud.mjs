@@ -333,8 +333,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     this._hideStatusGrid();
     const menu = this.element.querySelector('#dhud-context-menu');
     const portrait = this.element.querySelector('.dhud-portrait');
+    const core = this.element.querySelector('.dhud-core');
     
-    if (!menu || !portrait) return;
+    if (!menu || !portrait || !core) return;
     
     // First, show the menu off-screen to measure it
     menu.style.left = '-9999px';
@@ -344,76 +345,74 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     // Force a reflow to ensure styles are applied
     menu.offsetHeight;
     
-    // Get menu and portrait dimensions
+    // Get menu dimensions
     const menuRect = menu.getBoundingClientRect();
-    const portraitRect = portrait.getBoundingClientRect();
     const menuWidth = menuRect.width;
     const menuHeight = menuRect.height;
+    
+    // Get core position (this stays stable when wings open/close)
+    const coreRect = core.getBoundingClientRect();
+    const portraitRect = portrait.getBoundingClientRect();
+    
+    // Calculate portrait center relative to the core element (stable)
+    const portraitCenterX = portraitRect.left - coreRect.left + (portraitRect.width / 2);
+    const portraitCenterY = portraitRect.top - coreRect.top + (portraitRect.height / 2);
+    
+    // Position menu relative to portrait center within the core container
+    let menuX = portraitCenterX - (menuWidth / 2) + 90;
+    let menuY = portraitCenterY + (portraitRect.height / 2) - 200; 
     
     // Get viewport dimensions for boundary checking
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    // Position relative to portrait center
-    const portraitCenterX = portraitRect.left + (portraitRect.width / 2);
-    const portraitCenterY = portraitRect.top + (portraitRect.height / 2);
-    
-    // Get the HUD container's position to convert back to relative coordinates
-    const hudRect = this.element.getBoundingClientRect();
-    
-    // Calculate initial position relative to portrait center
-    let menuX = portraitCenterX - (menuWidth / 2); // Center horizontally
-    let menuY = portraitRect.bottom - 200; // Position below portrait with 10px gap
+    // Convert to viewport coordinates for boundary checking
+    const menuViewportX = coreRect.left + menuX;
+    const menuViewportY = coreRect.top + menuY;
     
     // Adjust horizontal position if it goes off viewport
-    if (menuX + menuWidth > viewportWidth) {
-      menuX = viewportWidth - menuWidth - 10; // 10px margin from edge
+    if (menuViewportX + menuWidth > viewportWidth) {
+      menuX = viewportWidth - coreRect.left - menuWidth - 10;
     }
-    if (menuX < 10) {
-      menuX = 10; // 10px margin from left edge
+    if (menuViewportX < 10) {
+      menuX = 10 - coreRect.left;
     }
     
     // Adjust vertical position if it goes off viewport
-    if (menuY + menuHeight > viewportHeight) {
+    if (menuViewportY + menuHeight > viewportHeight) {
       // Try positioning above the portrait
-      menuY = portraitRect.top - menuHeight - 10;
+      menuY = portraitCenterY - (portraitRect.height / 2) - menuHeight - 10;
       
-      // If still off-screen, clamp to viewport
-      if (menuY < 10) {
-        menuY = 10;
+      // If still off-screen, clamp to top
+      if (coreRect.top + menuY < 10) {
+        menuY = 10 - coreRect.top;
       }
     }
     
-    // Convert back to coordinates relative to HUD container
-    const relativeX = menuX - hudRect.left;
-    const relativeY = menuY - hudRect.top;
+    // Append menu to core element and use absolute positioning relative to core
+    if (menu.parentElement !== core) {
+      core.appendChild(menu);
+    }
     
-    // Apply final position
-    menu.style.left = `${relativeX}px`;
-    menu.style.top = `${relativeY}px`;
+    menu.style.position = 'absolute';
+    menu.style.left = `${menuX}px`;
+    menu.style.top = `${menuY}px`;
     
-  }
-
-  _hideStatusContextMenu() {
-    const menu = this.element?.querySelector('#dhud-context-menu');
-    if (menu) menu.classList.remove('show');
-  }
-
-  _hideStatusGrid() {
-    const grid = this.element?.querySelector('#dhud-status-grid');
-    if (grid) grid.classList.remove('show');
-  }
-
-  _hideTooltip() {
-    const tooltip = this.element?.querySelector('#dhud-tooltip');
-    if (tooltip) tooltip.classList.remove('show');
+    // Store the portrait center for the status grid positioning
+    this._portraitCenter = {
+      x: portraitCenterX,
+      y: portraitCenterY,
+      coreElement: core
+    };
   }
 
   _showStatusGrid(x, y) {
     const grid = this.element.querySelector('#dhud-status-grid');
-    if (!grid) return;
+    const core = this.element.querySelector('.dhud-core');
+    if (!grid || !core) return;
     
     // Show off-screen first to measure
+    grid.style.position = 'absolute';
     grid.style.left = '-9999px';
     grid.style.top = '-9999px';
     grid.classList.add('show');
@@ -437,42 +436,63 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     
     // Get dimensions
     const gridRect = grid.getBoundingClientRect();
-    const hudRect = this.element.getBoundingClientRect();
+    const coreRect = core.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    // Position relative to where the context menu was (x, y are HUD-relative)
+    // Use stored portrait center if available, otherwise fall back to click position
+    const anchorX = this._portraitCenter?.x || x;
+    const anchorY = this._portraitCenter?.y || y;
+    
+    // Position relative to the portrait center within core container
+    let adjustedX = anchorX - (gridRect.width / 2); // Center horizontally on portrait
+    let adjustedY = anchorY + 80; // Position below portrait with offset
+    
     // Convert to viewport coordinates for boundary checking
-    const viewportX = hudRect.left + x;
-    const viewportY = hudRect.top + y + 50; // Offset below the context menu
+    const gridViewportX = coreRect.left + adjustedX;
+    const gridViewportY = coreRect.top + adjustedY;
     
-    let adjustedX = x;
-    let adjustedY = y + 50; // Start 50px below the context menu position
-    
-    // Adjust if grid would go off-screen
-    if (viewportX + gridRect.width > viewportWidth) {
-      adjustedX = x - gridRect.width;
+    // Adjust if grid would go off-screen horizontally
+    if (gridViewportX + gridRect.width > viewportWidth) {
+      adjustedX = viewportWidth - coreRect.left - gridRect.width - 10;
+    }
+    if (gridViewportX < 10) {
+      adjustedX = 10 - coreRect.left;
     }
     
-    // FIX: Better vertical positioning logic
-    if (viewportY + gridRect.height > viewportHeight) {
-      // Try positioning above the context menu instead
-      adjustedY = y - gridRect.height - 20;
+    // Adjust if grid would go off-screen vertically
+    if (gridViewportY + gridRect.height > viewportHeight) {
+      // Try positioning above the portrait
+      adjustedY = anchorY - gridRect.height - 80;
       
-      // If still off-screen above, position at top of viewport
-      if (hudRect.top + adjustedY < 10) {
-        adjustedY = 10 - hudRect.top;
+      // If still off-screen above, clamp to top
+      if (coreRect.top + adjustedY < 10) {
+        adjustedY = 10 - coreRect.top;
       }
     }
     
-    // Ensure minimum bounds
-    if (hudRect.left + adjustedX < 10) {
-      adjustedX = 10 - hudRect.left;
+    // Append grid to core element and use absolute positioning relative to core
+    if (grid.parentElement !== core) {
+      core.appendChild(grid);
     }
     
-    // Apply final position
     grid.style.left = `${adjustedX}px`;
     grid.style.top = `${adjustedY}px`;
+  }
+
+  _hideStatusContextMenu() {
+    const menu = this.element?.querySelector('#dhud-context-menu');
+    if (menu) menu.classList.remove('show');
+  }
+
+  _hideStatusGrid() {
+    const grid = this.element?.querySelector('#dhud-status-grid');
+    if (grid) grid.classList.remove('show');
+  }
+
+  _hideTooltip() {
+    const tooltip = this.element?.querySelector('#dhud-tooltip');
+    if (tooltip) tooltip.classList.remove('show');
   }
 
   _showTooltip(x, y, text) {
