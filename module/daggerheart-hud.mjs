@@ -200,7 +200,7 @@ Hooks.on("daggerheart-hud:setting-changed", ({ key, value }) => {
 
 //Hooks.on("canvasPan", () => _hudApp?.close({ force: true }));
 
-Hooks.on("deleteToken", (scene, tokenDoc) => {
+Hooks.on("deleteToken", (tokenDoc) => {
   const t = canvas.tokens?.controlled[0];
   if (!t || t.id === tokenDoc.id) {
     if (game.user.isGM) {

@@ -718,21 +718,18 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           return;
         }
 
-        const current = Math.max(0, Number(equippedArmor.system?.marks?.value ?? 0));
-        const maxMarks = Math.max(
-          0,
-          Number(
-            equippedArmor.system?.marks?.max ??
-              this.actor?.system?.armorScore ??
-              equippedArmor.system?.baseScore ??
-              0
-          )
-        );
+        const armorData = equippedArmor.system?.armor ?? {};
+        const current = Math.max(0, Number(armorData.current ?? equippedArmor.system?.marks?.value ?? 0));
+        const actorScore = this.actor?.system?.armorScore;
+        const maxMarks = Math.max(0, Number(
+          (actorScore && typeof actorScore === 'object' ? actorScore.max : actorScore) ??
+            armorData.max ?? equippedArmor.system?.baseScore ?? 0
+        ));
 
         const next = Math.min(maxMarks, current + 1);
         if (next !== current) {
           try {
-            await equippedArmor.update({ "system.marks.value": next });
+            await equippedArmor.update({ "system.armor.current": next });
           } catch (err) {
             console.error("[DHUD] Failed to update armor", err);
             ui.notifications?.error("Failed to update armor");
@@ -797,12 +794,12 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           return;
         }
 
-        const current = Math.max(0, Number(equippedArmor.system?.marks?.value ?? 0));
+        const current = Math.max(0, Number(equippedArmor.system?.armor?.current ?? equippedArmor.system?.marks?.value ?? 0));
         const next = Math.max(0, current - 1);
 
         if (next !== current) {
           try {
-            await equippedArmor.update({ "system.marks.value": next });
+            await equippedArmor.update({ "system.armor.current": next });
           } catch (err) {
             console.error("[DHUD] Failed to update armor", err);
             ui.notifications?.error("Failed to update armor");
@@ -1192,7 +1189,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           if (!item) return;
 
           // Duplicate current resource and diceStates (object OR array)
-          const res = foundry.utils.duplicate(item.system?.resource ?? {});
+          const res = foundry.utils.deepClone(item.system?.resource ?? {});
           let states = res.diceStates ?? {};
 
           // Normalize: allow array or object, but we will write back in the same shape
@@ -1682,9 +1679,12 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     let armor;
     if (equippedArmor) {
       const armorSys    = equippedArmor.system;
-      const baseScore   = Number(armorSys.baseScore ?? 0);                
-      const effectiveMax= Math.max(0, Number(this.actor?.system?.armorScore ?? baseScore)); 
-      const rawMarks    = Number(armorSys.marks?.value ?? 0);
+      const baseScore   = Number(armorSys.armor?.max ?? armorSys.baseScore ?? 0);
+      const actorScore  = this.actor?.system?.armorScore;
+      const effectiveMax= Math.max(0, Number(
+        (actorScore && typeof actorScore === 'object' ? actorScore.max : actorScore) ?? baseScore
+      ));
+      const rawMarks    = Number(armorSys.armor?.current ?? armorSys.marks?.value ?? 0);
       const marks       = Math.max(0, Math.min(effectiveMax, rawMarks));  
 
       armor = {

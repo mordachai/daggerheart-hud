@@ -29,27 +29,13 @@ function applyHotbarVisibility() {
 export function registerSettings() {
   const scopeClient = "client"; // per-user
 
-  // Launcher that opens the V2 dialog (we accept the V1 FormApplication warning in v13)
   game.settings.registerMenu("daggerheart-hud", "hudThemeConfig", {
     name: "HUD Theme Config",
     label: "HUD Theme Config",
     icon: "fas fa-ring",
-    type: class DHUDThemeLauncher extends FormApplication {
-      static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-          id: "dhud-theme-launcher",
-          template: "modules/daggerheart-hud/templates/ui/blank.hbs",
-          title: "HUD Theme Config (Launcher)",
-          popOut: false
-        });
-      }
-      async getData() { return {}; }
-      async _render(...args) {
-        await super._render(...args);
-        setTimeout(() => {
-          try { openHudRingsDialog(); } finally { this.close({ force: true }); }
-        }, 0);
-      }
+    type: class DHUDThemeLauncher {
+      render() { openHudRingsDialog(); }
+      async close() {}
     },
     restricted: true
   });

@@ -1,0 +1,85 @@
+name: Release Module
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'module.json'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          fetch-tags: true
+
+      - name: Check if version changed
+        id: check_version
+        run: |
+          CURRENT_VERSION=$(jq -r '.version' module.json)
+          PREVIOUS_VERSION=$(git show HEAD~1:module.json | jq -r '.version')
+
+          echo "Current version: $CURRENT_VERSION"
+          echo "Previous version: $PREVIOUS_VERSION"
+
+          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "VERSION=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged, skipping release"
+          fi
+
+      - name: Check if tag exists
+        if: steps.check_version.outputs.changed == 'true'
+        id: check_tag
+        run: |
+          if git rev-parse "v${{ steps.check_version.outputs.VERSION }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag v${{ steps.check_version.outputs.VERSION }} already exists, skipping release"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create module package
+        if: steps.check_version.outputs.changed == 'true' && steps.check_tag.outputs.exists == 'false'
+        run: |
+          mkdir -p daggerheart-hud
+
+          cp module.json daggerheart-hud/
+          cp -r module daggerheart-hud/
+          cp -r styles daggerheart-hud/
+          cp -r templates daggerheart-hud/
+          cp -r ui daggerheart-hud/
+
+          cd daggerheart-hud
+          zip -r ../module.zip .
+          cd ..
+
+      - name: Create Release
+        if: steps.check_version.outputs.changed == 'true' && steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.check_version.outputs.VERSION }}
+          name: Release v${{ steps.check_version.outputs.VERSION }}
+          files: |
+            module.json
+            module.zip
+          body: |
+            ## Daggerheart HUD v${{ steps.check_version.outputs.VERSION }}
+
+            ### Installation
+            Install directly from Foundry VTT using the manifest URL, or:
+            1. Download `module.zip`
+            2. Extract to your Foundry VTT `Data/modules/` directory
+            3. Enable the module in your world's module settings
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
