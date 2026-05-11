@@ -4,7 +4,7 @@ export async function enrichItemDescription(item) {
   const rollData = item.getRollData?.() ?? item.actor?.getRollData?.() ?? {};
 
   // Foundry will parse [[/r ...]] and resolve @UUID, etc.
-  const html = await TextEditor.enrichHTML(raw, {
+  const html = await foundry.applications.ux.TextEditor.implementation.enrichHTML(raw, {
     async: true,
     rollData,
     relativeTo: item,
