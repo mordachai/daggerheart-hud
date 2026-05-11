@@ -1,5 +1,5 @@
 // module/settings.mjs
-import { openHudRingsDialog } from "./apps/hud-rings.mjs";
+import { HudRingsDialog } from "./apps/hud-rings.mjs";
 
 const MOD = "daggerheart-hud";
 
@@ -33,10 +33,7 @@ export function registerSettings() {
     name: "HUD Theme Config",
     label: "HUD Theme Config",
     icon: "fas fa-ring",
-    type: class DHUDThemeLauncher {
-      render() { openHudRingsDialog(); }
-      async close() {}
-    },
+    type: HudRingsDialog,
     restricted: true
   });
 
