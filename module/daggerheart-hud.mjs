@@ -3,6 +3,8 @@ import { registerSettings, getSetting, S } from "./settings.mjs";
 import { DaggerheartActorHUD } from "./apps/dh-actor-hud.mjs";
 import { registerDHUDHelpers } from "./helpers/handlebars-helpers.mjs";
 import { DHUD } from "./constants.mjs";
+import { captureLayout, restoreLayout, requestRender } from "./hud/layout.mjs";
+import { announceButtonRegistration } from "./hud/custom-buttons.mjs";
 
 // Re-exported so existing importers keep working (single source: constants.mjs).
 export { DHUD };
@@ -23,7 +25,7 @@ Hooks.once("ready", async () => {
   await foundry.applications.handlebars.loadTemplates(DHUD.templates);
   
   // Emit hook for custom button registration
-  Hooks.callAll("daggerheart-hud:registerButtons");
+  announceButtonRegistration();
 });
 
 let _hudApp;
@@ -53,7 +55,7 @@ let _lastHudLayout = null;
 function createOrUpdateHUD(actor = null, token = null) {
   // Capture current layout before closing
   if (_hudApp) {
-    _lastHudLayout = dhudCaptureLayout();
+    _lastHudLayout = captureLayout(_hudApp);
     _hudApp.close({ force: true });
     _hudApp = null;
   }
@@ -80,7 +82,7 @@ function createOrUpdateHUD(actor = null, token = null) {
     // Restore layout and show after DOM is ready
     if (_lastHudLayout) {
       setTimeout(() => {
-        dhudRestoreLayout(_lastHudLayout);
+        restoreLayout(_hudApp, _lastHudLayout);
         if (_hudApp?.element) {
           _hudApp.element.style.visibility = 'visible';
         }
@@ -214,73 +216,10 @@ Hooks.on("deleteToken", (tokenDoc) => {
   }
 });
 
-/** Snapshot current HUD layout (position + wings). */
-function dhudCaptureLayout() {
-  const app = _hudApp;
-  const el = app?.element;
-  if (!el) return null;
-
-  const shell = el.querySelector(".dhud");
-  const style = el.style;
-
-  // Determine if we're anchored at bottom or free-dragged
-  const mode = (style.bottom && style.bottom !== "auto") ? "bottom" : "free";
-
-  return {
-    mode,                           // "bottom" | "free"
-    left: style.left || "",
-    top:  style.top  || "",
-    bottom: style.bottom || "",
-    wings: shell?.getAttribute("data-wings") || "closed"
-  };
-}
-
-/** Re-apply a previously captured layout snapshot. */
-function dhudRestoreLayout(snapshot) {
-  if (!snapshot) return;
-  const app = _hudApp;
-  const el = app?.element;
-  if (!el) return;
-
-  const shell = el.querySelector(".dhud");
-  if (shell && snapshot.wings) shell.setAttribute("data-wings", snapshot.wings);
-
-  const style = el.style;
-  if (snapshot.mode === "bottom") {
-    // Re-anchor at bottom: set bottom + left, clear top
-    style.bottom = snapshot.bottom || "110px"; // default safety
-    style.top = "auto";
-    style.left = snapshot.left || "";
-  } else {
-    // Free-dragged: set top + left, clear bottom
-    style.bottom = "auto";
-    style.top = snapshot.top || "";
-    style.left = snapshot.left || "";
-  }
-}
-
 // ====== HUD REFRESH WATCHERS (actor + embedded docs) ======
 /** Queue a single re-render (collapse bursts of updates) and preserve layout. */
 function dhudRequestRender() {
-  if (!_hudApp) return;
-  if (_hudApp._renderQueued) return;
-  _hudApp._renderQueued = true;
-
-  const snap = dhudCaptureLayout();
-
-  (async () => {
-    try {
-      await _hudApp.render(false);
-    } finally {
-      _hudApp._renderQueued = false;
-      dhudRestoreLayout(snap);
-      
-      // Re-attach drag handlers
-      if (_hudApp.reattachDragHandlers) {
-        _hudApp.reattachDragHandlers();
-      }
-    }
-  })();
+  requestRender(_hudApp);
 }
 
 /** Actor paths that should rerender the HUD when changed. */

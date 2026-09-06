@@ -4,205 +4,14 @@ import { L, Lpath, Ltrait } from "../helpers/i18n.mjs";
 import { sendItemToChat } from "../helpers/chat-utils.mjs";
 import { getSetting, S } from "../settings.mjs";
 import { enrichItemDescription, toHudInlineButtons } from "../helpers/inline-rolls.mjs";
-
-
-function placeAtBottom(appEl, offsetPx = 110) {
-  if (!appEl?.getBoundingClientRect) return;
-  appEl.style.position = "absolute";
-  appEl.style.bottom = `${offsetPx}px`;
-  appEl.style.top = "auto";
-  appEl.style.right = "auto";
-  const rect = appEl.getBoundingClientRect();
-  const left = Math.max(0, (window.innerWidth - rect.width) / 2);
-  appEl.style.left = `${left}px`;
-}
-
-function enableDragByRing(appEl, appInstance) {
-  const handle = appEl.querySelector(".dhud-ring");
-  if (!handle) return;
-
-  let startX, startY, startLeft, startTop, didMove = false;
-
-  const onMove = (ev) => {
-    if (!didMove) {
-      // primeira vez que realmente move: sair de bottom e travar top no valor atual
-      const r0 = appEl.getBoundingClientRect();
-      appEl.style.bottom = "auto";
-      appEl.style.top = `${r0.top}px`;
-      didMove = true;
-    }
-    appInstance._isDragging = true;
-    const dx = ev.clientX - startX;
-    const dy = ev.clientY - startY;
-    appEl.style.left = `${startLeft + dx}px`;
-    appEl.style.top  = `${startTop  + dy}px`;
-  };
-
-  const onUp = async () => {
-    handle.style.cursor = "grab";
-    window.removeEventListener("pointermove", onMove, true);
-    window.removeEventListener("pointerup", onUp, true);
-
-    if (didMove) {
-      appInstance._justDraggedTs = Date.now();
-
-      // Save the user's preferred HUD position (not per-actor)
-      try {
-        const rect = appEl.getBoundingClientRect();
-        // Clamp to viewport a bit so we don't persist negative coords
-        const left = Math.max(0, Math.round(rect.left));
-        const top  = Math.max(0, Math.round(rect.top));
-        await game.user.setFlag("daggerheart-hud", "globalPosition", { left, top });
-      } catch (err) {
-        console.warn("[DHUD] Failed to persist HUD position", err);
-      }
-    }
-
-    didMove = false;
-
-    // Release dragging flag and then recompute panel direction (up/down)
-    requestAnimationFrame(() => {
-      appInstance._isDragging = false;
-
-      // If a tab is currently open, recompute its open direction now that position changed
-      try {
-        const shell    = appEl.querySelector(".dhud");
-        const openName = shell?.getAttribute("data-open");
-        if (openName) {
-          const panel = appEl.querySelector(`.dhud-panel[data-panel='${openName}']`);
-          if (panel && typeof setPanelOpenDirection === "function") {
-            setPanelOpenDirection(panel);
-          }
-        }
-      } catch (e) {
-        console.debug("[DHUD] setPanelOpenDirection after drag skipped", e);
-      }
-    });
-  };
-
-
-  const onDown = (ev) => {
-    if (ev.button !== 0) return;
-    ev.preventDefault();
-    handle.style.cursor = "grabbing";
-
-    const r = appEl.getBoundingClientRect();
-    // NÃO mexe em bottom/top aqui; só quando começar a mover
-    startX = ev.clientX; startY = ev.clientY;
-    startLeft = r.left;  startTop = r.top;
-
-    window.addEventListener("pointermove", onMove, true);
-    window.addEventListener("pointerup", onUp, true);
-  };
-
-  handle.addEventListener("pointerdown", onDown);
-}
-
-function setWingsState(rootEl, state /* "open" | "closed" */) {
-  if (!rootEl) return;
-  const shell = rootEl.querySelector(".dhud");
-  const leftWing  = rootEl.querySelector(".dhud-wing--left");
-  const rightWing = rootEl.querySelector(".dhud-wing--right");
-  const ring      = rootEl.querySelector(".dhud-ring");
-  if (!shell || !leftWing || !rightWing || !ring) return;
-
-  // 1) captura centro do ring antes
-  const pre = ring.getBoundingClientRect();
-  const cxPre = pre.left + pre.width / 2;
-
-  // 2) aplica estado
-  shell.setAttribute("data-wings", state);
-
-  // acessibilidade
-  const closed = state === "closed";
-  leftWing.toggleAttribute("inert", closed);
-  rightWing.toggleAttribute("inert", closed);
-  if (closed) shell.setAttribute("data-open", "");
-
-  // 3) compensa deslocamento p/ manter core ancorado
-  requestAnimationFrame(() => {
-    const post = ring.getBoundingClientRect();
-    const cxPost = post.left + post.width / 2;
-    const dx = cxPost - cxPre;
-    if (Math.abs(dx) > 0.5) {
-      const app = rootEl;
-      const currentLeft = parseFloat(app.style.left || "0");
-      app.style.left = `${currentLeft - dx}px`;
-    }
-  });
-}
-
-/**
- * Decide whether a tab panel should open up or down.
- * Sets:
- *   panel.dataset.openDir = "up" | "down"
- *   panel.style.setProperty("--dhud-panel-maxh", "<px>")  (so it scrolls if tight)
- */
-function setPanelOpenDirection(panel) {
-  if (!panel) return;
-
-  // Measure the tabwrap (panel’s offset parent is .dhud-tabwrap)
-  const wrap = panel.closest(".dhud-tabwrap") || panel.parentElement;
-  const rect = wrap.getBoundingClientRect();
-
-  const spaceAbove = rect.top;                                 // px to viewport top
-  const spaceBelow = window.innerHeight - rect.bottom;         // px to viewport bottom
-
-  // Estimate needed height: content’s natural height (capped)
-  // Using scrollHeight lets us respect the actual content size.
-  const contentHeight = panel.scrollHeight || 320;
-  const minRoom = 220;     // lower bound so short panels don’t jitter
-  const need = Math.max(minRoom, Math.min(contentHeight, 700));
-
-  // Choose direction
-  let dir;
-  if (spaceBelow >= need) dir = "down";
-  else if (spaceAbove >= need) dir = "up";
-  else dir = (spaceBelow >= spaceAbove) ? "down" : "up";
-
-  // Apply direction and max height
-  panel.setAttribute("data-open-dir", dir);
-  // Let CSS clamp the panel with a friendly margin to edges
-  const maxH = (dir === "down" ? Math.max(180, spaceBelow - 12) : Math.max(180, spaceAbove - 12));
-  panel.style.setProperty("--dhud-panel-maxh", `${maxH}px`);
-  panel.style.setProperty("--dhud-panel-gap", "6px"); // small visual gap below/above the tab
-}
-
-
-function attachDHUDToggles(root) {
-  if (!root) return;
-
-  // helper para setar/alternar o atributo data-open no elemento .dhud
-  const dhud = root.querySelector(".dhud");
-  if (!dhud) return;
-
-  const tabs = root.querySelectorAll(".dhud-tab");
-
-  const setOpen = (name) => {
-    const curr = dhud.getAttribute("data-open") || "";
-    const next = curr === name ? "" : name;
-    dhud.setAttribute("data-open", next);
-    tabs.forEach(t => t.setAttribute("aria-expanded", String(t.dataset.tab === next)));
-  };
-
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => setOpen(tab.dataset.tab));
-    tab.addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); setOpen(tab.dataset.tab); }
-    });
-  });
-
-  // fechar ao clicar fora do HUD
-  const onDocPointer = (ev) => {
-    if (!root.contains(ev.target)) setOpen("");
-  };
-  document.addEventListener("pointerdown", onDocPointer, { capture: true });
-
-  // fechar com ESC quando o foco estiver dentro do HUD
-  root.addEventListener("keydown", (ev) => {
-    if (ev.key === "Escape") setOpen("");
-  });
-}
+import { placeAtBottom, enableDragByRing, getSavedGlobalPosition } from "../hud/position.mjs";
+import { setWingsState, setPanelOpenDirection, attachDHUDToggles } from "../hud/wings.mjs";
+import { applyAppearance, reapplyAppearance } from "../hud/appearance.mjs";
+import {
+  registerCustomButton as registerCustomButtonImpl,
+  getCustomButton,
+  collectCustomButtons
+} from "../hud/custom-buttons.mjs";
 
 // Function to detect if an item has actions (works with Foundry Collections)
 function itemHasActions(item) {
@@ -241,33 +50,6 @@ async function setResource(actor, path, value, { min = 0, max = Number.MAX_SAFE_
   if (next === curr) return;
   const update = {}; foundry.utils.setProperty(update, path, next);
   await actor.update(update);
-}
-
-function getActorThemeOrDefault(actor) {
-  // Check GM theme override first - this applies to ALL characters
-  const gmThemeOverride = game.settings.get("daggerheart-hud", "gmThemeOverride");
-  if (gmThemeOverride) {
-    const gmTheme = game.settings.get("daggerheart-hud", "gmGlobalTheme");
-    if (gmTheme) return gmTheme;
-  }
-
-  // Fall back to actor-specific flags only if GM override is disabled
-  return actor?.getFlag("daggerheart-hud", "colorScheme") || "default";
-}
-
-function getActorRingImageOrDefault(actor, type) {
-  // Check GM override first - this applies to ALL characters
-  const gmOverride = game.settings.get("daggerheart-hud", "gmRingOverride");
-  if (gmOverride) {
-    const gmRing = type === "main" 
-      ? game.settings.get("daggerheart-hud", "gmPortraitRing")
-      : game.settings.get("daggerheart-hud", "gmWeaponsRing");
-    if (gmRing) return gmRing;
-  }
-
-  // Fall back to actor-specific flags only if GM override is disabled
-  const flagKey = type === "main" ? "ringPortrait" : "ringWeapons";
-  return actor?.getFlag("daggerheart-hud", flagKey) || "";
 }
 
 export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -313,18 +95,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     }
   }
 
-  // Custom buttoms
+  // Custom buttons — public API; registry lives in hud/custom-buttons.mjs
   static registerCustomButton(config) {
-    const { id, section, icon, title, handler, condition } = config;
-    
-    if (!id || !section || !handler) {
-      console.warn("[DHUD] Invalid button config:", config);
-      return;
-    }
-    
-    // Store in global registry
-    if (!this._customButtons) this._customButtons = new Map();
-    this._customButtons.set(id, { section, icon, title, handler, condition });
+    registerCustomButtonImpl(config);
   }
 
   // === STATUS CONTEXT MENU METHODS ===
@@ -993,7 +766,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       if (customBtn) {
         stop(ev);
         const buttonId = customBtn.dataset.action.replace('custom-', '');
-        const config = DaggerheartActorHUD._customButtons?.get(buttonId);
+        const config = getCustomButton(buttonId);
         if (config) {
           const traitKey = customBtn.dataset.trait;
           await config.handler(this.actor, traitKey);
@@ -1287,22 +1060,10 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     const sys = actor?.system ?? {};
 
     const customButtons = {
-      traits: [],
+      traits: collectCustomButtons("traits", this.actor),
       inventory: [],
       // other sections...
     };
-
-    // Collect custom buttons for each section
-    if (DaggerheartActorHUD._customButtons) {
-      for (const [id, config] of DaggerheartActorHUD._customButtons) {
-        if (config.section === "traits") {
-          // Check condition if provided
-          if (!config.condition || config.condition(this.actor)) {
-            customButtons.traits.push({ id, ...config });
-          }
-        }
-      }
-    }
 
     // === PRIMARY WEAPON (only equipped & NOT secondary); else Unarmed ===
     let primaryWeapon = null;
@@ -1899,56 +1660,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       alt: imgEl?.getAttribute("alt")
     });
 
-    // Normalize image paths to routed URLs
-    function toRouteURL(p) {
-      if (!p) return "none";
-      let cleanPath = p.trim();
-
-      // Full URLs pass through
-      if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
-        return `url("${cleanPath}")`;
-      }
-
-      // Absolute module/asset paths
-      if (cleanPath.startsWith("/")) {
-        const abs = foundry.utils.getRoute(cleanPath);
-        return `url("${abs}")`;
-      }
-
-      // Ensure leading slash for relative asset paths
-      if (!cleanPath.startsWith("/")) {
-        cleanPath = `/${cleanPath}`;
-      }
-
-      const abs = foundry.utils.getRoute(cleanPath);
-      return `url("${abs}")`;
-    }
-
-    // --- Theme: Use GM override logic
-    const prefix = "dhud-theme-";
-    const scheme = getActorThemeOrDefault(this.actor);
-
-    // remove any previous theme classes
-    for (const c of Array.from(root.classList)) {
-      if (c.startsWith(prefix)) root.classList.remove(c);
-    }
-
-    // apply the requested scheme
-    root.classList.add(prefix + scheme);
-
-    // verify the theme actually defines vars; if not, fallback to default
-    const cs = getComputedStyle(root);
-    if (!cs.getPropertyValue("--dh-accent").trim()) {
-      console.warn(`[DHUD] Unknown or missing theme "${scheme}" for ${this.actor?.name}; falling back to "default".`);
-      root.classList.remove(prefix + scheme);
-      root.classList.add(prefix + "default");
-    }
-
-    // --- Ring art: Actor flags only (no GM/global fallback)
-    const mainRing = getActorRingImageOrDefault(this.actor, "main");
-    const weapRing = getActorRingImageOrDefault(this.actor, "weapon");
-    root.style.setProperty("--dhud-ring-main",  toRouteURL(mainRing));
-    root.style.setProperty("--dhud-ring-weapon", toRouteURL(weapRing));
+    // --- Theme + ring art (GM override logic lives in hud/appearance.mjs)
+    applyAppearance(root, this.actor);
 
     // Cosmetic pointer cursor for roll targets
     root.querySelectorAll(".dhud-roll").forEach(el => {
@@ -1972,19 +1685,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         if (!this.actor) return;
         if (actorIds.length && !actorIds.includes(this.actor.id)) return;
 
-        // rings
-        const mr = getActorRingImageOrDefault(this.actor, "main");
-        const wr = getActorRingImageOrDefault(this.actor, "weapon");
-        root.style.setProperty("--dhud-ring-main",  toRouteURL(mr));
-        root.style.setProperty("--dhud-ring-weapon", toRouteURL(wr));
-
-        // theme only - NO position changes
-        const scheme = getActorThemeOrDefault(this.actor);
-        const prefix = "dhud-theme-";
-        Array.from(root.classList).forEach(c => { if (c.startsWith(prefix)) root.classList.remove(c); });
-        root.classList.add(`${prefix}${scheme}`);
-        
-        // Don't touch any position-related styles here
+        // rings + theme only - NO position changes
+        reapplyAppearance(root, this.actor);
       };
 
       // Listen only to the Configurator's saves
@@ -2001,8 +1703,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     if (!this._booted) {
       const applyPlacement = () => {
         // Check if user has a saved global position
-        const userGlobalPos = game.user.getFlag("daggerheart-hud", "globalPosition");
-        
+        const userGlobalPos = getSavedGlobalPosition();
+
         if (userGlobalPos) {
           // Use the user's saved position
           root.style.position = "absolute";
