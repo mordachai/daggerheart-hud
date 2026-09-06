@@ -44,6 +44,22 @@ export async function useItemAction(item, actionId, event) {
   }
 }
 
+/**
+ * Move a domain card between loadout and vault. Delegates to the system's
+ * `system.toggleVault(event, toVault, isRecall)` which handles the loadout-cap
+ * warning and the Stress recall-cost dialog. Leaving the vault (toVault=false)
+ * is a recall. Raw `item.update({'system.inVault'})` skips both — do not use it.
+ */
+export async function moveDomainCard(card, toVault, event) {
+  if (!card?.system?.toggleVault) return;
+  try {
+    return await card.system.toggleVault(event ?? {}, toVault, !toVault);
+  } catch (err) {
+    console.error("[DHUD] Domain card vault move failed", err);
+    ui.notifications?.error("Vault move failed (see console)");
+  }
+}
+
 /** Post the system's ability-use chat card for an item. toChat REQUIRES the uuid. */
 export async function sendToChat(item) {
   if (!item) return;

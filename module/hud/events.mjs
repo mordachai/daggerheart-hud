@@ -7,7 +7,7 @@
 
 import { setWingsState, setPanelOpenDirection } from "./wings.mjs";
 import { getCustomButton } from "./custom-buttons.mjs";
-import { useWeapon, useItemAction, sendToChat } from "../system/items.mjs";
+import { useWeapon, useItemAction, sendToChat, moveDomainCard } from "../system/items.mjs";
 import { rollTrait } from "../system/actor.mjs";
 
 /** Wire the delegated HUD interactions. Guarded once per app (`app._delegatedBound`). */
@@ -158,12 +158,12 @@ export function attachHudEvents(app) {
       return;
     }
 
-    // Move domain card (loadout <-> vault)
+    // Move domain card (loadout <-> vault) — via system.toggleVault (recall cost + cap)
     const mvBtn = ev.target.closest("[data-action='to-vault'],[data-action='to-loadout']");
     if (mvBtn) {
       stop(ev);
       const item = actor.items.get(mvBtn.dataset.itemId);
-      if (item) await item.update({ "system.inVault": mvBtn.dataset.action === "to-vault" });
+      if (item) await moveDomainCard(item, mvBtn.dataset.action === "to-vault", ev);
       return;
     }
 
