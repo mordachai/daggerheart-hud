@@ -1,10 +1,29 @@
-// module/helpers/inline-rolls.mjs
-export async function enrichItemDescription(item) {
-  const raw = item.system?.description ?? "";
-  const rollData = item.getRollData?.() ?? item.actor?.getRollData?.() ?? {};
+// module/system/descriptions.mjs
+// Item descriptions for the HUD. Base HTML comes from the system's own enricher
+// (item.system.getEnrichedDescription — includes weapon/armor feature prefixes and,
+// for the GM, the gmNotes section). On top of that we rewrite [[/r ...]] and
+// [[/dr ...]] into clickable HUD chips. Moved from helpers/inline-rolls.mjs in step 6.
 
-  // Foundry will parse [[/r ...]] and resolve @UUID, etc.
-  const html = await foundry.applications.ux.TextEditor.implementation.enrichHTML(raw, {
+/** System-enriched description HTML + HUD inline-roll chips. One call for collectors. */
+export async function getItemDescriptionHTML(item, { duality = true } = {}) {
+  return toHudInlineButtons(await enrichItemDescription(item), { enableDuality: duality });
+}
+
+/** Enriched description HTML for an item — system enricher first, manual enrich as fallback. */
+export async function enrichItemDescription(item) {
+  try {
+    const sys = item?.system;
+    if (typeof sys?.getEnrichedDescription === "function") {
+      const html = await sys.getEnrichedDescription({ gmNotes: game.user?.isGM === true, type: "sheet" });
+      if (html != null) return html;
+    }
+  } catch (err) {
+    console.warn("[DHUD] getEnrichedDescription failed, falling back to manual enrich", err);
+  }
+
+  const raw = item?.system?.description ?? "";
+  const rollData = item?.getRollData?.() ?? item?.actor?.getRollData?.() ?? {};
+  return foundry.applications.ux.TextEditor.implementation.enrichHTML(raw, {
     async: true,
     rollData,
     relativeTo: item,
@@ -13,8 +32,6 @@ export async function enrichItemDescription(item) {
     links: true,
     rolls: true
   });
-
-  return html;
 }
 
 function pickDieIcon(formula = "") {
@@ -27,9 +44,10 @@ function pickDieIcon(formula = "") {
   return faces ? map[faces] : "fa-solid fa-dice-d6";
 }
 
+/** Rewrite enriched [[/r]] anchors and bare [[/dr ...]] text into HUD chip buttons. */
 export function toHudInlineButtons(enrichedHTML, { enableDuality = true } = {}) {
   const root = document.createElement("div");
-  root.innerHTML = enrichedHTML;
+  root.innerHTML = enrichedHTML ?? "";
 
   // [[/r ...]] buttons
   for (const a of root.querySelectorAll("a.inline-roll")) {
@@ -44,7 +62,7 @@ export function toHudInlineButtons(enrichedHTML, { enableDuality = true } = {}) 
     a.replaceWith(btn);
   }
 
-  // [[/dr ...]] buttons (system chat command)
+  // [[/dr ...]] buttons (system duality roll)
   if (enableDuality) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];

@@ -5,7 +5,7 @@
 // system.granter.type and fills in the empty Class/Heritage panels on migrated worlds.
 
 import { itemHasActions, firstActionId } from "../../system/items.mjs";
-import { enrichItemDescription, toHudInlineButtons } from "../../helpers/inline-rolls.mjs";
+import { getItemDescriptionHTML } from "../../system/descriptions.mjs";
 
 export async function collectFeatures(app) {
   // === MISCELLANEOUS FEATURES ===
@@ -20,7 +20,7 @@ export async function collectFeatures(app) {
       name: it.name,
       img: it.img || "icons/svg/aura.svg",
       description: it.system?.description ?? "", // optional raw
-      descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
+      descriptionHTML: await getItemDescriptionHTML(it),
       hasActions: hasActions,
       actionId: firstActionId(it)
     });
@@ -44,7 +44,7 @@ export async function collectFeatures(app) {
       name: it.name,
       img: it.img || "icons/svg/aura.svg",
       description: it.system?.description ?? "", // optional raw
-      descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
+      descriptionHTML: await getItemDescriptionHTML(it),
       hasActions: hasActions,
       system: it.system,
       actionId: firstActionId(it)
@@ -85,7 +85,7 @@ export async function collectFeatures(app) {
         name: it.name,
         img: it.img || "icons/svg/aura.svg",
         description: it.system?.description ?? "", // optional raw
-        descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
+        descriptionHTML: await getItemDescriptionHTML(it),
         hasActions: hasActions,
         system: it.system,
         actionId: firstActionId(it)
@@ -102,7 +102,7 @@ export async function collectFeatures(app) {
         name: it.name,
         img: it.img || "icons/svg/aura.svg",
         description: it.system?.description ?? "", // optional raw
-        descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
+        descriptionHTML: await getItemDescriptionHTML(it),
         hasActions: hasActions,
         system: it.system,
         actionId: firstActionId(it)

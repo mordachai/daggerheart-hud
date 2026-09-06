@@ -7,8 +7,7 @@
 
 import { setWingsState, setPanelOpenDirection } from "./wings.mjs";
 import { getCustomButton } from "./custom-buttons.mjs";
-import { sendItemToChat } from "../helpers/chat-utils.mjs";
-import { useWeapon, useItemAction } from "../system/items.mjs";
+import { useWeapon, useItemAction, sendToChat } from "../system/items.mjs";
 import { rollTrait } from "../system/actor.mjs";
 
 /** Wire the delegated HUD interactions. Guarded once per app (`app._delegatedBound`). */
@@ -155,7 +154,7 @@ export function attachHudEvents(app) {
     if (chatBtn) {
       stop(ev);
       const item = actor.items.get(chatBtn.dataset.itemId);
-      if (item) await sendItemToChat(item, actor);
+      if (item) await sendToChat(item);
       return;
     }
 

@@ -44,6 +44,17 @@ export async function useItemAction(item, actionId, event) {
   }
 }
 
+/** Post the system's ability-use chat card for an item. toChat REQUIRES the uuid. */
+export async function sendToChat(item) {
+  if (!item) return;
+  try {
+    return await item.toChat(item.uuid);
+  } catch (err) {
+    console.error("[DHUD] Send to chat failed", err);
+    ui.notifications?.error("Send to chat failed (see console)");
+  }
+}
+
 /** Fire the actor's unarmed attack. */
 export async function useUnarmed(actor, event) {
   const attack = actor?.system?.attack;

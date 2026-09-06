@@ -2,7 +2,7 @@
 // Consumables + loot. Extracted verbatim from _prepareContext in refactor step 4.
 
 import { itemHasActions, firstActionId } from "../../system/items.mjs";
-import { enrichItemDescription, toHudInlineButtons } from "../../helpers/inline-rolls.mjs";
+import { getItemDescriptionHTML } from "../../system/descriptions.mjs";
 
 export async function collectInventory(app) {
   const invConsumables = [];
@@ -20,7 +20,7 @@ export async function collectInventory(app) {
       img: it.img || "icons/svg/aura.svg",
       qty: Number(it.system?.quantity ?? 0),
       description: it.system?.description ?? "", // optional raw
-      descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
+      descriptionHTML: await getItemDescriptionHTML(it),
       hasActions: hasActions,
       system: it.system,
       actionId: it.type === "consumable" ? firstActionId(it) : ""

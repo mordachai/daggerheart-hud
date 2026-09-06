@@ -3,7 +3,7 @@
 // Extracted verbatim from _prepareContext in refactor step 4 — no behaviour change.
 
 import { itemHasActions, firstActionId } from "../../system/items.mjs";
-import { enrichItemDescription, toHudInlineButtons } from "../../helpers/inline-rolls.mjs";
+import { getItemDescriptionHTML } from "../../system/descriptions.mjs";
 
 export async function collectDomains(app) {
   const sys = app.actor?.system ?? {};
@@ -50,7 +50,7 @@ export async function collectDomains(app) {
       name: it.name,
       img: it.img || "icons/svg/aura.svg",
       description: it.system?.description ?? "", // optional raw
-      descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
+      descriptionHTML: await getItemDescriptionHTML(it),
       hasActions: hasActions,
       recallCost: Number(it.system?.recallCost ?? 0),
       domain: (it.system?.domain ?? "").toString(),
