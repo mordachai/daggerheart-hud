@@ -1320,9 +1320,96 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 }
 
 
+/* ===== Extra resources (homebrew + feature-granted) ===== */
+/* Horizontal strip centered under the core cluster. Chips are the only
+   interactive bit; left/right-click adjust (see hud/resources-bar.mjs). */
+.dhud-extra-resources {
+  position: absolute;
+  bottom: calc(100% + 4px);   /* above the core — screen bottom is the hard edge */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: .3rem;
+  max-width: calc(var(--side-d) * 2 + var(--core-gap) * 2 + var(--circle-d));
+  pointer-events: none;
+}
+
+.dhud-extra-res {
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .12rem .4rem;
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  border-radius: 999px;
+  color: var(--dh-text);
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: border-color .15s, box-shadow .15s;
+}
+.dhud-extra-res:hover {
+  border-color: var(--dh-accent);
+  box-shadow: 0 0 6px 0 var(--dh-pip-border);
+}
+
+.dhud-extra-res__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dh-accent);
+  font-size: .85em;
+}
+.dhud-extra-res__icon img {
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+  border: none;
+}
+
+.dhud-extra-res__value {
+  font-weight: 800;
+}
+
+.dhud-extra-res__pips {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3px;
+}
+.dhud-extra-res__pips .pip {
+  width: calc(var(--pip) - 2px);
+  height: calc(var(--pip) - 2px);
+  border: 2px solid var(--dh-pip-border);
+  background: transparent;
+  border-radius: 999px;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+.dhud-extra-res__pips .pip:hover { transform: scale(1.15); }
+.dhud-extra-res__pips .pip.filled {
+  background: var(--dh-accent);
+  border-radius: 2px;
+  transform: rotate(45deg);
+  width: calc(var(--pip) - 5px);
+  height: calc(var(--pip) - 5px);
+}
+
+/* Reversed tracks (value counts UP toward a cap) read in a warning tint. */
+.dhud-extra-res.is-reversed .dhud-extra-res__icon { color: var(--dh-warn, #e0603a); }
+.dhud-extra-res.is-reversed .dhud-extra-res__pips .pip.filled { background: var(--dh-warn, #e0603a); }
+
+
 /* ===== Responsivo ===== */
 @media (max-width: 980px) {
   /* opcional: reduza levemente em telas menores */
   .dhud-core { --circle-d: 100px; --side-d: 68px; }
   .dhud-panel { --panel-w: 280px; }
+  .dhud-extra-res { font-size: .72rem; }
 }
