@@ -1,20 +1,18 @@
 // module/hud/context/conditions.mjs
-// Active status effects + the available-conditions list (Daggerheart conditions, plus
-// generic Foundry ones when the system setting allows). Extracted verbatim from
-// _prepareContext in refactor step 4 — step 7 routes this through the system API.
+// Active status effects (portrait row) + the available-conditions grid.
+// Step 7: the available-conditions list now comes from system/conditions.mjs
+// (real CONFIG.statusEffects enumeration, split on `systemEffect`). This file
+// only shapes the actor's currently-active ActiveEffects for display.
+
+import { listConditions } from "../../system/conditions.mjs";
 
 export function collectConditions(app) {
+  const actor = app.actor;
+
   // === ACTIVE STATUS EFFECTS ===
-  const activeStatuses = new Set();
   const statusEffects = [];
-
-  for (const effect of (app.actor?.effects ?? [])) {
+  for (const effect of (actor?.effects ?? [])) {
     if (effect.disabled) continue;
-
-    // Track which statuses are currently active
-    if (effect.statuses?.length) {
-      effect.statuses.forEach(status => activeStatuses.add(status));
-    }
 
     statusEffects.push({
       id: effect.id,
@@ -26,44 +24,7 @@ export function collectConditions(app) {
   }
 
   // === AVAILABLE CONDITIONS ===
-  const daggerheartConditions = [];
-  const genericConditions = [];
+  const { availableConditions, showGenericStatusSection } = listConditions(actor);
 
-  // Get Daggerheart-specific conditions first
-  const dhConditions = CONFIG.DH?.GENERAL?.conditions || {};
-  Object.values(dhConditions).forEach(condition => {
-    daggerheartConditions.push({
-      id: condition.id,
-      name: condition.name, // This is an i18n key
-      img: condition.img,
-      description: condition.description, // Also an i18n key
-      isActive: activeStatuses.has(condition.id),
-      source: 'daggerheart'
-    });
-  });
-
-  // Only add generic Foundry conditions if the system setting allows it
-  const showGenericStatuses = game.settings.get('daggerheart', 'Appearance').showGenericStatusEffects;
-  if (showGenericStatuses) {
-    CONFIG.statusEffects
-      .filter(effect => !effect.systemEffect)
-      .forEach(effect => {
-        genericConditions.push({
-          id: effect.id,
-          name: effect.name, // i18n key
-          img: effect.img,
-          description: effect.description || "",
-          isActive: activeStatuses.has(effect.id),
-          source: 'foundry'
-        });
-      });
-  }
-
-  const availableConditions = [...daggerheartConditions, ...genericConditions];
-
-  return {
-    statusEffects,
-    availableConditions,
-    showGenericStatusSection: showGenericStatuses
-  };
+  return { statusEffects, availableConditions, showGenericStatusSection };
 }

@@ -48,107 +48,10 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     registerCustomButtonImpl(config);
   }
 
-  async _applyCondition(conditionId) {
-    if (!this.actor) return;
-    
-   
-    // Find condition data
-    const condition = this._currentContext?.availableConditions?.find(c => c.id === conditionId);
-    if (!condition) {
-      console.warn('[DEBUG] Condition not found:', conditionId);
-      return;
-    }
-    
-    const effectData = {
-      name: game.i18n.localize(condition.name),
-      img: condition.img,
-      statuses: [conditionId],
-      description: condition.description ? game.i18n.localize(condition.description) : "",
-      // Store the condition ID for easy lookup
-      flags: {
-        'daggerheart-hud': {
-          conditionId: conditionId
-        }
-      }
-    };
-    
-    
-    try {
-      await this.actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
-    } catch (err) {
-      console.error("[DHUD] Failed to apply condition", err);
-      ui.notifications?.error("Failed to apply condition");
-    }
-  }
-
-  async _removeCondition(conditionId) {
-    if (!this.actor) return;
-        
-    // Find the effect by the condition ID flag first, fallback to statuses
-    let effect = this.actor.effects.find(e => 
-      e.getFlag('daggerheart-hud', 'conditionId') === conditionId && !e.disabled
-    );
-    
-    // Fallback to the old method if flag doesn't exist (for existing effects)
-    if (!effect) {
-      effect = this.actor.effects.find(e => 
-        e.statuses?.includes(conditionId) && !e.disabled
-      );
-    }
-    
-    if (!effect) {
-      console.warn('[DEBUG] No effect found for condition:', conditionId);
-      return;
-    }
-        
-    try {
-      await this.actor.deleteEmbeddedDocuments("ActiveEffect", [effect.id]);
-    } catch (err) {
-      console.error("[DHUD] Failed to remove condition", err);
-      ui.notifications?.error("Failed to remove condition");
-    }
-  }
-
-  _isConditionActive(conditionId) {
-    const actor = this.actor;
-    if (!actor) return false;
-
-    // Some Foundry versions expose effects as a Collection; both of these should work:
-    const effects = Array.isArray(actor.effects) ? actor.effects : actor.effects?.contents ?? [];
-
-    for (const e of effects) {
-      if (!e || e.disabled) continue;
-
-      // 1) Check the custom flag (safely)
-      let hasFlag = false;
-      try {
-        hasFlag = e.getFlag?.('daggerheart-hud', 'conditionId') === conditionId;
-      } catch {
-        // swallow and continue
-      }
-      if (hasFlag) return true;
-
-      // 2) Fallback: normalize statuses and check inclusion
-      const s = e.statuses;
-      const list =
-        Array.isArray(s) ? s :
-        s instanceof Set ? Array.from(s) :
-        typeof s === 'string' ? [s] :
-        (s && typeof s === 'object') ? Object.values(s) :
-        [];
-
-      if (list.includes(conditionId)) return true;
-    }
-
-    return false;
-  }
-
   async _prepareContext(_options) {
     // Data shaping lives in hud/context/* collectors; buildContext assembles the
-    // exact object shape the template consumes. Cache it for _applyCondition.
-    const ctx = await buildContext(this);
-    this._currentContext = ctx;
-    return ctx;
+    // exact object shape the template consumes.
+    return await buildContext(this);
   }
 
   async _onRender() {
@@ -181,9 +84,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       this._wingsState = saved;
       this._wingsInit = true;
     }
-
-    // _currentContext is populated by _prepareContext, which ApplicationV2 runs
-    // before every render — no need to rebuild it here.
 
     // --- Theme + ring art (GM override logic lives in hud/appearance.mjs)
     applyAppearance(root, this.actor);

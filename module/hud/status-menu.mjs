@@ -1,8 +1,9 @@
 // module/hud/status-menu.mjs
 // Portrait right-click context menu, the condition grid, and the hover tooltip.
-// Extracted from dh-actor-hud.mjs in refactor step 3 — pure move, no behaviour change.
-// Condition state (_isConditionActive / _applyCondition / _removeCondition) still
-// lives on the app class until step 7; this module calls through to it.
+// Extracted from dh-actor-hud.mjs in refactor step 3 — pure move.
+// Step 7: condition state goes through system/conditions.mjs (actor.toggleStatusEffect).
+
+import { isActive, toggle } from "../system/conditions.mjs";
 
 const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
 
@@ -104,12 +105,7 @@ export function showStatusGrid(app, x, y) {
   statusIcons.forEach(icon => {
     const conditionId = icon.dataset.conditionId;
     if (conditionId) {
-      const isActive = app._isConditionActive(conditionId);
-      if (isActive) {
-        icon.classList.add('active');
-      } else {
-        icon.classList.remove('active');
-      }
+      icon.classList.toggle('active', isActive(app.actor, conditionId));
     }
   });
 
@@ -245,14 +241,9 @@ export function attachStatusMenu(app) {
     if (statusIcon) {
       stop(ev);
       const conditionId = statusIcon.dataset.conditionId;
-      const isActive = app._isConditionActive(conditionId);
-      if (isActive) {
-        await app._removeCondition(conditionId);
-        statusIcon.classList.remove('active');
-      } else {
-        await app._applyCondition(conditionId);
-        statusIcon.classList.add('active');
-      }
+      const next = !isActive(app.actor, conditionId);
+      await toggle(app.actor, conditionId, next);
+      statusIcon.classList.toggle('active', next);
       return;
     }
   }, true);
