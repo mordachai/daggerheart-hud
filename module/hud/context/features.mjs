@@ -1,112 +1,77 @@
 // module/hud/context/features.mjs
 // Feature bucketing: misc + ancestry + community + class + subclass (with subclass
-// tier gating). Extracted verbatim from _prepareContext in refactor step 4.
-// NOTE: still buckets on the legacy system.originItemType — step 8 switches to
-// system.granter.type and fills in the empty Class/Heritage panels on migrated worlds.
+// tier gating).
+//
+// Step 8: buckets on feature.system.granter.type / .identifier (2.9.2), with a
+// one-line fallback to the legacy system.originItemType / system.identifier so
+// un-migrated worlds still work. Subclass tier gate = subclass.system.featureState
+// (1 foundation / 2 specialization / 3 mastery) vs granter.identifier.
 
 import { itemHasActions, firstActionId } from "../../system/items.mjs";
 import { getItemDescriptionHTML } from "../../system/descriptions.mjs";
 
+/** { type, identifier } for a feature — granter first, legacy fields as fallback. */
+function featureOrigin(it) {
+  const g = it.system?.granter;
+  return {
+    type: g?.type ?? it.system?.originItemType ?? null,
+    identifier: (g?.identifier ?? it.system?.identifier ?? "").toString().toLowerCase()
+  };
+}
+
+async function featureEntry(it, { withSystem = true } = {}) {
+  const entry = {
+    id: it.id,
+    name: it.name,
+    img: it.img || "icons/svg/aura.svg",
+    description: it.system?.description ?? "", // optional raw
+    descriptionHTML: await getItemDescriptionHTML(it),
+    hasActions: itemHasActions(it),
+    actionId: firstActionId(it)
+  };
+  if (withSystem) entry.system = it.system;
+  return entry;
+}
+
 export async function collectFeatures(app) {
-  // === MISCELLANEOUS FEATURES ===
-  const miscFeatures = [];
-  for (const it of (app.actor?.items ?? [])) {
-    if (it.type !== "feature") continue;
-    if (it.system?.originItemType) continue; // Skip ancestry/community/class/subclass
+  const items = [...(app.actor?.items ?? [])].filter(i => i.type === "feature");
 
-    const hasActions = itemHasActions(it);
-    miscFeatures.push({
-      id: it.id,
-      name: it.name,
-      img: it.img || "icons/svg/aura.svg",
-      description: it.system?.description ?? "", // optional raw
-      descriptionHTML: await getItemDescriptionHTML(it),
-      hasActions: hasActions,
-      actionId: firstActionId(it)
-    });
-  }
-
-
-  // === ANCESTRY / COMMUNITY FEATURES ===
-  const ancestryFeatures = [];
-  const communityFeatures = [];
-
-  for (const it of (app.actor?.items ?? [])) {
-    if (it.type !== "feature") continue;
-
-    const origin = it.system?.originItemType;
-    if (origin !== "ancestry" && origin !== "community") continue;
-
-    const hasActions = itemHasActions(it);
-
-    const entry = {
-      id: it.id,
-      name: it.name,
-      img: it.img || "icons/svg/aura.svg",
-      description: it.system?.description ?? "", // optional raw
-      descriptionHTML: await getItemDescriptionHTML(it),
-      hasActions: hasActions,
-      system: it.system,
-      actionId: firstActionId(it)
-    };
-
-    if (origin === "ancestry") ancestryFeatures.push(entry);
-    else communityFeatures.push(entry);
-  }
-
-  // === CLASS / SUBCLASS FEATURES (originItemType) with TIER GATING FOR SUBCLASS ===
-  const classFeatures = [];
-  const subclassFeatures = [];
-
-  // 1) Determine allowed subclass identifiers from the actor's subclass featureState
-  //    featureState: 1 = foundation, 2 = specialization, 3 = mastery
-  const subclasses = (app.actor?.items ?? []).filter(i => i.type === "subclass");
+  // Subclass tier reached on this actor (highest across multiclass).
   let subclassTier = 0;
-  for (const sc of subclasses) {
+  for (const sc of (app.actor?.items ?? [])) {
+    if (sc.type !== "subclass") continue;
     const t = Number(sc.system?.featureState ?? 0);
-    if (t > subclassTier) subclassTier = t; // in case of multiclass, allow the highest
+    if (t > subclassTier) subclassTier = t;
   }
-
   const allowedSubclassIds = new Set();
   if (subclassTier >= 1) allowedSubclassIds.add("foundation");
   if (subclassTier >= 2) allowedSubclassIds.add("specialization");
   if (subclassTier >= 3) allowedSubclassIds.add("mastery");
 
-  // 2) Collect features, gating subclass ones by identifier
-  for (const it of (app.actor?.items ?? [])) {
-    if (it.type !== "feature") continue;
-    const origin = it.system?.originItemType;
+  const miscFeatures = [];
+  const ancestryFeatures = [];
+  const communityFeatures = [];
+  const classFeatures = [];
+  const subclassFeatures = [];
 
-    const hasActions = itemHasActions(it);
+  for (const it of items) {
+    const { type, identifier } = featureOrigin(it);
 
-    if (origin === "class") {
-      classFeatures.push({
-        id: it.id,
-        name: it.name,
-        img: it.img || "icons/svg/aura.svg",
-        description: it.system?.description ?? "", // optional raw
-        descriptionHTML: await getItemDescriptionHTML(it),
-        hasActions: hasActions,
-        system: it.system,
-        actionId: firstActionId(it)
-      });
-      continue;
-    }
-
-    if (origin === "subclass") {
-      const ident = (it.system?.identifier || "").toString().toLowerCase();
-      if (!allowedSubclassIds.has(ident)) continue;
-
-      subclassFeatures.push({
-        id: it.id,
-        name: it.name,
-        img: it.img || "icons/svg/aura.svg",
-        description: it.system?.description ?? "", // optional raw
-        descriptionHTML: await getItemDescriptionHTML(it),
-        hasActions: hasActions,
-        system: it.system,
-        actionId: firstActionId(it)
-      });
+    switch (type) {
+      case "ancestry":
+        ancestryFeatures.push(await featureEntry(it));
+        break;
+      case "community":
+        communityFeatures.push(await featureEntry(it));
+        break;
+      case "class":
+        classFeatures.push(await featureEntry(it));
+        break;
+      case "subclass":
+        if (allowedSubclassIds.has(identifier)) subclassFeatures.push(await featureEntry(it));
+        break;
+      default:
+        miscFeatures.push(await featureEntry(it, { withSystem: false }));
     }
   }
 
