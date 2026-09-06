@@ -2,7 +2,7 @@
 // Domain card loadout / vault split + localized domain header label & tooltip.
 // Extracted verbatim from _prepareContext in refactor step 4 — no behaviour change.
 
-import { itemHasActions } from "./_helpers.mjs";
+import { itemHasActions, firstActionId } from "../../system/items.mjs";
 import { enrichItemDescription, toHudInlineButtons } from "../../helpers/inline-rolls.mjs";
 
 export async function collectDomains(app) {
@@ -56,15 +56,7 @@ export async function collectDomains(app) {
       domain: (it.system?.domain ?? "").toString(),
       inVault: isInVault,
       system: it.system,
-      actionPath: (() => {
-        const s = it.system ?? {};
-        if (s.actionPath) return s.actionPath;
-        if (s.actions && typeof s.actions === "object") {
-          const first = Object.values(s.actions)[0];
-          return first?.systemPath || "use";
-        }
-        return "use";
-      })()
+      actionId: firstActionId(it)
     };
 
     (entry.inVault ? domainVault : domainLoadout).push(entry);

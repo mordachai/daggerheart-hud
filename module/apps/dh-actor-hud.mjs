@@ -43,19 +43,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     }
   }
 
-  async _executeItem(item, actionPath = "use") {
-    const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
-    try {
-      if (typeof item.rollAction === "function") return await item.rollAction(actionPath);
-      if (typeof item.use === "function")       return await item.use({ action: actionPath });
-      if (Action?.execute)                      return await Action.execute({ source: item, actionPath });
-      item.sheet?.render(true, { focus: true });
-    } catch (err) {
-      console.error("[DHUD] Item exec failed", err);
-      ui.notifications?.error("Action failed (see console)");
-    }
-  }
-
   // Custom buttons — public API; registry lives in hud/custom-buttons.mjs
   static registerCustomButton(config) {
     registerCustomButtonImpl(config);
@@ -154,73 +141,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     }
 
     return false;
-  }
-
-  async _rollWeapon(btn, { secondary=false } = {}) {
-    if (this._justDraggedTs && (Date.now() - this._justDraggedTs) < 160) return;
-
-    const actor = this.actor;
-    if (!actor) return;
-
-    const isUnarmed = btn.dataset.unarmed === "true";
-    const Action = CONFIG?.DAGGERHEART?.Action ?? CONFIG?.DH?.Action;
-
-    try {
-
-      const currentTargets = [...game.user.targets];
-      if (currentTargets.length === 0 && getSetting(S.showTargetNotifications)) {
-        ui.notifications?.info("No target selected — the attack will not auto-apply damage.");
-      }
-
-      if (isUnarmed) {
-        const unarmedAttack = this.actor.system.usedUnarmed || this.actor.system.attack;
-        
-        try {
-          // Try the attack object's own methods first
-          if (typeof unarmedAttack.rollAction === "function") {
-            return await unarmedAttack.rollAction("attack");
-          }
-          if (typeof unarmedAttack.use === "function") {
-            return await unarmedAttack.use({ action: "attack" });
-          }
-          
-          return;
-          
-        } catch (err) {
-          console.error("[DHUD] Unarmed attack failed", err);
-        }
-        
-        // Only open sheet if everything else fails
-        actor.sheet?.render(true, { focus: true });
-        ui.notifications?.info("Open the Unarmed Attack and click Attack");
-        return;
-      }
-
-      let item = btn.dataset.itemId ? actor.items.get(btn.dataset.itemId) : null;
-      if (!item) {
-        const weaponsAll = actor.items.filter(i => i.type === "weapon");
-        const equipped   = weaponsAll.filter(w => w.system?.equipped === true);
-        if (secondary) {
-          const primaryId = this.element.querySelector("[data-action='roll-primary']")?.dataset?.itemId ?? null;
-          item = equipped.find(w => w.system?.secondary === true)
-              ?? equipped.find(w => w.id && w.id !== primaryId)
-              ?? null;
-        } else {
-          item = equipped.find(w => w.system?.secondary !== true) ?? null;
-        }
-      }
-      if (!item) return void ui.notifications?.warn(secondary ? "No secondary weapon found" : "No primary weapon found");
-
-      if (typeof item.rollAction === "function") return await item.rollAction("attack");
-      if (typeof item.use       === "function")  return await item.use({ action: "attack" });
-      if (Action?.execute)                      return await Action.execute({ source: item, actionPath: "attack" });
-
-      item.sheet?.render(true, { focus: true });
-      ui.notifications?.info("Open the weapon and click Attack");
-    } catch (err) {
-      console.error("[DHUD] Weapon roll failed", err);
-      ui.notifications?.error("Weapon roll failed - this may be a system issue");
-    }
   }
 
   async _prepareContext(_options) {

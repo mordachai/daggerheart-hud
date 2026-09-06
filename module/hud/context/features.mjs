@@ -4,7 +4,7 @@
 // NOTE: still buckets on the legacy system.originItemType — step 8 switches to
 // system.granter.type and fills in the empty Class/Heritage panels on migrated worlds.
 
-import { itemHasActions } from "./_helpers.mjs";
+import { itemHasActions, firstActionId } from "../../system/items.mjs";
 import { enrichItemDescription, toHudInlineButtons } from "../../helpers/inline-rolls.mjs";
 
 export async function collectFeatures(app) {
@@ -22,14 +22,7 @@ export async function collectFeatures(app) {
       description: it.system?.description ?? "", // optional raw
       descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
       hasActions: hasActions,
-      actionPath: (() => {
-        const s = it.system ?? {};
-        if (s.actions && typeof s.actions === "object") {
-          const first = Object.values(s.actions)[0];
-          return first?.systemPath || "use";
-        }
-        return "use";
-      })()
+      actionId: firstActionId(it)
     });
   }
 
@@ -54,14 +47,7 @@ export async function collectFeatures(app) {
       descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
       hasActions: hasActions,
       system: it.system,
-      actionPath: (() => {
-        const sys = it.system ?? {};
-        if (sys.actions && typeof sys.actions === "object") {
-          const first = Object.values(sys.actions)[0];
-          if (first?.systemPath) return first.systemPath;
-        }
-        return "use";
-      })()
+      actionId: firstActionId(it)
     };
 
     if (origin === "ancestry") ancestryFeatures.push(entry);
@@ -102,14 +88,7 @@ export async function collectFeatures(app) {
         descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
         hasActions: hasActions,
         system: it.system,
-        actionPath: (() => {
-          const s = it.system ?? {};
-          if (s.actions && typeof s.actions === "object") {
-            const first = Object.values(s.actions)[0];
-            if (first?.systemPath) return first.systemPath;
-          }
-          return "use";
-        })()
+        actionId: firstActionId(it)
       });
       continue;
     }
@@ -126,14 +105,7 @@ export async function collectFeatures(app) {
         descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
         hasActions: hasActions,
         system: it.system,
-        actionPath: (() => {
-          const s = it.system ?? {};
-          if (s.actions && typeof s.actions === "object") {
-            const first = Object.values(s.actions)[0];
-            if (first?.systemPath) return first.systemPath;
-          }
-          return "use";
-        })()
+        actionId: firstActionId(it)
       });
     }
   }

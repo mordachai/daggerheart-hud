@@ -8,6 +8,8 @@
 import { setWingsState, setPanelOpenDirection } from "./wings.mjs";
 import { getCustomButton } from "./custom-buttons.mjs";
 import { sendItemToChat } from "../helpers/chat-utils.mjs";
+import { useWeapon, useItemAction } from "../system/items.mjs";
+import { rollTrait } from "../system/actor.mjs";
 
 /** Wire the delegated HUD interactions. Guarded once per app (`app._delegatedBound`). */
 export function attachHudEvents(app) {
@@ -46,8 +48,7 @@ export function attachHudEvents(app) {
     if (!btn) return;
     ev.preventDefault(); ev.stopPropagation();
     if (app._justDraggedTs && (Date.now() - app._justDraggedTs) < 160) return;
-    const traitKey = btn.dataset.trait;
-    ui.chat?.processMessage?.(`/dr trait=${traitKey} reaction=true`);
+    rollTrait(app.actor, btn.dataset.trait, { reaction: true });
   }, true);
 
   // When a tab is clicked, after the DOM toggles, compute its open direction
@@ -120,8 +121,7 @@ export function attachHudEvents(app) {
     if (traitBtn) {
       if (app._justDraggedTs && (Date.now() - app._justDraggedTs) < 160) return;
       stop(ev);
-      const traitKey = traitBtn.dataset.trait;
-      ui.chat?.processMessage?.(`/dr trait=${traitKey}`);
+      await rollTrait(actor, traitBtn.dataset.trait);
       return;
     }
 
@@ -130,25 +130,23 @@ export function attachHudEvents(app) {
     if (reactBtn) {
       if (app._justDraggedTs && (Date.now() - app._justDraggedTs) < 160) return;
       stop(ev);
-      const traitKey = reactBtn.dataset.trait;
-      ui.chat?.processMessage?.(`/dr trait=${traitKey} reaction=true`);
+      await rollTrait(actor, reactBtn.dataset.trait, { reaction: true });
       return;
     }
 
     // Primary / Secondary weapon rolls
     const prim = ev.target.closest("[data-action='roll-primary']");
-    if (prim) { stop(ev); await app._rollWeapon(prim, { secondary: false }); return; }
+    if (prim) { stop(ev); await useWeapon(app, prim, { secondary: false }, ev); return; }
 
     const sec = ev.target.closest("[data-action='roll-secondary']");
-    if (sec) { stop(ev); await app._rollWeapon(sec, { secondary: true }); return; }
+    if (sec) { stop(ev); await useWeapon(app, sec, { secondary: true }, ev); return; }
 
     // Execute item (features, consumables, domain cards)
     const execBtn = ev.target.closest("[data-action='item-exec']");
     if (execBtn) {
       stop(ev);
       const item = actor.items.get(execBtn.dataset.itemId);
-      const actionPath = execBtn.dataset.actionpath || "use";
-      if (item) await app._executeItem(item, actionPath);
+      if (item) await useItemAction(item, execBtn.dataset.actionId || "", ev);
       return;
     }
 

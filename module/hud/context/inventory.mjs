@@ -1,7 +1,7 @@
 // module/hud/context/inventory.mjs
 // Consumables + loot. Extracted verbatim from _prepareContext in refactor step 4.
 
-import { itemHasActions } from "./_helpers.mjs";
+import { itemHasActions, firstActionId } from "../../system/items.mjs";
 import { enrichItemDescription, toHudInlineButtons } from "../../helpers/inline-rolls.mjs";
 
 export async function collectInventory(app) {
@@ -23,16 +23,7 @@ export async function collectInventory(app) {
       descriptionHTML: toHudInlineButtons(await enrichItemDescription(it)),
       hasActions: hasActions,
       system: it.system,
-      actionPath: (() => {
-        if (it.type !== "consumable") return "";
-        const sys = it.system ?? {};
-        if (sys.actionPath) return sys.actionPath;
-        if (sys.actions && typeof sys.actions === "object") {
-          const first = Object.values(sys.actions)[0];
-          return first?.systemPath || "use";
-        }
-        return "use";
-      })()
+      actionId: it.type === "consumable" ? firstActionId(it) : ""
     };
 
     if (it.type === "consumable") invConsumables.push(entry);

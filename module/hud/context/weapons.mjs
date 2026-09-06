@@ -26,9 +26,9 @@ export function collectWeapons(app) {
     }
   }
 
-  // If none, show Unarmed from actor.system.usedUnarmed or attack
+  // If none, show Unarmed from actor.system.attack
   if (!primaryWeapon) {
-    const un = sys.usedUnarmed || sys.attack;
+    const un = sys.attack;
     if (un) {
       const locName = game.i18n?.has?.(un.name) ? game.i18n.localize(un.name) : (un.name || "Unarmed Attack");
       primaryWeapon = {
