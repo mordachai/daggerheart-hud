@@ -59,7 +59,7 @@ OR use the link below for a manual installation:
 
 **Manifest URL:**
 ```
-https://raw.githubusercontent.com/mordachai/daggerheart-hud/main/module.json
+https://github.com/mordachai/daggerheart-hud/releases/latest/download/module.json
 ```
 
 **Requirements:**
