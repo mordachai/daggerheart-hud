@@ -462,6 +462,36 @@
       </span>
     </div>
 
+    {{!-- HOMEBREW / FEATURE EXTRA RESOURCES --}}
+    {{#if extraResources.length}}
+    <div class="dhud-extra-resources" aria-label="Extra resources">
+      {{#each extraResources}}
+        <div class="dhud-extra-res{{#if isReversed}} is-reversed{{/if}}"
+             data-bind="extra"
+             data-res-key="{{key}}"
+             {{#if max}}data-max="{{max}}"{{/if}}
+             title="{{label}}{{#if max}} ({{value}}/{{max}}){{/if}}">
+          <span class="dhud-extra-res__icon">
+            {{#if images.full.isIcon}}
+              <i class="{{images.full.value}}" aria-hidden="true"></i>
+            {{else}}
+              <img src="{{images.full.value}}" alt="{{label}}">
+            {{/if}}
+          </span>
+          {{#if hasPips}}
+            <span class="dhud-extra-res__pips">
+              {{#each pips}}
+                <span class="pip {{#if filled}}filled{{/if}}" data-index="{{index}}"></span>
+              {{/each}}
+            </span>
+          {{else}}
+            <span class="dhud-extra-res__value">{{value}}{{#if max}}/{{max}}{{/if}}</span>
+          {{/if}}
+        </div>
+      {{/each}}
+    </div>
+    {{/if}}
+
   </div>
 
 {{!-- =============== RIGHT WING (menus) =============== --}}
@@ -684,7 +714,7 @@
 
               <div class="acc-body">
                 <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
-                  <strong>Domain</strong>: {{domain}}</p>
+                  <strong>Domain</strong>: {{domainLabel}}</p>
                 {{{descriptionHTML}}}
               </div>
             </details>
@@ -734,7 +764,7 @@
 
               <div class="acc-body">
                 <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
-                  <strong>Domain</strong>: {{domain}}</p>
+                  <strong>Domain</strong>: {{domainLabel}}</p>
                 {{{descriptionHTML}}}
               </div>
             </details>

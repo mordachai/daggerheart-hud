@@ -1,6 +1,10 @@
 // module/hud/context/resources.mjs
 // HP, stress, hope (+pips), armor marks, damage thresholds, evasion, proficiency,
 // resistance. Extracted verbatim from _prepareContext in refactor step 4.
+// Step 12: also collects homebrew / feature-granted "extra" resources via
+// system/resources.mjs (actor.system.availableExtraResources).
+
+import { listActorResources } from "../../system/resources.mjs";
 
 export function collectResources(app) {
   const sys = app.actor?.system ?? {};
@@ -93,6 +97,9 @@ export function collectResources(app) {
     }
   };
 
+  // === EXTRA RESOURCES (homebrew + feature-granted optional) ===
+  const extraResources = listActorResources(app.actor);
+
   return {
     hitPoints,
     isDying,
@@ -103,6 +110,7 @@ export function collectResources(app) {
     armor,
     thresholds,
     proficiency,
-    resistance
+    resistance,
+    extraResources
   };
 }

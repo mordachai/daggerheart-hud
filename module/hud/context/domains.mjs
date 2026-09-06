@@ -1,36 +1,26 @@
 // module/hud/context/domains.mjs
 // Domain card loadout / vault split + localized domain header label & tooltip.
-// Extracted verbatim from _prepareContext in refactor step 4 — no behaviour change.
+// Step 12: header + per-card domain labels resolve through system/config.mjs
+// domainMeta() (CONFIG.DH.DOMAIN.allDomains()), so GM homebrew domains get their
+// configured label / colour / icon instead of a TitleCased raw key.
 
 import { itemHasActions, firstActionId } from "../../system/items.mjs";
+import { domainMeta } from "../../system/config.mjs";
 import { getItemDescriptionHTML } from "../../system/descriptions.mjs";
 
 export async function collectDomains(app) {
   const sys = app.actor?.system ?? {};
 
-  // === Actor Domains (header label, localized) ===
-  const rawDomains = Array.isArray(sys.domains) ? sys.domains : [];
-  const domainsHeader = rawDomains
+  // === Actor Domains (header label + tooltip, core or homebrew) ===
+  const domainMetas = (Array.isArray(sys.domains) ? sys.domains : [])
     .map(d => String(d).trim())
     .filter(Boolean)
-    .map(key => {
-      // Try i18n label: DAGGERHEART.GENERAL.Domain.<key>.label
-      const i18nKey = `DAGGERHEART.GENERAL.Domain.${key}.label`;
-      const loc = game.i18n?.localize?.(i18nKey);
-      if (loc && loc !== i18nKey) return loc; // localized OK
-      // Fallback: TitleCase the raw key
-      return key.charAt(0).toUpperCase() + key.slice(1);
-    })
-    .join(" & ") || null;
+    .map(domainMeta);
 
-  // (optional) if you want a tooltip with the concatenated descriptions:
-  const domainsHeaderTitle = rawDomains
-    .map(key => {
-      const dKey = String(key).trim();
-      const name = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.label`);
-      const desc = game.i18n?.localize?.(`DAGGERHEART.GENERAL.Domain.${dKey}.description`);
-      return (name && desc) ? `${name}: ${desc}` : null;
-    })
+  const domainsHeader = domainMetas.map(m => m.label).filter(Boolean).join(" & ") || null;
+
+  const domainsHeaderTitle = domainMetas
+    .map(m => (m.label && m.description) ? `${m.label}: ${m.description}` : null)
     .filter(Boolean)
     .join("\n") || "";
 
@@ -45,6 +35,9 @@ export async function collectDomains(app) {
     // Cards in vault should not be clickable for actions
     const hasActions = isInVault ? false : itemHasActions(it);
 
+    const domainKey = (it.system?.domain ?? "").toString();
+    const meta = domainMeta(domainKey);
+
     const entry = {
       id: it.id,
       name: it.name,
@@ -53,7 +46,10 @@ export async function collectDomains(app) {
       descriptionHTML: await getItemDescriptionHTML(it),
       hasActions: hasActions,
       recallCost: Number(it.system?.recallCost ?? 0),
-      domain: (it.system?.domain ?? "").toString(),
+      domain: domainKey,                 // raw key (logic)
+      domainLabel: meta.label || domainKey,   // display
+      domainColor: meta.color || "",
+      domainIcon: meta.src || "",
       inVault: isInVault,
       system: it.system,
       actionId: firstActionId(it)

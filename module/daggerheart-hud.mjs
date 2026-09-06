@@ -220,6 +220,12 @@ Hooks.on("updateActor", (actor, changes) => {
   if (dhudActorChangeRelevant(changes)) dhudRequestRender();
 });
 
+// Daggerheart homebrew settings feed the HUD (custom domains, extra resources,
+// maxHope/maxLoadout, currency, rest moves). Re-render when the GM edits them.
+Hooks.on("updateSetting", (setting) => {
+  if (setting?.key === "daggerheart.Homebrew") dhudRequestRender();
+});
+
 // Embedded item lifecycle – any change can affect derived values (evasion/thresholds, etc.)
 Hooks.on("createItem", (item) => {
   const parent = item?.parent;

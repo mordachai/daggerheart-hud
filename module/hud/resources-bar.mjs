@@ -3,6 +3,9 @@
 // things (HP/Stress ∓1, Hope fill/reduce-to-pip, Armor mark/repair).
 // Extracted from dh-actor-hud.mjs in refactor step 3 — pure move, no behaviour change.
 // Resource math helpers moved here too; step 5 relocates them to system/actor.mjs.
+// Step 12: same left/right pattern extended to homebrew / feature "extra" resources.
+
+import { setActorResource, bumpActorResource } from "../system/resources.mjs";
 
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
@@ -59,6 +62,22 @@ export function bindResourceAdjusters(app) {
       const idx = Number(pip.dataset.index || 0);
       const max = Number(app.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
       await setResource(actor, "system.resources.hope.value", idx + 1, { min: 0, max });
+      return;
+    }
+
+    // EXTRA RESOURCES (homebrew / feature-granted): left = +1, or fill-to-pip
+    const extraEl = ev.target.closest('[data-bind="extra"]');
+    if (extraEl) {
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      const key = extraEl.dataset.resKey;
+      const extraPip = ev.target.closest(".dhud-extra-res__pips .pip");
+      if (extraPip) {
+        await setActorResource(actor, key, Number(extraPip.dataset.index || 0) + 1);
+      } else {
+        await bumpActorResource(actor, key, +1);
+      }
       return;
     }
 
@@ -135,6 +154,22 @@ export function bindResourceAdjusters(app) {
       const idx = Number(pip.dataset.index || 0);
       const max = Number(app.actor.system?.resources?.hope?.max ?? (pip.parentElement?.children?.length || 0));
       await setResource(actor, "system.resources.hope.value", idx, { min: 0, max });
+      return;
+    }
+
+    // EXTRA RESOURCES (homebrew / feature-granted): right = -1, or reduce-to-pip
+    const extraEl = ev.target.closest('[data-bind="extra"]');
+    if (extraEl) {
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      const key = extraEl.dataset.resKey;
+      const extraPip = ev.target.closest(".dhud-extra-res__pips .pip");
+      if (extraPip) {
+        await setActorResource(actor, key, Number(extraPip.dataset.index || 0));
+      } else {
+        await bumpActorResource(actor, key, -1);
+      }
       return;
     }
 

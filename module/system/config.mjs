@@ -28,3 +28,31 @@ export function traits() {
     return { key, name, verbs, description: verbs.join(", ") };
   });
 }
+
+/**
+ * Localized metadata for a domain key. Works for core AND homebrew domains:
+ * `CONFIG.DH.DOMAIN.allDomains()` merges the GM's homebrew domains
+ * (Settings → Homebrew) over the built-in table. Core entries carry i18n keys in
+ * `label` / `description`; homebrew entries carry literal strings — `loc()` handles
+ * both (localize when the key exists, otherwise return as-is).
+ *
+ *   { key, label, description, src, color }
+ *
+ * Unknown key -> TitleCased fallback so nothing renders blank.
+ */
+export function domainMeta(key) {
+  const k = String(key ?? "").trim();
+  if (!k) return { key: k, label: "", description: "", src: "", color: "" };
+
+  let table = null;
+  try { table = CONFIG.DH?.DOMAIN?.allDomains?.() ?? null; } catch { table = null; }
+  const d = table?.[k] ?? null;
+
+  return {
+    key: k,
+    label: d?.label ? loc(d.label, k) : (k.charAt(0).toUpperCase() + k.slice(1)),
+    description: d?.description ? loc(d.description, "") : "",
+    src: d?.src ?? "",
+    color: d?.color ?? ""
+  };
+}

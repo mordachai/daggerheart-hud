@@ -50,6 +50,9 @@ export async function buildContext(app) {
     proficiency: resources.proficiency,
     experiences: traits.experiences,
 
+    // homebrew / feature-granted extra resources
+    extraResources: resources.extraResources,
+
     //features
     miscFeatures: features.miscFeatures,
 
