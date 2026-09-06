@@ -2,12 +2,10 @@
 import { registerSettings, getSetting, S } from "./settings.mjs";
 import { DaggerheartActorHUD } from "./apps/dh-actor-hud.mjs";
 import { registerDHUDHelpers } from "./helpers/handlebars-helpers.mjs";
+import { DHUD } from "./constants.mjs";
 
-const TEMPLATE_PATHS = [
-  "modules/daggerheart-hud/templates/actor/hud-character.hbs"
-];
-
-export const DHUD = { ID: "daggerheart-hud", templates: TEMPLATE_PATHS };
+// Re-exported so existing importers keep working (single source: constants.mjs).
+export { DHUD };
 
 Hooks.once("init", registerSettings);
 
