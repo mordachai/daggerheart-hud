@@ -5,6 +5,7 @@ import { registerDHUDHelpers } from "./helpers/handlebars-helpers.mjs";
 import { DHUD } from "./constants.mjs";
 import { captureLayout, restoreLayout, requestRender } from "./hud/layout.mjs";
 import { announceButtonRegistration } from "./hud/custom-buttons.mjs";
+import { dhudActorChangeRelevant } from "./hud/refresh.mjs";
 
 // Re-exported so existing importers keep working (single source: constants.mjs).
 export { DHUD };
@@ -16,15 +17,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", async () => {
-  // Use namespace oficial para loadTemplates
   await foundry.applications.handlebars.loadTemplates(DHUD.templates);
-});
-
-// Register custom buttons
-Hooks.once("ready", async () => {
-  await foundry.applications.handlebars.loadTemplates(DHUD.templates);
-  
-  // Emit hook for custom button registration
   announceButtonRegistration();
 });
 
@@ -222,38 +215,9 @@ function dhudRequestRender() {
   requestRender(_hudApp);
 }
 
-/** Actor paths that should rerender the HUD when changed. */
-const DHUD_ACTOR_PATHS = [
-  // portrait / token
-  "img",
-  "prototypeToken.texture.src",
-  // resources
-  "system.resources.hitPoints",
-  "system.resources.stress",
-  "system.resources.hope",
-  "system.resources.armor",  // Add this line
-
-  // traits
-  "system.traits",
-  // defenses / thresholds / misc
-  "system.proficiency",
-  "system.evasion",
-  "system.armorScore",
-  "system.damageThresholds",
-  "system.resistance"
-];
-
-/** Should the HUD rerender given an actor change payload? */
-function dhudActorChangeRelevant(changes) {
-  return DHUD_ACTOR_PATHS.some((p) => foundry.utils.hasProperty(changes, p));
-}
-
 Hooks.on("updateActor", (actor, changes) => {
   if (!_hudApp?.actor || _hudApp.actor.id !== actor.id) return;
-
-  // render if explicit paths matched OR if the payload contains "system"
-  const touchedSystem = Object.prototype.hasOwnProperty.call(changes, "system");
-  if (dhudActorChangeRelevant(changes) || touchedSystem) dhudRequestRender();
+  if (dhudActorChangeRelevant(changes)) dhudRequestRender();
 });
 
 // Embedded item lifecycle – any change can affect derived values (evasion/thresholds, etc.)

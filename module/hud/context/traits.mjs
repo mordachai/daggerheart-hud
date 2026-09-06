@@ -1,8 +1,9 @@
 // module/hud/context/traits.mjs
 // The six traits (ordered, localized, spellcasting flag) + experiences.
-// Extracted verbatim from _prepareContext in refactor step 4 — no behaviour change.
+// Step 10: trait names/verbs come from system/config.mjs traits() (CONFIG.DH.ACTOR
+// .abilities) instead of the deleted i18n Ltrait/Lpath guesswork.
 
-import { Ltrait } from "../../helpers/i18n.mjs";
+import { traits as configTraits } from "../../system/config.mjs";
 
 export function collectTraits(app) {
   const sys = app.actor?.system ?? {};
@@ -15,20 +16,14 @@ export function collectTraits(app) {
     spellcastingTraitKey = subclass?.system?.spellcastingTrait || klass?.system?.spellcastingTrait || null;
   }
 
-  // === TRAITS (ordered + localized via i18n helper) ===
-  const TRAIT_ORDER = ["agility","strength","finesse","instinct","presence","knowledge"];
-
-  const traits = TRAIT_ORDER.map(key => {
-    const value = Number(sys.traits?.[key]?.value ?? 0);
-    const loc = Ltrait(key); // { name, verbs[], description }
-    return {
-      key,
-      name: loc.name,           // e.g., "Agility"
-      value,                    // e.g., 2
-      description: loc.description, // e.g., "Sprint, Leap, Maneuver"
-      isSpellcasting: key === spellcastingTraitKey
-    };
-  });
+  // === TRAITS (ordered + localized via system/config.mjs) ===
+  const traits = configTraits().map(({ key, name, description }) => ({
+    key,
+    name,                         // e.g., "Agility"
+    value: Number(sys.traits?.[key]?.value ?? 0),
+    description,                  // e.g., "Sprint, Leap, Maneuver"
+    isSpellcasting: key === spellcastingTraitKey
+  }));
 
   // === EXPERIENCES ===
   const experiences = [];

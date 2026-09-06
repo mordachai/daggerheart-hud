@@ -22,24 +22,5 @@ export function Ltry(keys = [], fallback = undefined, data = undefined) {
   return fallback ?? (keys[0] ?? "");
 }
 
-/** Get a nested object from the loaded translation dictionary by path */
-export function Lpath(path) {
-  // Works with dotted paths like "DAGGERHEART.CONFIG.Traits.agility.verb"
-  const parts = String(path).split(".");
-  let cur = game.i18n?.translations ?? {};
-  for (const p of parts) {
-    if (cur && Object.prototype.hasOwnProperty.call(cur, p)) cur = cur[p];
-    else return undefined;
-  }
-  return cur;
-}
-
-/** Trait name + verbs (joined), from DAGGERHEART.CONFIG.Traits.<key> */
-export function Ltrait(key) {
-  const base = `DAGGERHEART.CONFIG.Traits.${key}`;
-  const name = L(`${base}.name`, key);
-  const verbsObj = Lpath(`${base}.verb`) ?? {};
-  const verbs = Object.values(verbsObj).filter(Boolean);
-  const description = verbs.join(", "); // "Sprint, Leap, Maneuver"
-  return { name, verbs, description };
-}
+// Lpath / Ltrait removed in step 10 — trait names + verbs now come from
+// system/config.mjs traits() over CONFIG.DH.ACTOR.abilities.
