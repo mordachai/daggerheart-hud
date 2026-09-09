@@ -1,5 +1,5 @@
 // module/settings.mjs
-import { HudRingsDialog } from "./apps/hud-rings.mjs";
+import { THEMES } from "./hud/appearance.mjs";
 
 const MOD = "daggerheart-hud";
 
@@ -8,8 +8,8 @@ export const S = {
   disableForMe: "disableForMe",
   hideHotbar: "hideHotbar",
   alwaysVisible: "alwaysVisible",
-  showTargetNotifications: "showTargetNotifications"
-
+  showTargetNotifications: "showTargetNotifications",
+  hudTheme: "hudTheme"
 };
 
 export function getSetting(key) {
@@ -29,59 +29,18 @@ function applyHotbarVisibility() {
 export function registerSettings() {
   const scopeClient = "client"; // per-user
 
-  game.settings.registerMenu("daggerheart-hud", "hudThemeConfig", {
-    name: "HUD Theme Config",
-    label: "HUD Theme Config",
-    icon: "fas fa-ring",
-    type: HudRingsDialog,
-    restricted: true
-  });
-
-  // GM Ring Override Settings
-  game.settings.register(MOD, "gmRingOverride", {
-    name: "GM Ring Override Enabled",
-    hint: "When enabled, GM-defined rings override individual character rings",
-    scope: "world",
-    config: false, // Hidden from settings menu since it's controlled via the configurator
-    type: Boolean,
-    default: false
-  });
-
-  game.settings.register(MOD, "gmPortraitRing", {
-    name: "GM Global Portrait Ring",
-    hint: "Global portrait ring image path applied to all characters when override is enabled",
-    scope: "world",
-    config: false, // Hidden from settings menu since it's controlled via the configurator
+  // Per-user: HUD color theme (+ ring frame derived from it in hud/appearance.mjs)
+  game.settings.register(MOD, S.hudTheme, {
+    name: "HUD Theme",
+    hint: "Color scheme and ring frame for your HUD.",
+    scope: scopeClient,
+    config: true,
     type: String,
-    default: ""
-  });
-
-  game.settings.register(MOD, "gmWeaponsRing", {
-    name: "GM Global Weapons Ring", 
-    hint: "Global weapons ring image path applied to all characters when override is enabled",
-    scope: "world",
-    config: false, // Hidden from settings menu since it's controlled via the configurator
-    type: String,
-    default: ""
-  });
-
-  // GM Theme Override Settings
-  game.settings.register(MOD, "gmThemeOverride", {
-    name: "GM Theme Override Enabled",
-    hint: "When enabled, GM-defined theme overrides individual character themes",
-    scope: "world",
-    config: false, // Hidden from settings menu since it's controlled via the configurator
-    type: Boolean,
-    default: false
-  });
-
-  game.settings.register(MOD, "gmGlobalTheme", {
-    name: "GM Global Theme",
-    hint: "Global theme applied to all characters when override is enabled",
-    scope: "world",
-    config: false, // Hidden from settings menu since it's controlled via the configurator
-    type: String,
-    default: ""
+    choices: THEMES,
+    default: "default",
+    onChange: (value) => {
+      Hooks.callAll("daggerheart-hud:setting-changed", { key: S.hudTheme, value });
+    }
   });
 
   // HUD anchor placement (client)

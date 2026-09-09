@@ -38,14 +38,12 @@ The strip below the core has Traits, Ancestry (Community inside), Inventory, Cla
 - **Resource Tracking**: HP, Stress, Evasion, Armor, and damage thresholds
 - **Expandable Panels**: Access traits, features, inventory, and domain cards
 - **Domain Management**: Move cards between loadout and vault
-- **Customizable**: Ring images, color themes, and positioning
+- **Customizable**: Color themes (each with its own ring frame) and positioning
 
 ## Settings
 
-### HUD Theme Configurator:
-Do you like neat table pieces? Custom appearance for everyone? Crazy themes? Well, we got you fam!
-
-<img width="863" height="953" alt="image" src="https://github.com/user-attachments/assets/cd133071-b3a4-425c-8372-26358335f40a" />
+### HUD Theme:
+A single per-player dropdown. Pick a color theme and the HUD picks up the matching ring frame. Each player chooses their own — no GM setup.
 
 ### Other settings:
 You can hide Foundry's macro hotbar, change the vertical position at which the HUD appears, or entirely disable it, while the other players can keep theirs (GMs: tell the players where to disable it)

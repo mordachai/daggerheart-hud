@@ -1,0 +1,539 @@
+[
+    {
+        "cls": "status-label",
+        "action": "toggleArmorMangement",
+        "txt": "Armor Slots"
+    },
+    {
+        "cls": "",
+        "action": "toggleEquipItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleVault",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleVault",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleVault",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "sendExpToChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "sendExpToChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "sendExpToChat",
+        "txt": ""
+    },
+    {
+        "cls": "dh-tagteam tag-team-button",
+        "txt": "GM: Click to reset for this character"
+    },
+    {
+        "cls": "",
+        "action": "viewParty",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "useDowntime",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "useDowntime",
+        "txt": ""
+    },
+    {
+        "cls": "features active ",
+        "action": "tab",
+        "txt": "Features"
+    },
+    {
+        "cls": "loadout  ",
+        "action": "tab",
+        "txt": "Loadout"
+    },
+    {
+        "cls": "inventory  ",
+        "action": "tab",
+        "txt": "Inventory"
+    },
+    {
+        "cls": "biography  ",
+        "action": "tab",
+        "txt": "Biography"
+    },
+    {
+        "cls": "effects  ",
+        "action": "tab",
+        "txt": "Effects"
+    },
+    {
+        "cls": "",
+        "action": "openSettings",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "editDoc",
+        "txt": "Ancestry - Infernis"
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "useItem",
+        "txt": "Mark Stress"
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "editDoc",
+        "txt": "Community - Underborne"
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "useItem",
+        "txt": "Spend 3 Hope"
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "useItem",
+        "txt": "Cast"
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "useItem",
+        "txt": "Channel"
+    },
+    {
+        "cls": "action-uses-button",
+        "action": "increaseActionUses",
+        "txt": "1/1"
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "useItem",
+        "txt": "Manipulate"
+    },
+    {
+        "cls": "",
+        "action": "addNewItem",
+        "txt": ""
+    },
+    {
+        "cls": "btn-toggle-view",
+        "action": "toggleLoadoutView",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "addNewItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleVault",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleVault",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleVault",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "addNewItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "addNewItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleEquipItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "unequipped",
+        "action": "toggleEquipItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "unequipped",
+        "action": "toggleEquipItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "unequipped",
+        "action": "toggleEquipItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "addNewItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleEquipItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "addNewItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "addNewItem",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "icon toggle",
+        "txt": ""
+    },
+    {
+        "cls": "icon toggle",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "createDoc",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleEffect",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleEffect",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleEffect",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "createDoc",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toggleEffect",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "toChat",
+        "txt": ""
+    },
+    {
+        "cls": "",
+        "action": "triggerContextMenu",
+        "txt": ""
+    }
+]

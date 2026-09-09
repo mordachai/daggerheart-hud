@@ -2,6 +2,8 @@
 // Name, portrait, and parent items (ancestry/community/class/subclass captions).
 // Extracted verbatim from _prepareContext in refactor step 4 — no behaviour change.
 
+import { getParties, getCompanion } from "../../system/actor.mjs";
+
 export function collectIdentity(app) {
   const actor = app.actor ?? null;
 
@@ -29,5 +31,9 @@ export function collectIdentity(app) {
   const classInfo     = classItem     ? { id: classItem.id,     name: classItem.name,     img: classItem.img     } : null;
   const subclassInfo  = subclassItem  ? { id: subclassItem.id,  name: subclassItem.name,  img: subclassItem.img  } : null;
 
-  return { actorName, portrait, ancestryInfo, communityInfo, classInfo, subclassInfo };
+  // Portrait context-menu extras: link to the actor's party sheet / companion sheet
+  const hasParty     = getParties(actor).length > 0;
+  const hasCompanion = !!getCompanion(actor);
+
+  return { actorName, portrait, ancestryInfo, communityInfo, classInfo, subclassInfo, hasParty, hasCompanion };
 }

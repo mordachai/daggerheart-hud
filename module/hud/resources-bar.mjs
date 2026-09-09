@@ -34,13 +34,13 @@ export function bindResourceAdjusters(app) {
   rootEl.addEventListener("click", async (ev) => {
     const actor = app.actor; if (!actor) return;
 
-    // HP / Stress on .value
-    const valueEl = ev.target.closest(".dhud-count .value");
-    if (valueEl) {
+    // HP / Stress — the whole count box is clickable (icon, text, padding)
+    const countEl = ev.target.closest(".dhud-count--hp, .dhud-count--stress");
+    if (countEl) {
       ev.preventDefault();
       ev.stopPropagation();
 
-      const bind = valueEl.dataset.bind;
+      const bind = countEl.classList.contains("dhud-count--hp") ? "hp" : "stress";
       if (bind === "hp") {
         const max = Number(app.actor.system?.resources?.hitPoints?.max ?? 0);
         await bumpResource(actor, "system.resources.hitPoints.value", +1, { min: 0, max });
@@ -126,13 +126,13 @@ export function bindResourceAdjusters(app) {
     const portrait = ev.target.closest('.dhud-portrait, .dhud-portrait-img');
     if (portrait) return;
 
-    // HP / Stress on .value
-    const valueEl = ev.target.closest(".dhud-count .value");
-    if (valueEl) {
+    // HP / Stress — the whole count box is clickable (icon, text, padding)
+    const countEl = ev.target.closest(".dhud-count--hp, .dhud-count--stress");
+    if (countEl) {
       ev.preventDefault();
       ev.stopPropagation();
 
-      const bind = valueEl.dataset.bind;
+      const bind = countEl.classList.contains("dhud-count--hp") ? "hp" : "stress";
       if (bind === "hp") {
         const max = Number(app.actor.system?.resources?.hitPoints?.max ?? 0);
         await bumpResource(actor, "system.resources.hitPoints.value", -1, { min: 0, max });

@@ -6,6 +6,7 @@ import { DHUD } from "./constants.mjs";
 import { captureLayout, restoreLayout, requestRender } from "./hud/layout.mjs";
 import { announceButtonRegistration } from "./hud/custom-buttons.mjs";
 import { dhudActorChangeRelevant } from "./hud/refresh.mjs";
+import { applyAppearance, previewAppearance } from "./hud/appearance.mjs";
 
 // Re-exported so existing importers keep working (single source: constants.mjs).
 export { DHUD };
@@ -176,6 +177,8 @@ Hooks.on("daggerheart-hud:setting-changed", ({ key, value }) => {
         }
       }
     }
+  } else if (key === S.hudTheme) {
+    dhudRequestRender();
   } else if (key === S.disableForMe) {
     if (value && _hudApp) {
       // HUD disabled - close it
@@ -189,6 +192,20 @@ Hooks.on("daggerheart-hud:setting-changed", ({ key, value }) => {
       }
     }
   }
+});
+
+// Live theme preview: react to the settings dropdown before "Save Changes".
+Hooks.on("renderSettingsConfig", (_app, html) => {
+  const root = html instanceof HTMLElement ? html : html?.[0];
+  const sel = root?.querySelector('[name="daggerheart-hud.hudTheme"]');
+  if (!sel) return;
+  sel.addEventListener("change", () => {
+    if (_hudApp?.element) previewAppearance(_hudApp.element, sel.value);
+  });
+});
+// On close, snap back to the actually-saved theme (no-op if it was saved).
+Hooks.on("closeSettingsConfig", () => {
+  if (_hudApp?.element) applyAppearance(_hudApp.element);
 });
 
 //Hooks.on("canvasPan", () => _hudApp?.close({ force: true }));

@@ -14,3 +14,39 @@ export async function rollTrait(actor, traitKey, { reaction = false } = {}) {
     ui.notifications?.error("Trait roll failed (see console)");
   }
 }
+
+/**
+ * The party actors this actor belongs to. The system registers each member on
+ * `actor.parties` (a Set) from the party's `prepareBaseData`.
+ */
+export function getParties(actor) {
+  return actor ? Array.from(actor.parties ?? []) : [];
+}
+
+/** The companion Actor linked to this character (`system.companion` UUID field), or null. */
+export function getCompanion(actor) {
+  const c = actor?.system?.companion;
+  return (c && typeof c === "object") ? c : null;
+}
+
+/** Open the sheet of the party this actor is in (prefers the active party when in several). */
+export function openPartySheet(actor) {
+  const parties = getParties(actor);
+  if (!parties.length) {
+    ui.notifications?.warn("This character is not part of a party.");
+    return;
+  }
+  const active = game.actors?.party ?? null;
+  const target = (active && parties.includes(active)) ? active : parties[0];
+  target?.sheet?.render(true, { focus: true });
+}
+
+/** Open the linked companion's sheet. */
+export function openCompanionSheet(actor) {
+  const companion = getCompanion(actor);
+  if (!companion) {
+    ui.notifications?.warn("This character has no linked companion.");
+    return;
+  }
+  companion.sheet?.render(true, { focus: true });
+}

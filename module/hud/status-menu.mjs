@@ -4,6 +4,7 @@
 // Step 7: condition state goes through system/conditions.mjs (actor.toggleStatusEffect).
 
 import { isActive, toggle } from "../system/conditions.mjs";
+import { openPartySheet, openCompanionSheet } from "../system/actor.mjs";
 
 const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
 
@@ -215,6 +216,10 @@ export function attachStatusMenu(app) {
           showStatusGrid(app, x, y);
         }
       }
+
+      if (action === 'open-party') openPartySheet(app.actor);
+
+      if (action === 'open-companion') openCompanionSheet(app.actor);
 
       if (action === 'short-rest' || action === 'long-rest') {
         try {

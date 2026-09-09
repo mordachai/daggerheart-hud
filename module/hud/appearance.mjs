@@ -1,104 +1,80 @@
 // module/hud/appearance.mjs
-// Theme + ring-image resolution and application (per-actor flags vs GM world override).
-// Extracted from dh-actor-hud.mjs in refactor step 2. No behaviour change.
+// Theme + ring-frame resolution. Theme is a per-player client setting ("hudTheme");
+// the ring frame is derived from the theme via THEME_RINGS. No per-actor config.
 
-import { MODULE_ID, FLAGS, SETTING_KEYS } from "../constants.mjs";
+import { MODULE_ID } from "../constants.mjs";
 
 const THEME_PREFIX = "dhud-theme-";
+const RING_BASE = `modules/${MODULE_ID}/assets/ui`;
 
-/** Resolve the theme name for an actor: GM override wins, else actor flag, else "default". */
-export function getActorThemeOrDefault(actor) {
-  // Check GM theme override first - this applies to ALL characters
-  const gmThemeOverride = game.settings.get(MODULE_ID, SETTING_KEYS.gmThemeOverride);
-  if (gmThemeOverride) {
-    const gmTheme = game.settings.get(MODULE_ID, SETTING_KEYS.gmGlobalTheme);
-    if (gmTheme) return gmTheme;
-  }
+/**
+ * Dropdown choices for the "HUD Theme" setting.
+ * Adding a theme = add a `.dhud-theme-<name>` var block in styles/dhud-themes.css,
+ * update the "Available themes" comment there, and add a line here.
+ */
+export const THEMES = {
+  default:    "Default",
+  shadowveil: "Shadowveil",
+  wildfire:   "Wildfire",
+  frostbite:  "Frostbite",
+  thornwood:  "Thornwood",
+  bloodmoon:  "Bloodmoon",
+  mysticvoid: "Mystic Void",
+};
 
-  // Fall back to actor-specific flags only if GM override is disabled
-  return actor?.getFlag(MODULE_ID, FLAGS.actor.colorScheme) || "default";
+/**
+ * Theme -> ring frame. Only 5 frames ship in assets/ui, so themes without an exact
+ * match reuse the nearest one. Unknown themes fall back to the default frame.
+ */
+const THEME_RINGS = {
+  default:    "dgm-default-frame.webp",
+  shadowveil: "dgm-shadowveil-frame.webp",
+  wildfire:   "dgm-wildfire-frame.webp",
+  frostbite:  "dgm-frostbite-frame.webp",
+  thornwood:  "dgm-thornwood-frame.webp",    
+  bloodmoon:  "dgm-bloodmoon-frame.webp",  
+  mysticvoid: "dgm-shadowveil-frame.webp", // purple / void
+};
+
+/** Resolve the current player's theme, validated against THEMES. */
+export function getPlayerTheme() {
+  const v = game.settings.get(MODULE_ID, "hudTheme");
+  return (v && THEMES[v]) ? v : "default";
 }
 
-/** Resolve a ring image path for an actor. `type` is "main" | "weapon". */
-export function getActorRingImageOrDefault(actor, type) {
-  // Check GM override first - this applies to ALL characters
-  const gmOverride = game.settings.get(MODULE_ID, SETTING_KEYS.gmRingOverride);
-  if (gmOverride) {
-    const gmRing = type === "main"
-      ? game.settings.get(MODULE_ID, SETTING_KEYS.gmPortraitRing)
-      : game.settings.get(MODULE_ID, SETTING_KEYS.gmWeaponsRing);
-    if (gmRing) return gmRing;
-  }
-
-  // Fall back to actor-specific flags only if GM override is disabled
-  const flagKey = type === "main" ? FLAGS.actor.ringPortrait : FLAGS.actor.ringWeapons;
-  return actor?.getFlag(MODULE_ID, flagKey) || "";
+function ringURL(theme) {
+  const file = THEME_RINGS[theme] || THEME_RINGS.default;
+  return `url("${foundry.utils.getRoute(`/${RING_BASE}/${file}`)}")`;
 }
 
-/** Normalize an image path to a routed `url("…")` value (or "none"). */
-export function toRouteURL(p) {
-  if (!p) return "none";
-  let cleanPath = p.trim();
-
-  // Full URLs pass through
-  if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
-    return `url("${cleanPath}")`;
-  }
-
-  // Absolute module/asset paths
-  if (cleanPath.startsWith("/")) {
-    const abs = foundry.utils.getRoute(cleanPath);
-    return `url("${abs}")`;
-  }
-
-  // Ensure leading slash for relative asset paths
-  if (!cleanPath.startsWith("/")) {
-    cleanPath = `/${cleanPath}`;
-  }
-
-  const abs = foundry.utils.getRoute(cleanPath);
-  return `url("${abs}")`;
-}
-
-function setRingVars(root, actor) {
-  const mainRing = getActorRingImageOrDefault(actor, "main");
-  const weapRing = getActorRingImageOrDefault(actor, "weapon");
-  root.style.setProperty("--dhud-ring-main",  toRouteURL(mainRing));
-  root.style.setProperty("--dhud-ring-weapon", toRouteURL(weapRing));
-}
-
-/** Full apply: theme class (+ fallback-to-default check) and ring CSS vars. */
-export function applyAppearance(root, actor) {
+/**
+ * Apply a specific theme name (class + fallback-to-default check + ring CSS vars)
+ * to `root`. Does NOT persist — use for live preview from the settings dropdown.
+ */
+export function previewAppearance(root, theme) {
   if (!root) return;
 
-  const scheme = getActorThemeOrDefault(actor);
+  theme = (theme && THEMES[theme]) ? theme : "default";
 
-  // remove any previous theme classes
   for (const c of Array.from(root.classList)) {
     if (c.startsWith(THEME_PREFIX)) root.classList.remove(c);
   }
+  root.classList.add(THEME_PREFIX + theme);
 
-  // apply the requested scheme
-  root.classList.add(THEME_PREFIX + scheme);
-
-  // verify the theme actually defines vars; if not, fallback to default
-  const cs = getComputedStyle(root);
-  if (!cs.getPropertyValue("--dh-accent").trim()) {
-    console.warn(`[DHUD] Unknown or missing theme "${scheme}" for ${actor?.name}; falling back to "default".`);
-    root.classList.remove(THEME_PREFIX + scheme);
+  // verify the theme actually defines vars; if not, fall back to default
+  if (!getComputedStyle(root).getPropertyValue("--dh-accent").trim()) {
+    console.warn(`[DHUD] Unknown or missing theme "${theme}"; falling back to "default".`);
+    root.classList.remove(THEME_PREFIX + theme);
     root.classList.add(THEME_PREFIX + "default");
+    theme = "default";
   }
 
-  setRingVars(root, actor);
+  const url = ringURL(theme);
+  root.style.setProperty("--dhud-ring-main", url);
+  root.style.setProperty("--dhud-ring-weapon", url);
 }
 
-/** Lighter re-apply used when the Configurator saves — no fallback check, no position work. */
-export function reapplyAppearance(root, actor) {
-  if (!root) return;
-
-  setRingVars(root, actor);
-
-  const scheme = getActorThemeOrDefault(actor);
-  Array.from(root.classList).forEach(c => { if (c.startsWith(THEME_PREFIX)) root.classList.remove(c); });
-  root.classList.add(`${THEME_PREFIX}${scheme}`);
+/** Apply the player's saved `hudTheme` setting to `root`. */
+export function applyAppearance(root) {
+  previewAppearance(root, getPlayerTheme());
 }

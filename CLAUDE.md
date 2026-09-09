@@ -50,12 +50,13 @@ module/
   apps/
     dh-actor-hud.mjs      the ApplicationV2 class SHELL: _prepareContext (delegates to
                           buildContext), _onRender, close, static registerCustomButton
-    hud-rings.mjs         appearance/theme config dialog (self-contained)
   hud/                    presentation / interaction — no system knowledge
     position.mjs          placeAtBottom, enableDragByRing, global-position flag
     layout.mjs            captureLayout / restoreLayout / requestRender
     wings.mjs             setPanelOpenDirection, attachDHUDToggles (nav-bar tabs)
-    appearance.mjs        theme + ring-image resolve/apply (per-actor flags vs GM override)
+    appearance.mjs        THEMES (dropdown choices) + THEME_RINGS (theme -> ring
+                          frame in assets/ui) + applyAppearance(root): theme class
+                          from the per-player "hudTheme" setting, ring CSS vars
     events.mjs            attachHudEvents(app) — the data-action dispatch table
     resources-bar.mjs     bindResourceAdjusters(app) — HP/Stress/Hope/Armor pip clicks
     status-menu.mjs       portrait context menu + condition grid + tooltip
@@ -87,18 +88,16 @@ Registers settings + Handlebars helpers on `init`, preloads `DHUD.templates` and
 - **Events are fully delegated** on `this.element`, wired once and guarded by per-app flags (`_delegatedBound`, `_resAdjBound`, `_statusMenuBound`, `_dragHooked`, `_imgHooked`, `_booted`). `attachHudEvents` (`hud/events.mjs`) dispatches by `data-action` in one `click` listener; `bindResourceAdjusters` (`hud/resources-bar.mjs`) is a separate `click`/`contextmenu` pair where **left-click and right-click do opposite things** (HP/Stress ∓1, Hope fill/reduce to pip, Armor mark/repair); `attachStatusMenu` (`hud/status-menu.mjs`) owns the portrait context menu + condition grid.
 - **Tabs** live in a single themed `.dhud-navbar` strip below the core (traits / heritage / inventory / class / loadout / features). `attachDHUDToggles` (`hud/wings.mjs`) toggles `.dhud[data-open]` + tab `aria-expanded`; `setPanelOpenDirection` decides whether the panel opens up or down based on viewport room. No wings — panels are `position:absolute` anchored to the nav bar.
 - **Layout persistence**: dragged by the `.dhud-ring` handle; position saved to `game.user` flag `daggerheart-hud.globalPosition`.
-- **Theming applied in `_onRender`** via `applyAppearance` / `reapplyAppearance` (`hud/appearance.mjs`): resolves theme + ring images, toggles `dhud-theme-<name>`, sets `--dhud-ring-main` / `--dhud-ring-weapon` CSS vars. Re-applied on `daggerheart-hud:rings-updated` / `:appearance-updated` hooks; listeners torn down in `close()`.
+- **Theming applied in `_onRender`** via `applyAppearance(root)` (`hud/appearance.mjs`): reads the per-player client setting `hudTheme`, toggles `dhud-theme-<name>` (with a computed-style fallback to `default`), sets `--dhud-ring-main` / `--dhud-ring-weapon` CSS vars to the theme's ring frame from `THEME_RINGS`. A saved theme change re-renders the whole HUD via the `daggerheart-hud:setting-changed` hook — no per-app appearance listeners. `previewAppearance(root, theme)` applies a named theme without persisting; the entry point wires it to the settings dropdown's `change` event (`renderSettingsConfig`) for live preview, and re-applies the saved value on `closeSettingsConfig`.
 
 ### Appearance config
 
-- Per-actor: flags `daggerheart-hud.{ringPortrait, ringWeapons, colorScheme}`.
-- GM world overrides (world-scoped settings, `config: false`): `gmRingOverride` + `gmPortraitRing` / `gmWeaponsRing`, `gmThemeOverride` + `gmGlobalTheme`. When an override is enabled it wins for **all** characters (`getActorThemeOrDefault` / `getActorRingImageOrDefault`).
-- Edited through **`HudRingsDialog`** (`module/apps/hud-rings.mjs`, `DialogV2` + Handlebars, template `templates/ui/hud-rings.hbs`), registered as the settings menu `HUD Theme Config`. On save it validates image paths with `foundry.canvas.loadTexture`, writes flags/settings, then fires the `:rings-updated` / `:appearance-updated` hooks.
-- **Themes are discovered by parsing `styles/dhud-themes.css`** — the `/* Available themes: a,b,c */` comment between `THEME_LIST_START`/`THEME_LIST_END`, with a regex fallback over `.dhud-theme-*` selectors, and a hardcoded list as last resort. **Adding a theme = add the `.dhud-theme-<name>` var block AND update that comment.**
+- **One per-player client setting: `hudTheme`** (dropdown, choices = `THEMES` from `hud/appearance.mjs`). Picks the color scheme; the ring frame is derived from the theme via `THEME_RINGS` (theme name → one of the 5 `.webp` frames in `assets/ui/`, reused where there is no exact match, `default` frame as the catch-all). Portrait and weapon rings use the same frame. No per-actor appearance flags, no GM override, no config dialog, no FilePicker.
+- **`THEMES` is the theme registry** — the source of truth for the dropdown. `styles/dhud-themes.css` still defines the `.dhud-theme-<name>` var blocks (CSS is built elsewhere; don't hand-edit). **Adding a theme = add the var block in that CSS AND a line in `THEMES` + `THEME_RINGS`.** Themes not listed in `THEMES` (e.g. leftover `ironclad`/`stormcloud`/`goldenhour` var blocks) are simply unreachable.
 
 ### Settings — `module/settings.mjs`
 
-`S` is the key enum. Client-scoped and user-facing: `bottomOffset`, `disableForMe`, `hideHotbar`, `alwaysVisible`, `showTargetNotifications`. Setting changes broadcast via the `daggerheart-hud:setting-changed` hook, which the entry point listens to for live show/hide.
+`S` is the key enum. Client-scoped and user-facing: `bottomOffset`, `disableForMe`, `hideHotbar`, `alwaysVisible`, `showTargetNotifications`, `hudTheme`. Setting changes broadcast via the `daggerheart-hud:setting-changed` hook, which the entry point listens to for live show/hide (and a full HUD re-render on `hudTheme`).
 
 ### Custom button API
 

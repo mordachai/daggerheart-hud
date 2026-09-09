@@ -946,6 +946,18 @@
       <i class="fas fa-bed"></i>
       Long Rest
     </div>
+    {{#if hasParty}}
+    <div class="dhud-context-item" data-action="open-party">
+      <i class="fas fa-users"></i>
+      Open Party Sheet
+    </div>
+    {{/if}}
+    {{#if hasCompanion}}
+    <div class="dhud-context-item" data-action="open-companion">
+      <i class="fas fa-paw"></i>
+      Open Companion Sheet
+    </div>
+    {{/if}}
   </div>
 
   {{!-- Status Effects Grid --}}

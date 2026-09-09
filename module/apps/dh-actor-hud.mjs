@@ -3,7 +3,7 @@
 import { getSetting, S } from "../settings.mjs";
 import { placeAtBottom, enableDragByRing, getSavedGlobalPosition } from "../hud/position.mjs";
 import { setPanelOpenDirection, attachDHUDToggles } from "../hud/wings.mjs";
-import { applyAppearance, reapplyAppearance } from "../hud/appearance.mjs";
+import { applyAppearance } from "../hud/appearance.mjs";
 import { registerCustomButton as registerCustomButtonImpl } from "../hud/custom-buttons.mjs";
 import { attachHudEvents } from "../hud/events.mjs";
 import { bindResourceAdjusters } from "../hud/resources-bar.mjs";
@@ -76,8 +76,8 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       this._initiallyHidden = false;
     }
 
-    // --- Theme + ring art (GM override logic lives in hud/appearance.mjs)
-    applyAppearance(root, this.actor);
+    // --- Theme + ring frame (per-player "hudTheme" setting; see hud/appearance.mjs)
+    applyAppearance(root);
 
     // Cosmetic pointer cursor for roll targets
     root.querySelectorAll(".dhud-roll").forEach(el => {
@@ -90,27 +90,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
     // One-time wiring for resource adjusters (guard lives in the module)
     bindResourceAdjusters(this);
-
-    // Hooks to re-apply art/theme on changes coming from the Configurator
-    if (!this._imgHooked) {
-      // Re-apply both rings and theme when the Configurator saves
-      this._reapplyAppearance ??= async ({ actorIds = [] } = {}) => {
-        if (!this.actor) return;
-        if (actorIds.length && !actorIds.includes(this.actor.id)) return;
-
-        // rings + theme only - NO position changes
-        reapplyAppearance(root, this.actor);
-      };
-
-      // Listen only to the Configurator's saves
-      Hooks.on("daggerheart-hud:rings-updated",      this._reapplyAppearance);
-      Hooks.on("daggerheart-hud:appearance-updated", this._reapplyAppearance);
-
-      this._imgHooked = true;
-    }
-
-    // Apply once now
-    await this._reapplyAppearance?.({ actorIds: [this.actor?.id].filter(Boolean) });
 
     // First boot: placement and resize behavior
     if (!this._booted) {
@@ -192,18 +171,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
   async close(opts) {
     try {
-      if (this._imgHooked) {
-        // Unhook configurator updates
-        if (this._reapplyAppearance) {
-          Hooks.off("daggerheart-hud:rings-updated",      this._reapplyAppearance);
-          Hooks.off("daggerheart-hud:appearance-updated", this._reapplyAppearance);
-        }
-
-        // Clear refs
-        this._reapplyAppearance = null;
-        this._imgHooked = false;
-      }
-
       // Remove window resize listener if set
       if (this._onResize) {
         window.removeEventListener("resize", this._onResize);

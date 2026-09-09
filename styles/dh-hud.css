@@ -462,6 +462,10 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   --side-d: 75px;
   --pip: 16px;
 
+  /* === IMAGE SIZE KNOBS (tune by hand) === */
+  --portrait-inset: 20px;    /* gap between portrait edge and ring frame; smaller = fills more */
+  --weapon-icon-size: 80%;  /* weapon icon diameter inside the side ring */
+
   /* spacing e fórmulas */
   --core-gap: .05rem; 
   --overlap: 8px;   
@@ -486,7 +490,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud-core__rightcircle { position: relative; z-index: 1; }
 .dhud-core__center      { position: relative; z-index: 2; }  /* ring acima */
 
-/* Side circles with ícone do item */
+/* Side circles with the item icon; ring frame is the ::after overlay */
 .dhud-circle {
   width: var(--side-d);
   height: var(--side-d);
@@ -496,66 +500,38 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   position: relative;
   z-index: 1;
   pointer-events: auto;
-  /* Remove background-image from here since we're using ::after overlay */
 }
 
 .dhud-circle .item-icon {
   position: relative;
-  width: 70%;
-  height: 70%;
+  width: var(--weapon-icon-size);
+  height: var(--weapon-icon-size);
   object-fit: cover;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
   border: none;
   border-radius: 999px;
   z-index: 2;
-  box-shadow: inset 0 1px 6px rgba(0,0,0,0.3);
-  transition: box-shadow 0.2s ease;
+  box-shadow: 0 0 3px 1px #000;
+  transition: box-shadow 0.2s ease, filter 0.15s ease;
 }
 
-.dhud-circle .item-icon:hover {
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
-}
-
-/* Alternative approach: If you want the ring image to be more like a border overlay */
+/* Ring frame overlaid on top of the icon as a border (stays above the icon) */
 .dhud-circle::after {
   content: '';
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
   border-radius: 999px;
-  background-image: var(--dhud-ring-weapon, none);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: var(--dhud-ring-weapon, none) center / cover no-repeat;
   pointer-events: none;
-  z-index: 3; /* Above the item icon */
+  z-index: 3;
 }
 
-/* If using the ::after approach, remove the background from the main circle */
-.dhud-circle.use-overlay-ring {
-  background-image: none;
+/* Hover: brighten the icon + glow on the icon (frame untouched) */
+.dhud-circle:hover .item-icon {
+  filter: brightness(1.3);
+  box-shadow: 0 0 12px 4px var(--dh-accent);
 }
 
-
-/* ===== DEBUGGING STYLES (temporary) ===== */
-
-/* Add these temporarily to see what's happening */
-.dhud-ring {
-  /* Temporary border to see the ring boundaries */
-  /* border: 2px solid red; */
-}
-
-.dhud-circle {
-  /* Temporary border to see the weapon circle boundaries */
-  /* border: 2px solid blue; */
-}
-
-.dhud-portrait {
-  /* Temporary border to see the portrait boundaries */
-  /* border: 2px solid green; */
-}
-.dhud-roll { 
+.dhud-roll {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -632,7 +608,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   row-gap: .25rem;
 }
 
-/* Main ring - portrait container */
+/* Main ring - portrait container. Frame art lives on .dhud-ring-overlay. */
 .dhud-ring {
   grid-area: ring;
   position: relative;
@@ -641,50 +617,36 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   border-radius: 999px;
   display: grid;
   place-items: center;
-
-  /* Ring frame art as background */
-  background-image: var(--dhud-ring-main, none);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
   z-index: 1;
   pointer-events: auto;
   cursor: grab;
 }
 .dhud-ring:active { cursor: grabbing; }
 
-.dhud-ring img {border: none; }
-
 .dhud-ring-overlay {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
   border-radius: 999px;
-  background-image: var(--dhud-ring-main, none);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: var(--dhud-ring-main, none) center / cover no-repeat;
   pointer-events: none;
   z-index: 2; /* Above portrait */
 }
 
-.dhud-ring {
-  background-image: none; /* Remove from main ring */
-}
-
 .dhud-portrait {
   position: relative;
-  width: calc(var(--circle-d) - 20px); /* Slightly smaller to prevent cutoff */
-  height: calc(var(--circle-d) - 20px);
-  border-radius: 999px; 
+  width: calc(var(--circle-d) - var(--portrait-inset)); /* fill the ring frame's inner hole */
+  height: calc(var(--circle-d) - var(--portrait-inset));
+  border-radius: 999px;
   overflow: hidden;
-  pointer-events: auto; 
+  pointer-events: auto;
   z-index: 1;
 }
 
 .dhud-portrait-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   box-shadow: 0 0 5px 2px #000;
 }
 
@@ -716,22 +678,6 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   filter: saturate(0.3) brightness(0.95);
 }
 
-.dhud-circle .item-icon {
-  position: relative;
-  width: 70%;
-  height: 70%;
-  object-fit: cover;
-  /* filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); */
-  border: none;
-  border-radius: 999px;
-  z-index: 2;
-  box-shadow: 0 0 3px 1px #000;
-  transition: box-shadow 0.2s ease;
-}
-
-.dhud-circle .item-icon:hover {
-  box-shadow: 0 0 6px 2px var(--dh-accent);
-}
 /* Hope pips */
 .dhud-pips {
   position: absolute;
@@ -776,7 +722,8 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   }
 
 
-.dhud-count .value,
+.dhud-count--hp,
+.dhud-count--stress,
 .dhud-pips .pip {
   cursor: pointer;
   user-select: none;
@@ -802,14 +749,20 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   right: var(--stress-right);
   text-align: center;
 }
-.dhud-count--hp .value:hover,
-.dhud-count--stress .value:hover{
+.dhud-count--hp .value,
+.dhud-count--stress .value,
+.dhud-count--hp i,
+.dhud-count--stress i {
+  color: var(--dh-accent);
+}
+.dhud-count--hp:hover .value,
+.dhud-count--stress:hover .value{
   font-weight: 700;
   text-shadow: 0px 0px 3px var(--dh-pip-border);
 }
 .dhud-count--hp i,
 .dhud-count--stress i {
-  filter: drop-shadow(0px 0px 1px var(--dh-accent));
+  filter: drop-shadow(0px 0px 2px var(--dh-accent));
 }
 
 /* Thresholds:  */
@@ -917,172 +870,6 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 
 .capitalize { text-transform: capitalize; }
 
-
-/* HUD Theme Config — 2-up cards with theme support */
-#dh-hud-images-config .window-content { overflow: auto;}
-
-.dh-hudrings { padding: 12px; }
-
-.dh-hudrings .cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* 2 cards per row */
-  gap: 16px;
-}
-
-/* Card shell with theme support */
-.dh-hudrings .card {
-  border: 1px solid var(--dh-border, rgba(255,255,255,0.15));
-  border-radius: 10px;
-  background: var(--dh-surface, rgba(255,255,255,0.03));
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Card header */
-.dh-hudrings .card-head {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 12px;
-}
-.dh-hudrings .who {
-  text-align: center;
-}
-.dh-hudrings .who .char {
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 1.2;
-  color: var(--dh-accent, #fff);
-}
-.dh-hudrings .who .player {
-  opacity: .8;
-  font-size: 12px;
-}
-.dh-hudrings .scheme {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-}
-.dh-hudrings .scheme label { 
-  white-space: nowrap; 
-  color: var(--dh-accent, #fff);
-  font-weight: 600;
-}
-.dh-hudrings .scheme select.dh-color { 
-  min-width: 170px;
-  background: var(--dh-surface, #15161a);
-  border: 1px solid var(--dh-border, rgba(255, 255, 255, 0.12));
-  color: #fff;
-  border-radius: 4px;
-  padding: 0.5rem;
-}
-.dh-hudrings .scheme select.dh-color:focus {
-  border-color: var(--dh-accent, #f2c24b);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(242, 194, 75, 0.3);
-}
-
-/* Previews row (portrait | weapons) */
-.dh-hudrings .previews {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.dh-hudrings .preview-card {
-  display: grid;
-  grid-template-rows: auto auto auto;
-  gap: 8px;
-}
-.dh-hudrings .preview-card .title {
-  font-weight: 600;
-  text-align: left;
-  opacity: .9;
-  color: var(--dh-accent, #fff);
-}
-
-/* Preview box with click-to-pick and placeholder */
-.dh-hudrings .preview-box {
-  position: relative;
-  display: flex; align-items: center; justify-content: center;
-  width: 100%; height: 120px;
-  border: 1px dashed var(--dh-border, rgba(255,255,255,0.2));
-  border-radius: 10px;
-  background: var(--dh-surface, rgba(255,255,255,0.03));
-  overflow: hidden;
-  cursor: pointer;
-}
-.dh-hudrings .preview-box:hover {
-  outline: 2px solid var(--dh-accent, rgba(255,255,255,0.25));
-}
-.dh-hudrings .preview-box img.preview {
-  max-width: 100%; max-height: 100%; display: block;
-}
-
-/* "Search" placeholder */
-.dh-hudrings .preview-box .placeholder {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-style: italic; font-size: 0.95rem; opacity: 0.75; pointer-events: none;
-}
-.dh-hudrings .preview-box img.preview[src=""],
-.dh-hudrings .preview-box img.preview:not([src]) { display: none; }
-.dh-hudrings .preview-box img.preview[src]:not([src=""]) ~ .placeholder { display: none; }
-
-/* Path row under each preview */
-.dh-hudrings .path-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-}
-.dh-hudrings .path-row input.path { 
-  min-width: 0;
-  background: var(--dh-surface, #15161a);
-  border: 1px solid var(--dh-border, rgba(255, 255, 255, 0.12));
-  color: #fff;
-  border-radius: 4px;
-  padding: 0.5rem;
-}
-.dh-hudrings .path-row input.path:focus {
-  border-color: var(--dh-accent, #f2c24b);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(242, 194, 75, 0.3);
-}
-.dh-hudrings .path-row .clear-path {
-  width: 34px; height: 34px;
-  border: 1px solid var(--dh-border, rgba(255,255,255,0.2));
-  border-radius: 6px;
-  background: var(--dh-surface, rgba(255,255,255,0.06));
-  line-height: 1; font-weight: 700;
-  color: var(--dh-accent, #f2c24b);
-  cursor: pointer;
-}
-.dh-hudrings .path-row .clear-path:hover {
-  background: var(--dh-accent, #f2c24b);
-  color: var(--dh-surface, #15161a);
-}
-
-/* Footer */
-.dh-hudrings .empty { margin: 8px 0; text-align: center; opacity: .8; }
-.dh-hudrings-footer {
-  display: flex; justify-content: space-around; align-items: center; gap: 10px; margin-top: 20px;
-}
-.dh-hudrings-footer button {
-  width: 90%; 
-  padding: 20px; 
-  background-color: var(--dh-surface, #15161a);
-  border: 1px solid var(--dh-border, rgba(255, 255, 255, 0.12));
-  color: var(--dh-accent, #f2c24b);
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.dh-hudrings-footer button:hover {
-  background-color: var(--dh-accent, #f2c24b);
-  color: var(--dh-surface, #15161a);
-}
 
 /* ===== STATUS CONTEXT MENU & GRID ===== */
 

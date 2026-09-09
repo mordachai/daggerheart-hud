@@ -29,7 +29,7 @@ export async function buildContext(app) {
     // other sections...
   };
 
-  const { ancestryInfo, communityInfo, classInfo, subclassInfo, actorName, portrait } = identity;
+  const { ancestryInfo, communityInfo, classInfo, subclassInfo, actorName, portrait, hasParty, hasCompanion } = identity;
 
   // Return everything the HBS references today (+ a few future-safe keys)
   return {
@@ -69,6 +69,7 @@ export async function buildContext(app) {
     classFeatures: features.classFeatures,
     subclassFeatures: features.subclassFeatures,
     ancestryInfo, communityInfo, classInfo, subclassInfo,
+    hasParty, hasCompanion,
 
     invConsumables: inventory.invConsumables,
     invLoot: inventory.invLoot,
