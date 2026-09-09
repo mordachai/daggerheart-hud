@@ -30,6 +30,19 @@ export function traits() {
 }
 
 /**
+ * Whether the GM enabled the "Massive Damage" variant rule
+ * (Settings → Variant Rules). When on, damage >= severe * 2 counts as a
+ * fourth ("massive") threshold tier. Returns false if the setting is missing.
+ */
+export function massiveDamageEnabled() {
+  try {
+    return !!game.settings.get("daggerheart", "VariantRules")?.massiveDamage?.enabled;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Localized metadata for a domain key. Works for core AND homebrew domains:
  * `CONFIG.DH.DOMAIN.allDomains()` merges the GM's homebrew domains
  * (Settings → Homebrew) over the built-in table. Core entries carry i18n keys in

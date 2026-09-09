@@ -5,6 +5,7 @@
 // system/resources.mjs (actor.system.availableExtraResources).
 
 import { listActorResources } from "../../system/resources.mjs";
+import { massiveDamageEnabled } from "../../system/config.mjs";
 
 export function collectResources(app) {
   const sys = app.actor?.system ?? {};
@@ -78,9 +79,13 @@ export function collectResources(app) {
   }
 
   // === DAMAGE THRESHOLDS ===
+  // Massive tier (severe * 2) only when the GM enabled the "Massive Damage"
+  // variant rule; matches Actor#convertDamageToThreshold in the system.
+  const severeThreshold = sys.damageThresholds?.severe ?? 0;
   const thresholds = {
     major:  sys.damageThresholds?.major  ?? 0,
-    severe: sys.damageThresholds?.severe ?? 0
+    severe: severeThreshold,
+    massive: massiveDamageEnabled() ? severeThreshold * 2 : 0
   };
 
   // === RESISTANCE ===
