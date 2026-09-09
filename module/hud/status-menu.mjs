@@ -29,7 +29,7 @@ export function showStatusContextMenu(app, x, y) {
   const menuWidth = menuRect.width;
   const menuHeight = menuRect.height;
 
-  // Get core position (this stays stable when wings open/close)
+  // Get core position (stable anchor for the portrait menu)
   const coreRect = core.getBoundingClientRect();
   const portraitRect = portrait.getBoundingClientRect();
 

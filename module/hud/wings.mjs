@@ -1,41 +1,6 @@
 // module/hud/wings.mjs
-// Wing open/close state, tab-panel open direction, and the tab toggler.
-// Pure DOM helpers — no system knowledge, no `this`. Extracted in refactor step 2.
-
-/** Toggle the wings open/closed and keep the ring core visually anchored. */
-export function setWingsState(rootEl, state /* "open" | "closed" */) {
-  if (!rootEl) return;
-  const shell = rootEl.querySelector(".dhud");
-  const leftWing  = rootEl.querySelector(".dhud-wing--left");
-  const rightWing = rootEl.querySelector(".dhud-wing--right");
-  const ring      = rootEl.querySelector(".dhud-ring");
-  if (!shell || !leftWing || !rightWing || !ring) return;
-
-  // 1) captura centro do ring antes
-  const pre = ring.getBoundingClientRect();
-  const cxPre = pre.left + pre.width / 2;
-
-  // 2) aplica estado
-  shell.setAttribute("data-wings", state);
-
-  // acessibilidade
-  const closed = state === "closed";
-  leftWing.toggleAttribute("inert", closed);
-  rightWing.toggleAttribute("inert", closed);
-  if (closed) shell.setAttribute("data-open", "");
-
-  // 3) compensa deslocamento p/ manter core ancorado
-  requestAnimationFrame(() => {
-    const post = ring.getBoundingClientRect();
-    const cxPost = post.left + post.width / 2;
-    const dx = cxPost - cxPre;
-    if (Math.abs(dx) > 0.5) {
-      const app = rootEl;
-      const currentLeft = parseFloat(app.style.left || "0");
-      app.style.left = `${currentLeft - dx}px`;
-    }
-  });
-}
+// Tab-panel open direction + the nav-bar tab toggler.
+// Pure DOM helpers — no system knowledge, no `this`.
 
 /**
  * Decide whether a tab panel should open up or down.
@@ -46,8 +11,8 @@ export function setWingsState(rootEl, state /* "open" | "closed" */) {
 export function setPanelOpenDirection(panel) {
   if (!panel) return;
 
-  // Measure the tabwrap (panel’s offset parent is .dhud-tabwrap)
-  const wrap = panel.closest(".dhud-tabwrap") || panel.parentElement;
+  // Measure the nav bar (panel’s offset parent is .dhud-navbar / .dhud-tabwrap)
+  const wrap = panel.closest(".dhud-navbar, .dhud-tabwrap") || panel.parentElement;
   const rect = wrap.getBoundingClientRect();
 
   const spaceAbove = rect.top;                                 // px to viewport top

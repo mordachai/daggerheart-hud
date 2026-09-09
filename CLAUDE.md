@@ -54,7 +54,7 @@ module/
   hud/                    presentation / interaction — no system knowledge
     position.mjs          placeAtBottom, enableDragByRing, global-position flag
     layout.mjs            captureLayout / restoreLayout / requestRender
-    wings.mjs             setWingsState, setPanelOpenDirection, attachDHUDToggles
+    wings.mjs             setPanelOpenDirection, attachDHUDToggles (nav-bar tabs)
     appearance.mjs        theme + ring-image resolve/apply (per-actor flags vs GM override)
     events.mjs            attachHudEvents(app) — the data-action dispatch table
     resources-bar.mjs     bindResourceAdjusters(app) — HP/Stress/Hope/Armor pip clicks
@@ -76,7 +76,7 @@ module/
 Registers settings + Handlebars helpers on `init`, preloads `DHUD.templates` and fires the custom-button hook on `ready`, owns the **single HUD instance** `_hudApp`. Show/hide is driven by hooks:
 
 - `controlToken` / `canvasReady` / `userConnected` / `deleteToken` → `createOrUpdateHUD(actor, token)`. Multiple selected Daggerheart tokens ⇒ HUD closes. Non-GM players with the `alwaysVisible` setting get a persistent HUD bound to their first owned character.
-- `createOrUpdateHUD` captures the current layout (`captureLayout`), closes the old app, and restores position/wings after re-render to prevent visual jumps (`restoreLayout`).
+- `createOrUpdateHUD` captures the current layout (`captureLayout`), closes the old app, and restores position after re-render to prevent visual jumps (`restoreLayout`).
 - **Re-render watchers**: `updateActor`, `create/update/deleteItem`, `*ActiveEffect` hooks, all filtered to `_hudApp.actor`, plus `updateSetting` for `daggerheart.Homebrew`. `updateActor` calls `dhudActorChangeRelevant` (`hud/refresh.mjs`: `DHUD_ACTOR_PATHS` allowlist **or** any `system` change). `updateItem` deliberately **skips** simple quantity / `uses.value` / `resource.value` updates to avoid re-render churn (`_updatingQuantity` flag + `isSimpleResourceUpdate` check). Renders are coalesced through `requestRender`.
 
 ### The HUD app — `module/apps/dh-actor-hud.mjs` (`DaggerheartActorHUD`)
@@ -84,8 +84,9 @@ Registers settings + Handlebars helpers on `init`, preloads `DHUD.templates` and
 `ApplicationV2` + `HandlebarsApplicationMixin`, single PART `body` → `templates/actor/hud-character.hbs`.
 
 - **`_prepareContext`** just calls `buildContext(this)` (`hud/context/index.mjs`), which runs the collectors and assembles the exact object the template consumes. Data shaping — weapon selection (primary = first equipped non-secondary, else unarmed from `system.attack`; two-handed primary fills both slots), armor marks (marks on the item, max from post-effects actor `armorScore`), feature bucketing by `granter.type` + subclass-tier gating, domain loadout/vault split, condition list, enriched descriptions — lives in the `context/*` collectors, which import from `system/*` for anything Daggerheart-specific.
-- **Events are fully delegated** on `this.element`, wired once and guarded by per-app flags (`_delegatedBound`, `_resAdjBound`, `_statusMenuBound`, `_dragHooked`, `_imgHooked`, `_booted`, `_wingsInit`). `attachHudEvents` (`hud/events.mjs`) dispatches by `data-action` in one `click` listener; `bindResourceAdjusters` (`hud/resources-bar.mjs`) is a separate `click`/`contextmenu` pair where **left-click and right-click do opposite things** (HP/Stress ∓1, Hope fill/reduce to pip, Armor mark/repair); `attachStatusMenu` (`hud/status-menu.mjs`) owns the portrait context menu + condition grid.
-- **Layout persistence**: dragged by the `.dhud-ring` handle; position saved to `game.user` flag `daggerheart-hud.globalPosition`, wings state to flag `daggerheart-hud.wings`. `setPanelOpenDirection` decides whether a tab panel opens up or down based on viewport room.
+- **Events are fully delegated** on `this.element`, wired once and guarded by per-app flags (`_delegatedBound`, `_resAdjBound`, `_statusMenuBound`, `_dragHooked`, `_imgHooked`, `_booted`). `attachHudEvents` (`hud/events.mjs`) dispatches by `data-action` in one `click` listener; `bindResourceAdjusters` (`hud/resources-bar.mjs`) is a separate `click`/`contextmenu` pair where **left-click and right-click do opposite things** (HP/Stress ∓1, Hope fill/reduce to pip, Armor mark/repair); `attachStatusMenu` (`hud/status-menu.mjs`) owns the portrait context menu + condition grid.
+- **Tabs** live in a single themed `.dhud-navbar` strip below the core (traits / heritage / inventory / class / loadout / features). `attachDHUDToggles` (`hud/wings.mjs`) toggles `.dhud[data-open]` + tab `aria-expanded`; `setPanelOpenDirection` decides whether the panel opens up or down based on viewport room. No wings — panels are `position:absolute` anchored to the nav bar.
+- **Layout persistence**: dragged by the `.dhud-ring` handle; position saved to `game.user` flag `daggerheart-hud.globalPosition`.
 - **Theming applied in `_onRender`** via `applyAppearance` / `reapplyAppearance` (`hud/appearance.mjs`): resolves theme + ring images, toggles `dhud-theme-<name>`, sets `--dhud-ring-main` / `--dhud-ring-weapon` CSS vars. Re-applied on `daggerheart-hud:rings-updated` / `:appearance-updated` hooks; listeners torn down in `close()`.
 
 ### Appearance config

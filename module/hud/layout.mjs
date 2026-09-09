@@ -1,14 +1,12 @@
 // module/hud/layout.mjs
-// Snapshot / restore the HUD layout (position + wings) across a close/reopen, and
-// coalesce re-renders. Extracted from the entry file in refactor step 2.
-// Functions take the app instance explicitly instead of closing over `_hudApp`.
+// Snapshot / restore the HUD layout (position) across a close/reopen, and
+// coalesce re-renders. Functions take the app instance explicitly.
 
-/** Snapshot current HUD layout (position + wings). */
+/** Snapshot current HUD layout (position). */
 export function captureLayout(app) {
   const el = app?.element;
   if (!el) return null;
 
-  const shell = el.querySelector(".dhud");
   const style = el.style;
 
   // Determine if we're anchored at bottom or free-dragged
@@ -18,8 +16,7 @@ export function captureLayout(app) {
     mode,                           // "bottom" | "free"
     left: style.left || "",
     top:  style.top  || "",
-    bottom: style.bottom || "",
-    wings: shell?.getAttribute("data-wings") || "closed"
+    bottom: style.bottom || ""
   };
 }
 
@@ -28,9 +25,6 @@ export function restoreLayout(app, snapshot) {
   if (!snapshot) return;
   const el = app?.element;
   if (!el) return;
-
-  const shell = el.querySelector(".dhud");
-  if (shell && snapshot.wings) shell.setAttribute("data-wings", snapshot.wings);
 
   const style = el.style;
   if (snapshot.mode === "bottom") {

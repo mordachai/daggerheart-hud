@@ -14,8 +14,7 @@ export const TEMPLATE_PATHS = [
 export const FLAGS = {
   // game.user flags
   user: {
-    globalPosition: "globalPosition",
-    wings: "wings"
+    globalPosition: "globalPosition"
   },
   // actor flags (appearance config)
   actor: {

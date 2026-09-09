@@ -1,455 +1,4 @@
 <section class="dhud dhud--layout" data-open="">
-  {{!-- =============== LEFT WING (menus) =============== --}}
-  <div class="dhud-wing dhud-wing--left">
-    {{!-- TRAITS --}}
-    <div class="dhud-tabwrap">
-      <div class="dhud-tab" role="button" tabindex="0"
-          data-tab="traits" aria-controls="panel-traits" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Trait.plural"}}</div>
-      <div id="panel-traits" class="dhud-panel dhud-panel--traits" data-panel="traits" role="dialog" aria-label="Traits">
-      <header>{{l "DAGGERHEART.GENERAL.Trait.plural"}}</header>
-        <ul class="dhud-acc">
-          {{#each traits}}
-          <li class="acc">
-            <details>
-              <summary>
-                <i class="fa-light fa-dice-d12 icon dhud-roll dhud-action-roll"
-                  role="button"
-                  tabindex="0"
-                  data-action="roll-trait"
-                  data-trait="{{key}}"
-                  title="{{l "DAGGERHEART.GENERAL.Roll.trait"}}: {{l name}}"></i>
-
-                <span class="title">
-                  {{name}}
-                  {{#if isSpellcasting}}
-                    <i class="fa-solid fa-wand-sparkles dhud-spellcast" aria-hidden="true" title="{{l 'DAGGERHEART.ITEMS.Subclass.spellcastingTrait'}}: {{name}}"></i>
-                  {{/if}}
-                </span>
-
-                <span class="value">{{value}}</span>
-
-                {{!-- NEW: Reaction roll button --}}
-                <span class="dhud-reaction-btn"
-                      role="button"
-                      tabindex="0"
-                      title="{{l 'DAGGERHEART.GENERAL.Roll.reaction'}}: {{l name}}"
-                      data-action="roll-trait-reaction"
-                      data-trait="{{key}}">
-                  <i class="fa-solid fa-reply" aria-hidden="true"></i>
-                </span>
-                {{!-- Custom buttons hook point --}}
-                {{#each ../customButtons.traits}}
-                <span class="dhud-custom-btn"
-                      role="button"
-                      tabindex="0"
-                      title="{{title}}"
-                      data-action="custom-{{id}}"
-                      data-trait="{{../key}}">
-                  <i class="{{icon}}"></i>
-                </span>
-                {{/each}}
-              </summary>
-              <div class="acc-body">{{descriptionHTML}}</div>
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">No traits found</li>
-          {{/each}}
-        </ul>
-
-        {{!-- EXPERIENCES SECTION --}}
-        <header>Experiences</header>
-        <ul class="dhud-acc">
-          {{#each experiences}}
-          <li class="acc">
-            <details>
-              <summary>
-                <i class="fa-light fa-star icon"
-                  role="button"
-                  tabindex="0"
-                  data-action="roll-experience"
-                  data-experience-id="{{id}}"
-                  data-experience-key="{{key}}"
-                  title="Roll Experience: {{name}}"></i>
-                <span class="title">{{name}}</span>
-                <span class="value">+{{value}}</span>
-              </summary>
-              {{#if description}}
-              <div class="acc-body">{{{descriptionHTML}}}</div>
-              {{/if}}
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">No experiences found</li>
-          {{/each}}
-        </ul>
-      </div>
-    </div>
-
-    {{!-- ANCESTRY --}}
-    <div class="dhud-tabwrap">
-      <div class="dhud-tab" role="button" tabindex="0"
-          data-tab="heritage" aria-controls="panel-heritage" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.heritage"}}</div>
-
-      <div id="panel-heritage" class="dhud-panel dhud-panel--heritage" data-panel="heritage" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.heritage"}}">
-        <header>
-          {{l "TYPES.Item.ancestry"}}{{#if ancestryInfo}}:
-          <span class="dhud-header-item">{{ancestryInfo.name}}</span>{{/if}}
-        </header>
-        <ul class="dhud-acc">
-          {{#each ancestryFeatures}}
-          <li class="acc">
-            <details>
-              <summary>
-               <img class="icon{{#if hasActions}} clickable{{/if}}"
-                    src="{{img}}"
-                    alt=""
-                    role="button"
-                    tabindex="0"
-                    data-action="item-exec"
-                    data-item-id="{{id}}"
-                    data-action-id="{{actionId}}"
-                    title="{{name}}">
-                <span class="title">{{name}}</span>
-                {{#with (getResourceInfo this)}}
-                  {{#if (eq displayType "diceValues")}}
-                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
-                      {{#each dice}}
-                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
-                              data-index="{{key}}"
-                              data-item-id="{{../../id}}"
-                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
-                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
-                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
-                          <span class="dhud-dicechip-value">{{value}}</span>
-
-                          <!-- X overlay: shown only when .used -->
-                          <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
-                        </span>
-                      {{/each}}
-                    </span>
-                  {{else}}
-                    <span class="dhud-qty-container">
-                      {{#if editable}}
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
-                      {{else}}
-                        <span class="dhud-qty-readonly">{{value}}</span>
-                      {{/if}}
-                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                    </span>
-                  {{/if}}
-                {{/with}}
-                <i class="far fa-comment chat"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-chat"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-              </summary>
-              <div class="acc-body">{{{descriptionHTML}}}</div>
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">Empty</li>
-          {{/each}}
-        </ul>
-
-        <header>
-          {{l "TYPES.Item.community"}}{{#if communityInfo}}:
-          <span class="dhud-header-item">{{communityInfo.name}}</span>{{/if}}
-        </header>
-        <ul class="dhud-acc">
-          {{#each communityFeatures}}
-          <li class="acc">
-            <details>
-              <summary>
-               <img class="icon{{#if hasActions}} clickable{{/if}}"
-                    src="{{img}}"
-                    alt=""
-                    role="button"
-                    tabindex="0"
-                    data-action="item-exec"
-                    data-item-id="{{id}}"
-                    data-action-id="{{actionId}}"
-                    title="{{name}}">
-                <span class="title">{{name}}</span>
-                {{#with (getResourceInfo this)}}
-                  {{#if (eq displayType "diceValues")}}
-                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
-                      {{#each dice}}
-                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
-                              data-index="{{key}}"
-                              data-item-id="{{../../id}}"
-                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
-                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
-                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
-                          <span class="dhud-dicechip-value">{{value}}</span>
-
-                          <!-- X overlay: shown only when .used -->
-                          <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
-                        </span>
-                      {{/each}}
-                    </span>
-                  {{else}}
-                    <span class="dhud-qty-container">
-                      {{#if editable}}
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
-                      {{else}}
-                        <span class="dhud-qty-readonly">{{value}}</span>
-                      {{/if}}
-                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                    </span>
-                  {{/if}}
-                {{/with}}
-                <i class="far fa-comment chat"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-chat"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-              </summary>
-              <div class="acc-body">{{{descriptionHTML}}}</div>
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">Empty</li>
-          {{/each}}
-        </ul>
-      </div>
-    </div>
-
-    {{!-- INVENTORY --}}
-    <div class="dhud-tabwrap">
-      <div class="dhud-tab" role="button" tabindex="0"
-          data-tab="inventory" aria-controls="panel-inventory" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.inventory"}}</div>
-
-      <div id="panel-inventory" class="dhud-panel dhud-panel--inventory" data-panel="inventory" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.inventory"}}">
-        <header>{{l "TYPES.Item.consumable"}}</header>
-        <ul class="dhud-acc">
-          {{#each invConsumables}}
-          <li class="acc">
-            <details>
-              <summary>
-               <img class="icon{{#if hasActions}} clickable{{/if}}"
-                    src="{{img}}"
-                    alt=""
-                    role="button"
-                    tabindex="0"
-                    data-action="item-exec"
-                    data-item-id="{{id}}"
-                    data-action-id="{{actionId}}"
-                    title="{{name}}">
-                <span class="title">{{name}}</span>
-                {{#with (getResourceInfo this)}}
-                  {{#if (eq displayType "diceValues")}}
-                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
-                      {{#each dice}}
-                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
-                              data-index="{{key}}"
-                              data-item-id="{{../../id}}"
-                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
-                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
-                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
-                          <span class="dhud-dicechip-value">{{value}}</span>
-
-                          <!-- X overlay: shown only when .used -->
-                          <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
-                        </span>
-                      {{/each}}
-                    </span>
-                  {{else}}
-                    <span class="dhud-qty-container">
-                      {{#if editable}}
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
-                      {{else}}
-                        <span class="dhud-qty-readonly">{{value}}</span>
-                      {{/if}}
-                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                    </span>
-                  {{/if}}
-                {{/with}}
-                {{!-- {{#if qty}}<span class="qty">x{{qty}}</span>{{/if}} --}}
-                <i class="far fa-comment chat"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-chat"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-              </summary>
-              {{#if description}}
-              <div class="acc-body">{{{descriptionHTML}}}</div>
-              {{/if}}
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">Empty</li>
-          {{/each}}
-        </ul>
-
-        <header>{{l "TYPES.Item.loot"}}</header>
-        <ul class="dhud-acc">
-          {{#each invLoot}}
-          <li class="acc">
-            <details>
-              <summary>
-               <img class="icon{{#if hasActions}} clickable{{/if}}"
-                    src="{{img}}"
-                    alt=""
-                    role="button"
-                    tabindex="0"
-                    data-action="item-exec"
-                    data-item-id="{{id}}"
-                    title="{{name}}">
-                <span class="title">{{name}}</span>
-                {{#with (getResourceInfo this)}}
-                  {{#if (eq displayType "diceValues")}}
-                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
-                      {{#each dice}}
-                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
-                              data-index="{{key}}"
-                              data-item-id="{{../../id}}"
-                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
-                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
-                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
-                          <span class="dhud-dicechip-value">{{value}}</span>
-
-                          <!-- X overlay: shown only when .used -->
-                          <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
-                        </span>
-                      {{/each}}
-                    </span>
-                  {{else}}
-                    <span class="dhud-qty-container">
-                      {{#if editable}}
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
-                      {{else}}
-                        <span class="dhud-qty-readonly">{{value}}</span>
-                      {{/if}}
-                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                    </span>
-                  {{/if}}
-                {{/with}}
-                <i class="far fa-comment chat"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-chat"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-                {{!-- Custom buttons hook point --}}
-                {{#each ../customButtons.inventory}}
-                <span class="dhud-custom-btn"
-                      role="button"
-                      tabindex="0"
-                      title="{{title}}"
-                      data-action="custom-{{id}}"
-                      data-trait="{{../key}}">
-                  <i class="{{icon}}"></i>
-                </span>
-                {{/each}}
-              </summary>
-              {{#if description}}
-              <div class="acc-body">{{{descriptionHTML}}}</div>
-              {{/if}}
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">Empty</li>
-          {{/each}}
-        </ul>
-
-        {{!-- WEAPONS (equip / unequip) --}}
-        <header>{{l "TYPES.Item.weapon"}}</header>
-        <ul class="dhud-acc">
-          {{#each invWeapons}}
-          <li class="acc{{#if equipped}} is-equipped{{/if}}">
-            <details>
-              <summary>
-               <img class="icon{{#if hasActions}} clickable{{/if}}"
-                    src="{{img}}"
-                    alt=""
-                    role="button"
-                    tabindex="0"
-                    data-action="item-exec"
-                    data-item-id="{{id}}"
-                    data-action-id="{{actionId}}"
-                    title="{{name}}">
-                <span class="title">{{name}}</span>
-                <span class="qty dhud-wpn-meta">
-                  {{#if range}}<span class="dhud-wpn-range" title="{{rangeLabel}}">{{range}}</span>{{/if}}
-                  {{#if damage}}<span class="dhud-wpn-dmg" title="{{damageLabel}}">{{damage}}</span>{{/if}}
-                  {{#each damageIcons}}<i class="fa-solid {{icon}}" title="{{label}}"></i>{{/each}}
-                  {{#if burdenLabel}}<span class="dhud-wpn-burden">{{burdenLabel}}</span>{{/if}}
-                </span>
-                <i class="fa-solid {{#if equipped}}fa-toggle-on{{else}}fa-toggle-off{{/if}} move dhud-equip{{#if equipped}} is-equipped{{/if}}"
-                  role="button"
-                  tabindex="0"
-                  data-action="toggle-equip"
-                  data-item-id="{{id}}"
-                  title="{{#if equipped}}{{l 'DAGGERHEART.UI.Tooltip.unequip'}}{{else}}{{l 'DAGGERHEART.UI.Tooltip.equip'}}{{/if}}"></i>
-                <i class="far fa-comment chat"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-chat"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-              </summary>
-              {{#if description}}
-              <div class="acc-body">{{{descriptionHTML}}}</div>
-              {{/if}}
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">Empty</li>
-          {{/each}}
-        </ul>
-
-        {{!-- ARMOR (equip / unequip) --}}
-        <header>{{l "TYPES.Item.armor"}}</header>
-        <ul class="dhud-acc">
-          {{#each invArmor}}
-          <li class="acc{{#if equipped}} is-equipped{{/if}}">
-            <details>
-              <summary>
-               <img class="icon"
-                    src="{{img}}"
-                    alt=""
-                    title="{{name}}">
-                <span class="title">{{name}}</span>
-                {{#if armorScore}}<span class="qty" title="{{armorScoreLabel}}">AS {{armorScore}}</span>{{/if}}
-                <i class="fa-solid {{#if equipped}}fa-toggle-on{{else}}fa-toggle-off{{/if}} move dhud-equip{{#if equipped}} is-equipped{{/if}}"
-                  role="button"
-                  tabindex="0"
-                  data-action="toggle-equip"
-                  data-item-id="{{id}}"
-                  title="{{#if equipped}}{{l 'DAGGERHEART.UI.Tooltip.unequip'}}{{else}}{{l 'DAGGERHEART.UI.Tooltip.equip'}}{{/if}}"></i>
-                <i class="far fa-comment chat"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-chat"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-              </summary>
-              {{#if description}}
-              <div class="acc-body">{{{descriptionHTML}}}</div>
-              {{/if}}
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">Empty</li>
-          {{/each}}
-        </ul>
-      </div>
-    </div>
-
-  </div>
 
   {{!-- =============== CORE (center ring) =============== --}}
   <div class="dhud-core">
@@ -484,16 +33,16 @@
         </div>
 
         {{#if (gte hitPoints.value hitPoints.max)}}
-        <div class="dhud-death" 
-            role="button" 
+        <div class="dhud-death"
+            role="button"
             tabindex="0"
             data-action="death-move"
             title="Death Move">
         </div>
         {{/if}}
-        
+
         <div class="dhud-ring-overlay"></div>
-       
+
         <div class="dhud-pips" aria-label="Hope">
           {{#each hopePips}}
             <span class="pip {{#if this.filled}}filled{{/if}}" data-index="{{@index}}"></span>
@@ -574,369 +123,820 @@
 
   </div>
 
-{{!-- =============== RIGHT WING (menus) =============== --}}
-  <div class="dhud-wing dhud-wing--right">
-    {{!-- CLASS --}}
-    <div class="dhud-tabwrap dhud-tabwrap--right">
+  {{!-- =============== NAV BAR (tabs) + PANELS =============== --}}
+  <div class="dhud-navbar dhud-tabwrap">
+    <div class="dhud-navbar-tabs" role="tablist">
+      <div class="dhud-tab" role="button" tabindex="0"
+          data-tab="traits" aria-controls="panel-traits" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Trait.plural"}}</div>
+      <div class="dhud-tab" role="button" tabindex="0"
+          data-tab="heritage" aria-controls="panel-heritage" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.heritage"}}</div>
+      <div class="dhud-tab" role="button" tabindex="0"
+          data-tab="inventory" aria-controls="panel-inventory" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.inventory"}}</div>
       <div class="dhud-tab" role="button" tabindex="0"
           data-tab="class" aria-controls="panel-class" aria-expanded="false">{{l "TYPES.Item.class"}}</div>
-
-      <div id="panel-class" class="dhud-panel dhud-panel--class" data-panel="class" role="dialog" aria-label="{{l "TYPES.Item.class"}}">
-        <header>
-          {{l "TYPES.Item.class"}}{{#if classInfo}}:
-          <span class="dhud-header-item">{{classInfo.name}}</span>{{/if}}
-        </header>
-        <ul class="dhud-acc">
-          {{#each classFeatures}}
-          <li class="acc">
-            <details>
-              <summary>
-               <img class="icon{{#if hasActions}} clickable{{/if}}"
-                    src="{{img}}"
-                    alt=""
-                    role="button"
-                    tabindex="0"
-                    data-action="item-exec"
-                    data-item-id="{{id}}"
-                    data-action-id="{{actionId}}"
-                    title="{{name}}">
-                <span class="title">{{name}}</span>
-                {{#with (getResourceInfo this)}}
-                  {{#if (eq displayType "diceValues")}}
-                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
-                      {{#each dice}}
-                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
-                              data-index="{{key}}"
-                              data-item-id="{{../../id}}"
-                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
-                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
-                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
-                          <span class="dhud-dicechip-value">{{value}}</span>
-
-                          <!-- X overlay: shown only when .used -->
-                          <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
-                        </span>
-                      {{/each}}
-                    </span>
-                  {{else}}
-                    <span class="dhud-qty-container">
-                      {{#if editable}}
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
-                      {{else}}
-                        <span class="dhud-qty-readonly">{{value}}</span>
-                      {{/if}}
-                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                    </span>
-                  {{/if}}
-                {{/with}}
-                <i class="far fa-comment chat"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-chat"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-              </summary>
-              <div class="acc-body">{{{descriptionHTML}}}</div>
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">Empty</li>
-          {{/each}}
-        </ul>
-
-        <header>
-          {{l "TYPES.Item.subclass"}}{{#if subclassInfo}}:
-          <span class="dhud-header-item">{{subclassInfo.name}}</span>{{/if}}
-        </header>
-        <ul class="dhud-acc">
-          {{#each subclassFeatures}}
-          <li class="acc">
-            <details>
-              <summary>
-               <img class="icon{{#if hasActions}} clickable{{/if}}"
-                    src="{{img}}"
-                    alt=""
-                    role="button"
-                    tabindex="0"
-                    data-action="item-exec"
-                    data-item-id="{{id}}"
-                    data-action-id="{{actionId}}"
-                    title="{{name}}">
-                <span class="title">{{name}}</span>
-                {{#with (getResourceInfo this)}}
-                  {{#if (eq displayType "diceValues")}}
-                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
-                      {{#each dice}}
-                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
-                              data-index="{{key}}"
-                              data-item-id="{{../../id}}"
-                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
-                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
-                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
-                          <span class="dhud-dicechip-value">{{value}}</span>
-
-                          <!-- X overlay: shown only when .used -->
-                          <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
-                        </span>
-                      {{/each}}
-                    </span>
-                  {{else}}
-                    <span class="dhud-qty-container">
-                      {{#if editable}}
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
-                      {{else}}
-                        <span class="dhud-qty-readonly">{{value}}</span>
-                      {{/if}}
-                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                    </span>
-                  {{/if}}
-                {{/with}}
-                <i class="far fa-comment chat"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-chat"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-              </summary>
-              <div class="acc-body">{{{descriptionHTML}}}</div>
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">Empty</li>
-          {{/each}}
-        </ul>
-      </div>
-    </div>
-
-    {{!-- DOMAINS / LOADOUT --}}
-    <div class="dhud-tabwrap dhud-tabwrap--right">
       <div class="dhud-tab" role="button" tabindex="0"
           data-tab="loadout" aria-controls="panel-loadout" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.loadout"}}</div>
+      <div class="dhud-tab" role="button" tabindex="0"
+          data-tab="features" aria-controls="panel-features" aria-expanded="false">{{l 'DAGGERHEART.GENERAL.Tabs.features'}}</div>
+    </div>
 
-      <div id="panel-loadout" class="dhud-panel dhud-panel--domains" data-panel="loadout" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.loadout"}}">
-        <header>
-        {{l "DAGGERHEART.GENERAL.Domain.plural"}}
-        {{#if domainsHeader}}:
-          <span class="dhud-domains-header" {{#if domainsHeaderTitle}}title="{{domainsHeaderTitle}}"{{/if}}>
-            {{domainsHeader}}
-          </span>
-        {{/if}}
-        </header>
-        <ul class="dhud-acc">
-          {{#each domainLoadout}}
-          <li class="acc">
-            <details>
-              <summary>
-               <img class="icon{{#if hasActions}} clickable{{/if}}"
-                    src="{{img}}"
-                    alt=""
-                    role="button"
-                    tabindex="0"
-                    data-action="item-exec"
-                    data-item-id="{{id}}"
-                    data-action-id="{{actionId}}"
-                    title="{{name}}">
-                <span class="title">{{name}}</span>
-
-                {{#with (getResourceInfo this)}}
-                  {{#if (eq displayType "diceValues")}}
-                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
-                      {{#each dice}}
-                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
-                              data-index="{{key}}"
-                              data-item-id="{{../../id}}"
-                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
-                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
-                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
-                          <span class="dhud-dicechip-value">{{value}}</span>
-
-                          <!-- X overlay: shown only when .used -->
-                          <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
-                        </span>
-                      {{/each}}
-                    </span>
-                  {{else}}
-                    <span class="dhud-qty-container">
-                      {{#if editable}}
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
-                      {{else}}
-                        <span class="dhud-qty-readonly">{{value}}</span>
-                      {{/if}}
-                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                    </span>
-                  {{/if}}
-                {{/with}}
-
-                <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
-
-                {{!-- move to vault --}}
-                <i class="fas fa-arrow-down move"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-vault"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToVault'}}"></i>
-
-                {{!-- send to chat --}}
-                <i class="far fa-comment chat"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-chat"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-              </summary>
-
-              <div class="acc-body">
-                <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
-                  <strong>Domain</strong>: {{domainLabel}}</p>
-                {{{descriptionHTML}}}
-              </div>
-            </details>
-          </li>
-          {{else}}
-          <li class="acc"></li>
-          {{/each}}
-        </ul>
-
-        {{!-- VAULT SECTION (moved inside Loadout) --}}
-        <header>{{l "DAGGERHEART.GENERAL.Tabs.vault"}}</header>
-        <ul class="dhud-acc">
-          {{#each domainVault}}
-          <li class="acc">
-            <details>
-              <summary>
-               <img class="icon{{#if hasActions}} clickable{{/if}}"
-                src="{{img}}"
+    {{!-- TRAITS --}}
+    <div id="panel-traits" class="dhud-panel dhud-panel--traits" data-panel="traits" role="dialog" aria-label="Traits">
+    <header>{{l "DAGGERHEART.GENERAL.Trait.plural"}}</header>
+      <ul class="dhud-acc">
+        {{#each traits}}
+        <li class="acc">
+          <details>
+            <summary>
+              <img class="icon dhud-roll dhud-action-roll dhud-trait-dice"
+                src="systems/daggerheart/assets/icons/dice/duality/DualityBW.svg"
                 alt=""
                 role="button"
                 tabindex="0"
-                {{#if hasActions}}
+                data-action="roll-trait"
+                data-trait="{{key}}"
+                title="{{l "DAGGERHEART.GENERAL.Roll.trait"}}: {{l name}}">
+
+              <span class="title">
+                {{name}}
+                {{#if isSpellcasting}}
+                  <i class="fa-solid fa-wand-sparkles dhud-spellcast" aria-hidden="true" title="{{l 'DAGGERHEART.ITEMS.Subclass.spellcastingTrait'}}: {{name}}"></i>
+                {{/if}}
+              </span>
+
+              <span class="value">{{value}}</span>
+
+              {{!-- NEW: Reaction roll button --}}
+              <span class="dhud-reaction-btn"
+                    role="button"
+                    tabindex="0"
+                    title="{{l 'DAGGERHEART.GENERAL.Roll.reaction'}}: {{l name}}"
+                    data-action="roll-trait-reaction"
+                    data-trait="{{key}}">
+                <i class="fa-solid fa-reply" aria-hidden="true"></i>
+              </span>
+              {{!-- Custom buttons hook point --}}
+              {{#each ../customButtons.traits}}
+              <span class="dhud-custom-btn"
+                    role="button"
+                    tabindex="0"
+                    title="{{title}}"
+                    data-action="custom-{{id}}"
+                    data-trait="{{../key}}">
+                <i class="{{icon}}"></i>
+              </span>
+              {{/each}}
+            </summary>
+            <div class="acc-body">{{descriptionHTML}}</div>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">No traits found</li>
+        {{/each}}
+      </ul>
+
+      {{!-- EXPERIENCES SECTION --}}
+      <header>Experiences</header>
+      <ul class="dhud-acc">
+        {{#each experiences}}
+        <li class="acc">
+          <details>
+            <summary>
+              <i class="fa-light fa-star icon"
+                role="button"
+                tabindex="0"
+                data-action="roll-experience"
+                data-experience-id="{{id}}"
+                data-experience-key="{{key}}"
+                title="Roll Experience: {{name}}"></i>
+              <span class="title">{{name}}</span>
+              <span class="value">+{{value}}</span>
+            </summary>
+            {{#if description}}
+            <div class="acc-body">{{{descriptionHTML}}}</div>
+            {{/if}}
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">No experiences found</li>
+        {{/each}}
+      </ul>
+    </div>
+
+    {{!-- ANCESTRY --}}
+    <div id="panel-heritage" class="dhud-panel dhud-panel--heritage" data-panel="heritage" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.heritage"}}">
+      <header>
+        {{l "TYPES.Item.ancestry"}}{{#if ancestryInfo}}:
+        <span class="dhud-header-item">{{ancestryInfo.name}}</span>{{/if}}
+      </header>
+      <ul class="dhud-acc">
+        {{#each ancestryFeatures}}
+        <li class="acc">
+          <details>
+            <summary>
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
+                  src="{{img}}"
+                  alt=""
+                  role="button"
+                  tabindex="0"
                   data-action="item-exec"
                   data-item-id="{{id}}"
                   data-action-id="{{actionId}}"
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+              {{#with (getResourceInfo this)}}
+                {{#if (eq displayType "diceValues")}}
+                  <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                    {{#each dice}}
+                      <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                            data-index="{{key}}"
+                            data-item-id="{{../../id}}"
+                            title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                            aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                        <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                        <span class="dhud-dicechip-value">{{value}}</span>
+
+                        <!-- X overlay: shown only when .used -->
+                        <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
+                      </span>
+                    {{/each}}
+                  </span>
+                {{else}}
+                  <span class="dhud-qty-container">
+                    {{#if editable}}
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                      <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                    {{else}}
+                      <span class="dhud-qty-readonly">{{value}}</span>
+                    {{/if}}
+                    {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                  </span>
                 {{/if}}
-                title="{{name}}">
-                <span class="title">{{name}}</span>
+              {{/with}}
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+            </summary>
+            <div class="acc-body">{{{descriptionHTML}}}</div>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
 
-                <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
-
-                {{!-- move to loadout --}}
-                <i class="fas fa-arrow-up move"
+      <header>
+        {{l "TYPES.Item.community"}}{{#if communityInfo}}:
+        <span class="dhud-header-item">{{communityInfo.name}}</span>{{/if}}
+      </header>
+      <ul class="dhud-acc">
+        {{#each communityFeatures}}
+        <li class="acc">
+          <details>
+            <summary>
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
+                  src="{{img}}"
+                  alt=""
                   role="button"
                   tabindex="0"
-                  data-action="to-loadout"
+                  data-action="item-exec"
                   data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToLoadout'}}"></i>
+                  data-action-id="{{actionId}}"
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+              {{#with (getResourceInfo this)}}
+                {{#if (eq displayType "diceValues")}}
+                  <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                    {{#each dice}}
+                      <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                            data-index="{{key}}"
+                            data-item-id="{{../../id}}"
+                            title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                            aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                        <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                        <span class="dhud-dicechip-value">{{value}}</span>
 
-                <i class="far fa-comment chat"
-                  role="button"
-                  tabindex="0"
-                  data-action="to-chat"
-                  data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-              </summary>
-
-              <div class="acc-body">
-                <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
-                  <strong>Domain</strong>: {{domainLabel}}</p>
-                {{{descriptionHTML}}}
-              </div>
-            </details>
-          </li>
-          {{else}}
-          <li class="acc"></li>
-          {{/each}}
-        </ul>
-      </div>
+                        <!-- X overlay: shown only when .used -->
+                        <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
+                      </span>
+                    {{/each}}
+                  </span>
+                {{else}}
+                  <span class="dhud-qty-container">
+                    {{#if editable}}
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                      <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                    {{else}}
+                      <span class="dhud-qty-readonly">{{value}}</span>
+                    {{/if}}
+                    {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                  </span>
+                {{/if}}
+              {{/with}}
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+            </summary>
+            <div class="acc-body">{{{descriptionHTML}}}</div>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
     </div>
 
+    {{!-- INVENTORY --}}
+    <div id="panel-inventory" class="dhud-panel dhud-panel--inventory" data-panel="inventory" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.inventory"}}">
+      <header>{{l "TYPES.Item.consumable"}}</header>
+      <ul class="dhud-acc">
+        {{#each invConsumables}}
+        <li class="acc">
+          <details>
+            <summary>
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
+                  src="{{img}}"
+                  alt=""
+                  role="button"
+                  tabindex="0"
+                  data-action="item-exec"
+                  data-item-id="{{id}}"
+                  data-action-id="{{actionId}}"
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+              {{#with (getResourceInfo this)}}
+                {{#if (eq displayType "diceValues")}}
+                  <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                    {{#each dice}}
+                      <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                            data-index="{{key}}"
+                            data-item-id="{{../../id}}"
+                            title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                            aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                        <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                        <span class="dhud-dicechip-value">{{value}}</span>
 
-    {{!-- FEATURES --}}
-    <div class="dhud-tabwrap dhud-tabwrap--right">
-      <div class="dhud-tab" role="button" tabindex="0"
-          data-tab="features" aria-controls="panel-features" aria-expanded="false">{{l 'DAGGERHEART.GENERAL.Tabs.features'}}</div>
+                        <!-- X overlay: shown only when .used -->
+                        <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
+                      </span>
+                    {{/each}}
+                  </span>
+                {{else}}
+                  <span class="dhud-qty-container">
+                    {{#if editable}}
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                      <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                    {{else}}
+                      <span class="dhud-qty-readonly">{{value}}</span>
+                    {{/if}}
+                    {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                  </span>
+                {{/if}}
+              {{/with}}
+              {{!-- {{#if qty}}<span class="qty">x{{qty}}</span>{{/if}} --}}
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+            </summary>
+            {{#if description}}
+            <div class="acc-body">{{{descriptionHTML}}}</div>
+            {{/if}}
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
 
-      <div id="panel-features" class="dhud-panel dhud-panel--features" data-panel="features" role="dialog" aria-label="{{l 'DAGGERHEART.GENERAL.Tabs.features'}}">
-        <header>{{l 'DAGGERHEART.GENERAL.Tabs.features'}}</header>
-        <ul class="dhud-acc">
-          {{#each miscFeatures}}
-          <li class="acc">
-            <details>
-              <summary>
-              <img class="icon{{#if hasActions}} clickable{{/if}}"
-                    src="{{img}}"
-                    alt=""
+      <header>{{l "TYPES.Item.loot"}}</header>
+      <ul class="dhud-acc">
+        {{#each invLoot}}
+        <li class="acc">
+          <details>
+            <summary>
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
+                  src="{{img}}"
+                  alt=""
+                  role="button"
+                  tabindex="0"
+                  data-action="item-exec"
+                  data-item-id="{{id}}"
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+              {{#with (getResourceInfo this)}}
+                {{#if (eq displayType "diceValues")}}
+                  <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                    {{#each dice}}
+                      <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                            data-index="{{key}}"
+                            data-item-id="{{../../id}}"
+                            title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                            aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                        <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                        <span class="dhud-dicechip-value">{{value}}</span>
+
+                        <!-- X overlay: shown only when .used -->
+                        <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
+                      </span>
+                    {{/each}}
+                  </span>
+                {{else}}
+                  <span class="dhud-qty-container">
+                    {{#if editable}}
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                      <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                    {{else}}
+                      <span class="dhud-qty-readonly">{{value}}</span>
+                    {{/if}}
+                    {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                  </span>
+                {{/if}}
+              {{/with}}
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+              {{!-- Custom buttons hook point --}}
+              {{#each ../customButtons.inventory}}
+              <span class="dhud-custom-btn"
                     role="button"
                     tabindex="0"
-                    data-action="item-exec"
-                    data-item-id="{{id}}"
-                    data-action-id="{{actionId}}"
-                    title="{{name}}">
-                <span class="title">{{name}}</span>
-                {{#with (getResourceInfo this)}}
-                  {{#if (eq displayType "diceValues")}}
-                    <span class="dhud-dicegroup" data-die="{{dieFaces}}">
-                      {{#each dice}}
-                        <span class="dhud-dicechip {{#if used}}used{{/if}}"
-                              data-index="{{key}}"
-                              data-item-id="{{../../id}}"
-                              title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
-                              aria-pressed="{{#if used}}true{{else}}false{{/if}}">
-                          <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
-                          <span class="dhud-dicechip-value">{{value}}</span>
+                    title="{{title}}"
+                    data-action="custom-{{id}}"
+                    data-trait="{{../key}}">
+                <i class="{{icon}}"></i>
+              </span>
+              {{/each}}
+            </summary>
+            {{#if description}}
+            <div class="acc-body">{{{descriptionHTML}}}</div>
+            {{/if}}
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
 
-                          <!-- X overlay: shown only when .used -->
-                          <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
-                        </span>
-                      {{/each}}
-                    </span>
-                  {{else}}
-                    <span class="dhud-qty-container">
-                      {{#if editable}}
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
-                        <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
-                        <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
-                      {{else}}
-                        <span class="dhud-qty-readonly">{{value}}</span>
-                      {{/if}}
-                      {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
-                    </span>
-                  {{/if}}
-                {{/with}}
-
-                <i class="far fa-comment chat"
+      {{!-- WEAPONS (equip / unequip) --}}
+      <header>{{l "TYPES.Item.weapon"}}</header>
+      <ul class="dhud-acc">
+        {{#each invWeapons}}
+        <li class="acc{{#if equipped}} is-equipped{{/if}}">
+          <details>
+            <summary>
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
+                  src="{{img}}"
+                  alt=""
                   role="button"
                   tabindex="0"
-                  data-action="to-chat"
+                  data-action="item-exec"
                   data-item-id="{{id}}"
-                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
-              </summary>
-              <div class="acc-body">{{{descriptionHTML}}}</div>
-            </details>
-          </li>
-          {{else}}
-          <li class="acc">Empty</li>
-          {{/each}}
-        </ul>
+                  data-action-id="{{actionId}}"
+                  title="{{name}}">
+              <span class="title" title="{{metaTooltip}}">{{name}}</span>
+              <span class="qty dhud-wpn-meta">
+                {{#if range}}<span class="dhud-wpn-range" title="{{rangeLabel}}">{{range}}</span>{{/if}}
+                {{#if damage}}<span class="dhud-wpn-dmg" title="{{damageLabel}}">{{damage}}</span>{{/if}}
+                {{#each damageIcons}}<i class="fa-solid {{icon}}" title="{{label}}"></i>{{/each}}
+                {{#if burdenLabel}}<span class="dhud-wpn-burden">{{burdenLabel}}</span>{{/if}}
+              </span>
+              <i class="fa-solid {{#if equipped}}fa-toggle-on{{else}}fa-toggle-off{{/if}} move dhud-equip{{#if equipped}} is-equipped{{/if}}"
+                role="button"
+                tabindex="0"
+                data-action="toggle-equip"
+                data-item-id="{{id}}"
+                title="{{#if equipped}}{{l 'DAGGERHEART.UI.Tooltip.unequip'}}{{else}}{{l 'DAGGERHEART.UI.Tooltip.equip'}}{{/if}}"></i>
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+            </summary>
+            {{#if description}}
+            <div class="acc-body">{{{descriptionHTML}}}</div>
+            {{/if}}
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
+
+      {{!-- ARMOR (equip / unequip) --}}
+      <header>{{l "TYPES.Item.armor"}}</header>
+      <ul class="dhud-acc">
+        {{#each invArmor}}
+        <li class="acc{{#if equipped}} is-equipped{{/if}}">
+          <details>
+            <summary>
+             <img class="icon"
+                  src="{{img}}"
+                  alt=""
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+              <span class="qty dhud-arm-meta">
+                {{#if armorScore}}<span class="dhud-arm-score" title="{{armorScoreLabel}}">BS {{armorScore}}</span>{{/if}}
+                {{#if hasThresholds}}<span class="dhud-arm-thr" title="{{thresholdsLabel}}">T {{thresholdMajor}}/{{thresholdSevere}}</span>{{/if}}
+              </span>
+              <i class="fa-solid {{#if equipped}}fa-toggle-on{{else}}fa-toggle-off{{/if}} move dhud-equip{{#if equipped}} is-equipped{{/if}}"
+                role="button"
+                tabindex="0"
+                data-action="toggle-equip"
+                data-item-id="{{id}}"
+                title="{{#if equipped}}{{l 'DAGGERHEART.UI.Tooltip.unequip'}}{{else}}{{l 'DAGGERHEART.UI.Tooltip.equip'}}{{/if}}"></i>
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+            </summary>
+            {{#if description}}
+            <div class="acc-body">{{{descriptionHTML}}}</div>
+            {{/if}}
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
+
+      {{!-- MONEY (no header — themed divider + single denomination row) --}}
+      {{#if invCurrency.length}}
+      <div class="dhud-money-divider"></div>
+      <div class="dhud-money">
+        {{#each invCurrency}}
+        <label class="dhud-money-slot" title="{{label}}">
+          <i class="{{icon}}" aria-hidden="true"></i>
+          <input type="number" class="dhud-money-input" inputmode="numeric" min="0" step="1"
+                 value="{{value}}" data-currency="{{key}}" aria-label="{{label}}">
+        </label>
+        {{/each}}
       </div>
+      {{/if}}
     </div>
 
+    {{!-- CLASS --}}
+    <div id="panel-class" class="dhud-panel dhud-panel--class" data-panel="class" role="dialog" aria-label="{{l "TYPES.Item.class"}}">
+      <header>
+        {{l "TYPES.Item.class"}}{{#if classInfo}}:
+        <span class="dhud-header-item">{{classInfo.name}}</span>{{/if}}
+      </header>
+      <ul class="dhud-acc">
+        {{#each classFeatures}}
+        <li class="acc">
+          <details>
+            <summary>
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
+                  src="{{img}}"
+                  alt=""
+                  role="button"
+                  tabindex="0"
+                  data-action="item-exec"
+                  data-item-id="{{id}}"
+                  data-action-id="{{actionId}}"
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+              {{#with (getResourceInfo this)}}
+                {{#if (eq displayType "diceValues")}}
+                  <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                    {{#each dice}}
+                      <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                            data-index="{{key}}"
+                            data-item-id="{{../../id}}"
+                            title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                            aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                        <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                        <span class="dhud-dicechip-value">{{value}}</span>
+
+                        <!-- X overlay: shown only when .used -->
+                        <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
+                      </span>
+                    {{/each}}
+                  </span>
+                {{else}}
+                  <span class="dhud-qty-container">
+                    {{#if editable}}
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                      <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                    {{else}}
+                      <span class="dhud-qty-readonly">{{value}}</span>
+                    {{/if}}
+                    {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                  </span>
+                {{/if}}
+              {{/with}}
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+            </summary>
+            <div class="acc-body">{{{descriptionHTML}}}</div>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
+
+      <header>
+        {{l "TYPES.Item.subclass"}}{{#if subclassInfo}}:
+        <span class="dhud-header-item">{{subclassInfo.name}}</span>{{/if}}
+      </header>
+      <ul class="dhud-acc">
+        {{#each subclassFeatures}}
+        <li class="acc">
+          <details>
+            <summary>
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
+                  src="{{img}}"
+                  alt=""
+                  role="button"
+                  tabindex="0"
+                  data-action="item-exec"
+                  data-item-id="{{id}}"
+                  data-action-id="{{actionId}}"
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+              {{#with (getResourceInfo this)}}
+                {{#if (eq displayType "diceValues")}}
+                  <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                    {{#each dice}}
+                      <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                            data-index="{{key}}"
+                            data-item-id="{{../../id}}"
+                            title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                            aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                        <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                        <span class="dhud-dicechip-value">{{value}}</span>
+
+                        <!-- X overlay: shown only when .used -->
+                        <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
+                      </span>
+                    {{/each}}
+                  </span>
+                {{else}}
+                  <span class="dhud-qty-container">
+                    {{#if editable}}
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                      <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                    {{else}}
+                      <span class="dhud-qty-readonly">{{value}}</span>
+                    {{/if}}
+                    {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                  </span>
+                {{/if}}
+              {{/with}}
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+            </summary>
+            <div class="acc-body">{{{descriptionHTML}}}</div>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
+    </div>
+
+    {{!-- DOMAINS / LOADOUT --}}
+    <div id="panel-loadout" class="dhud-panel dhud-panel--domains" data-panel="loadout" role="dialog" aria-label="{{l "DAGGERHEART.GENERAL.Tabs.loadout"}}">
+      <header>
+      {{l "DAGGERHEART.GENERAL.Domain.plural"}}
+      {{#if domainsHeader}}:
+        <span class="dhud-domains-header" {{#if domainsHeaderTitle}}title="{{domainsHeaderTitle}}"{{/if}}>
+          {{domainsHeader}}
+        </span>
+      {{/if}}
+      </header>
+      <ul class="dhud-acc">
+        {{#each domainLoadout}}
+        <li class="acc">
+          <details>
+            <summary>
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
+                  src="{{img}}"
+                  alt=""
+                  role="button"
+                  tabindex="0"
+                  data-action="item-exec"
+                  data-item-id="{{id}}"
+                  data-action-id="{{actionId}}"
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+
+              {{#with (getResourceInfo this)}}
+                {{#if (eq displayType "diceValues")}}
+                  <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                    {{#each dice}}
+                      <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                            data-index="{{key}}"
+                            data-item-id="{{../../id}}"
+                            title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                            aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                        <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                        <span class="dhud-dicechip-value">{{value}}</span>
+
+                        <!-- X overlay: shown only when .used -->
+                        <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
+                      </span>
+                    {{/each}}
+                  </span>
+                {{else}}
+                  <span class="dhud-qty-container">
+                    {{#if editable}}
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                      <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                    {{else}}
+                      <span class="dhud-qty-readonly">{{value}}</span>
+                    {{/if}}
+                    {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                  </span>
+                {{/if}}
+              {{/with}}
+
+              <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
+
+              {{!-- move to vault --}}
+              <i class="fas fa-arrow-down move"
+                role="button"
+                tabindex="0"
+                data-action="to-vault"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToVault'}}"></i>
+
+              {{!-- send to chat --}}
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+            </summary>
+
+            <div class="acc-body">
+              <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
+                <strong>Domain</strong>: {{domainLabel}}</p>
+              {{{descriptionHTML}}}
+            </div>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc"></li>
+        {{/each}}
+      </ul>
+
+      {{!-- VAULT SECTION (moved inside Loadout) --}}
+      <header>{{l "DAGGERHEART.GENERAL.Tabs.vault"}}</header>
+      <ul class="dhud-acc">
+        {{#each domainVault}}
+        <li class="acc">
+          <details>
+            <summary>
+             <img class="icon{{#if hasActions}} clickable{{/if}}"
+              src="{{img}}"
+              alt=""
+              role="button"
+              tabindex="0"
+              {{#if hasActions}}
+                data-action="item-exec"
+                data-item-id="{{id}}"
+                data-action-id="{{actionId}}"
+              {{/if}}
+              title="{{name}}">
+              <span class="title">{{name}}</span>
+
+              <span class="recall"><i class="fas fa-star"></i>{{recallCost}}</span>
+
+              {{!-- move to loadout --}}
+              <i class="fas fa-arrow-up move"
+                role="button"
+                tabindex="0"
+                data-action="to-loadout"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToLoadout'}}"></i>
+
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+            </summary>
+
+            <div class="acc-body">
+              <p class="capitalize"><strong>{{l "DAGGERHEART.ITEMS.DomainCard.recallCost"}}</strong>: {{recallCost}} —
+                <strong>Domain</strong>: {{domainLabel}}</p>
+              {{{descriptionHTML}}}
+            </div>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc"></li>
+        {{/each}}
+      </ul>
+    </div>
+
+    {{!-- FEATURES --}}
+    <div id="panel-features" class="dhud-panel dhud-panel--features" data-panel="features" role="dialog" aria-label="{{l 'DAGGERHEART.GENERAL.Tabs.features'}}">
+      <header>{{l 'DAGGERHEART.GENERAL.Tabs.features'}}</header>
+      <ul class="dhud-acc">
+        {{#each miscFeatures}}
+        <li class="acc">
+          <details>
+            <summary>
+            <img class="icon{{#if hasActions}} clickable{{/if}}"
+                  src="{{img}}"
+                  alt=""
+                  role="button"
+                  tabindex="0"
+                  data-action="item-exec"
+                  data-item-id="{{id}}"
+                  data-action-id="{{actionId}}"
+                  title="{{name}}">
+              <span class="title">{{name}}</span>
+              {{#with (getResourceInfo this)}}
+                {{#if (eq displayType "diceValues")}}
+                  <span class="dhud-dicegroup" data-die="{{dieFaces}}">
+                    {{#each dice}}
+                      <span class="dhud-dicechip {{#if used}}used{{/if}}"
+                            data-index="{{key}}"
+                            data-item-id="{{../../id}}"
+                            title="{{../dieFaces}}: {{value}}{{#if used}} - {{l 'DAGGERHEART.GENERAL.used'}}{{/if}}"
+                            aria-pressed="{{#if used}}true{{else}}false{{/if}}">
+                        <img class="dhud-dicechip-bg" src="icons/svg/{{../dieFaces}}-grey.svg" alt="{{../dieFaces}}">
+                        <span class="dhud-dicechip-value">{{value}}</span>
+
+                        <!-- X overlay: shown only when .used -->
+                        <i class="fa-solid fa-xmark dhud-dicechip-x" aria-hidden="true"></i>
+                      </span>
+                    {{/each}}
+                  </span>
+                {{else}}
+                  <span class="dhud-qty-container">
+                    {{#if editable}}
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="-1" data-item-id="{{../id}}" data-field="{{field}}">-</span>
+                      <input class="dhud-qty-input" type="number" value="{{value}}" min="0" {{#if max}}max="{{max}}"{{/if}} data-item-id="{{../id}}" data-field="{{field}}">
+                      <span class="dhud-qty-btn" data-action="universal-change" data-delta="+1" data-item-id="{{../id}}" data-field="{{field}}">+</span>
+                    {{else}}
+                      <span class="dhud-qty-readonly">{{value}}</span>
+                    {{/if}}
+                    {{#if max}}<span class="dhud-qty-max">/{{max}}</span>{{/if}}
+                  </span>
+                {{/if}}
+              {{/with}}
+
+              <i class="far fa-comment chat"
+                role="button"
+                tabindex="0"
+                data-action="to-chat"
+                data-item-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+            </summary>
+            <div class="acc-body">{{{descriptionHTML}}}</div>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
+    </div>
 
   </div>
 
 {{!-- =============== CONTEXT MENU & STATUS GRID =============== --}}
-  
+
   {{!-- Context Menu --}}
   <div class="dhud-context-menu" id="dhud-context-menu">
     <div class="dhud-context-item" data-action="apply-status">
       <i class="fas fa-magic"></i>
-      Toggle Conditions 
+      Toggle Conditions
     </div>
     <div class="dhud-context-item" data-action="short-rest">
       <i class="fas fa-utensils"></i>
@@ -954,15 +954,15 @@
       <i class="fas fa-magic"></i>
       Apply Status Effect
     </div>
-    
+
     {{#if availableConditions}}
       <div class="dhud-status-section">
         <div class="dhud-status-section-title">Daggerheart Conditions</div>
         <div class="dhud-status-icons" data-section="daggerheart">
           {{#each availableConditions}}
             {{#if (eq source "daggerheart")}}
-              <div class="dhud-status-icon {{#if isActive}}active{{/if}}" 
-                   data-condition-id="{{id}}" 
+              <div class="dhud-status-icon {{#if isActive}}active{{/if}}"
+                   data-condition-id="{{id}}"
                    data-condition-name="{{l name}}"
                    title="{{l name}}">
                 <img src="{{img}}" alt="{{l name}}">
@@ -978,8 +978,8 @@
         <div class="dhud-status-icons" data-section="generic">
           {{#each availableConditions}}
             {{#if (eq source "foundry")}}
-              <div class="dhud-status-icon {{#if isActive}}active{{/if}}" 
-                  data-condition-id="{{id}}" 
+              <div class="dhud-status-icon {{#if isActive}}active{{/if}}"
+                  data-condition-id="{{id}}"
                   data-condition-name="{{l name}}"
                   title="{{l name}}">
                 <img src="{{img}}" alt="{{l name}}">

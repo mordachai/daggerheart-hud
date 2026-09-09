@@ -118,3 +118,59 @@ export function bumpActorResource(actor, key, delta) {
   const curr = Math.max(0, Number(actor?.system?.resources?.[key]?.value ?? 0));
   return setActorResource(actor, key, curr + Number(delta || 0));
 }
+
+// --- Currency (gold) -------------------------------------------------------
+// Daggerheart stores four denominations at `actor.system.gold.{coins,handfuls,
+// bags,chests}` (plain integers). Which are shown, their display names and their
+// FA icons come from the world Homebrew setting's `currency` block (same source
+// the system character sheet uses); a disabled denomination is hidden.
+
+const CURRENCY_KEYS = ["coins", "handfuls", "bags", "chests"];
+const CURRENCY_FALLBACK = {
+  coins:    { label: "DAGGERHEART.CONFIG.Gold.coins",    icon: "fa-solid fa-coins" },
+  handfuls: { label: "DAGGERHEART.CONFIG.Gold.handfuls", icon: "fa-solid fa-coins" },
+  bags:     { label: "DAGGERHEART.CONFIG.Gold.bags",     icon: "fa-solid fa-sack" },
+  chests:   { label: "DAGGERHEART.CONFIG.Gold.chests",   icon: "fa-solid fa-box" }
+};
+
+/**
+ * Enabled currency denominations for the Inventory money strip:
+ *   { key, label, icon, value }
+ * Falls back to the four defaults if the Homebrew setting can't be read.
+ */
+export function listActorCurrency(actor) {
+  const gold = actor?.system?.gold ?? {};
+
+  let cfg = null;
+  try {
+    cfg = game.settings.get(CONFIG.DH.id, CONFIG.DH.SETTINGS.gameSettings.Homebrew)?.currency ?? null;
+  } catch { cfg = null; }
+
+  const out = [];
+  for (const key of CURRENCY_KEYS) {
+    const c = cfg?.[key];
+    if (c && c.enabled === false) continue;
+    const fb = CURRENCY_FALLBACK[key];
+    out.push({
+      key,
+      label: (c?.label && String(c.label).trim()) || loc(fb.label, key),
+      icon: (c?.icon && String(c.icon).trim()) || fb.icon,
+      value: Math.max(0, Number(gold[key] ?? 0))
+    });
+  }
+  return out;
+}
+
+/** Clamp + write one currency denomination. */
+export async function setActorCurrency(actor, key, value) {
+  if (!actor || !CURRENCY_KEYS.includes(key)) return;
+  const next = Math.max(0, Math.round(Number(value ?? 0)));
+  const curr = Math.max(0, Number(actor.system?.gold?.[key] ?? 0));
+  if (next === curr) return;
+  try {
+    await actor.update({ [`system.gold.${key}`]: next });
+  } catch (err) {
+    console.error("[DHUD] Currency update failed", err);
+    ui.notifications?.error("Currency update failed (see console)");
+  }
+}

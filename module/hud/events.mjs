@@ -1,13 +1,14 @@
 // module/hud/events.mjs
-// The delegated data-action dispatch table for the HUD: ring/wings, trait & reaction
+// The delegated data-action dispatch table for the HUD: trait & reaction
 // rolls, weapon rolls, item exec, send-to-chat, domain vault moves, universal resource
 // change, inline rolls, dice chips, quantity inputs, portrait double-click.
 // Extracted from dh-actor-hud.mjs in refactor step 3 — pure move, no behaviour change.
 // Status-menu handlers live in hud/status-menu.mjs; resource pips in hud/resources-bar.mjs.
 
-import { setWingsState, setPanelOpenDirection } from "./wings.mjs";
+import { setPanelOpenDirection } from "./wings.mjs";
 import { getCustomButton } from "./custom-buttons.mjs";
 import { useWeapon, useItemAction, sendToChat, moveDomainCard, toggleEquip } from "../system/items.mjs";
+import { setActorCurrency } from "../system/resources.mjs";
 import { rollTrait } from "../system/actor.mjs";
 
 /** Wire the delegated HUD interactions. Guarded once per app (`app._delegatedBound`). */
@@ -99,20 +100,6 @@ export function attachHudEvents(app) {
       const dialog = new DeathMove(app.actor);
       dialog.render(true);
       return;
-    }
-
-    // Ring toggle (wings) - only if NOT clicking on interactive elements
-    const ring = ev.target.closest(".dhud-ring");
-    if (ring) {
-      const isInteractiveElement = ev.target.closest(".dhud-pips, .dhud-count, .dhud-badge, [data-action]");
-      if (isInteractiveElement) return;
-      if (app._justDraggedTs && (Date.now() - app._justDraggedTs) < 160) return;
-      stop(ev);
-      const shell = rootEl.querySelector(".dhud");
-      const willOpen = shell?.getAttribute("data-wings") !== "open";
-      const next = willOpen ? "open" : "closed";
-      setWingsState(rootEl, next);
-      app._wingsState = next;
     }
 
     // Trait roll
@@ -359,6 +346,23 @@ export function attachHudEvents(app) {
 
         app._updatingQuantity = false;
       }
+    }
+  }, true);
+
+  // Money strip (Inventory tab): commit on change/blur, not per keystroke, so the
+  // HUD re-render fires once. `_updatingQuantity` suppresses the updateActor
+  // re-render on our own client (the field already shows the typed value).
+  rootEl.addEventListener("change", async (ev) => {
+    const goldInput = ev.target.closest(".dhud-money-input");
+    if (!goldInput || !app.actor) return;
+    const key = goldInput.dataset.currency;
+    const next = Math.max(0, parseInt(goldInput.value, 10) || 0);
+    goldInput.value = next;
+    app._updatingQuantity = true;
+    try {
+      await setActorCurrency(app.actor, key, next);
+    } finally {
+      app._updatingQuantity = false;
     }
   }, true);
 

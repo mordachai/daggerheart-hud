@@ -2,7 +2,7 @@
 
 import { getSetting, S } from "../settings.mjs";
 import { placeAtBottom, enableDragByRing, getSavedGlobalPosition } from "../hud/position.mjs";
-import { setWingsState, setPanelOpenDirection, attachDHUDToggles } from "../hud/wings.mjs";
+import { setPanelOpenDirection, attachDHUDToggles } from "../hud/wings.mjs";
 import { applyAppearance, reapplyAppearance } from "../hud/appearance.mjs";
 import { registerCustomButton as registerCustomButtonImpl } from "../hud/custom-buttons.mjs";
 import { attachHudEvents } from "../hud/events.mjs";
@@ -74,15 +74,6 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     if (this._initiallyHidden) {
       root.style.visibility = 'hidden';
       this._initiallyHidden = false;
-    }
-
-    // Initialize wings state immediately to prevent blinking
-    if (!this._wingsInit) {
-      const saved = (await game.user.getFlag("daggerheart-hud", "wings")) || "closed";
-      // Set wings state immediately on the root element before other rendering
-      setWingsState(root, saved);
-      this._wingsState = saved;
-      this._wingsInit = true;
     }
 
     // --- Theme + ring art (GM override logic lives in hud/appearance.mjs)

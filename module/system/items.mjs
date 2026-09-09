@@ -76,11 +76,16 @@ export async function sendToChat(item) {
  * DHAttackAction._getLabels: an uppercased range abbreviation ("F", "C", "M"…),
  * the resolved damage formula ("2d6+3"), and the FA icon class(es) for the
  * damage type(s) (physical = fa-hand-fist, magical = fa-wand-sparkles).
+ * `metaTooltip` is the full spelled-out version ("Agility | Far | 2d6+3 |
+ * Two-Handed"), meant for a hover title on the weapon name.
  */
 export function weaponMeta(weapon) {
   const atk = weapon?.system?.attack;
   const loc = (k) => (k && game.i18n?.has?.(k) ? game.i18n.localize(k) : (k ? game.i18n?.localize?.(k) ?? "" : ""));
-  if (!atk) return { range: "", rangeLabel: "", damage: "", damageLabel: "", damageIcons: [] };
+  if (!atk) return { range: "", rangeLabel: "", damage: "", damageLabel: "", damageIcons: [], metaTooltip: "" };
+
+  const tid = atk.roll?.trait ?? "";
+  const traitLabel = tid ? loc(`DAGGERHEART.CONFIG.Traits.${tid}.name`) : "";
 
   const rid = atk.range;
   const rangeCfg = CONFIG?.DH?.GENERAL?.range?.[rid];
@@ -94,15 +99,27 @@ export function weaponMeta(weapon) {
   damage = String(damage).replace(/\s+/g, "");
   const damageLabel = loc("DAGGERHEART.GENERAL.damage");
 
-  const types = atk.damage?.main?.type ?? [];
-  const damageIcons = Array.from(types)
+  const types = Array.from(atk.damage?.main?.type ?? []);
+  const damageIcons = types
     .map((t) => {
       const dc = CONFIG?.DH?.GENERAL?.damageTypes?.[t];
       return dc?.icon ? { icon: dc.icon, label: loc(dc.label) } : null;
     })
     .filter(Boolean);
 
-  return { range, rangeLabel, damage, damageLabel, damageIcons };
+  // Spelled-out damage with type suffix, matching the character sheet: "1d10+3 (Phy)".
+  const typeAbbrs = types
+    .map((t) => loc(CONFIG?.DH?.GENERAL?.damageTypes?.[t]?.abbreviation))
+    .filter(Boolean);
+  const damageFull = damage
+    ? (typeAbbrs.length ? `${damage} (${typeAbbrs.join("/")})` : damage)
+    : "";
+
+  const bid = weapon?.system?.burden;
+  const burdenName = bid ? loc(`DAGGERHEART.CONFIG.Burden.${bid}`) : "";
+  const metaTooltip = [traitLabel, rangeLabel, damageFull, burdenName].filter(Boolean).join(" | ");
+
+  return { range, rangeLabel, damage, damageLabel, damageIcons, metaTooltip };
 }
 
 /**

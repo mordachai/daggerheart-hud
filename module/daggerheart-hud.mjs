@@ -217,6 +217,8 @@ function dhudRequestRender() {
 
 Hooks.on("updateActor", (actor, changes) => {
   if (!_hudApp?.actor || _hudApp.actor.id !== actor.id) return;
+  // Skip re-render while the HUD is writing an inline value (money strip, qty inputs)
+  if (_hudApp._updatingQuantity) return;
   if (dhudActorChangeRelevant(changes)) dhudRequestRender();
 });
 

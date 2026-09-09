@@ -74,6 +74,7 @@ export async function buildContext(app) {
     invLoot: inventory.invLoot,
     invWeapons: inventory.invWeapons,
     invArmor: inventory.invArmor,
+    invCurrency: inventory.invCurrency,
 
     domainLoadout: domains.domainLoadout,
     domainVault: domains.domainVault,

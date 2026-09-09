@@ -4,6 +4,7 @@
 // added so the HUD can equip/unequip them from the Inventory tab.
 
 import { itemHasActions, firstActionId, weaponMeta } from "../../system/items.mjs";
+import { listActorCurrency } from "../../system/resources.mjs";
 import { getItemDescriptionHTML } from "../../system/descriptions.mjs";
 
 /** Compact burden tag for a weapon: "2H" / "1H". */
@@ -54,6 +55,7 @@ export async function collectInventory(app) {
       entry.damage = wm.damage;
       entry.damageLabel = wm.damageLabel;
       entry.damageIcons = wm.damageIcons;
+      entry.metaTooltip = wm.metaTooltip;
       invWeapons.push(entry);
     } else {
       entry.img = it.img || "icons/svg/shield.svg";
@@ -61,10 +63,19 @@ export async function collectInventory(app) {
       const marks = Number(it.system?.armor?.current ?? 0);
       entry.armorScore = score;
       entry.armorMarks = marks;
-      entry.armorScoreLabel = game.i18n?.localize?.("DAGGERHEART.GENERAL.armorScore") ?? "Armor Score";
+      // The system sheet labels this "Base Score" -> abbreviate "BS".
+      entry.armorScoreLabel = game.i18n?.localize?.("DAGGERHEART.ITEMS.Armor.baseScore") ?? "Base Score";
+      const tMajor = Number(it.system?.baseThresholds?.major ?? 0);
+      const tSevere = Number(it.system?.baseThresholds?.severe ?? 0);
+      entry.thresholdMajor = tMajor;
+      entry.thresholdSevere = tSevere;
+      entry.hasThresholds = tMajor > 0 || tSevere > 0;
+      entry.thresholdsLabel = game.i18n?.localize?.("DAGGERHEART.ITEMS.Armor.baseThresholds.base") ?? "Base Thresholds";
       invArmor.push(entry);
     }
   }
 
-  return { invConsumables, invLoot, invWeapons, invArmor };
+  const invCurrency = listActorCurrency(app.actor);
+
+  return { invConsumables, invLoot, invWeapons, invArmor, invCurrency };
 }

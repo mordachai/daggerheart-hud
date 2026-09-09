@@ -12,7 +12,6 @@
 
 ##### Over the portrait:
 
-- **Left click:** toggle wing menus with Traits, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout (Vault inside), and Features
 - **Double click:** opens the character sheet
 - **Click n' drag:** moves HUD around
 - **Right click:** opens context menu with _Toggle Conditions_, _Long Rest_ and _Short Rest_ options
@@ -24,7 +23,9 @@
 - **Hope:** Left-click goes until the selected pip, Right-click goes until the previous. Use Right-click to zero the bar.
 - **HP, Stress and Armor slots:** Left-click = **-1**, Right-click = **+1**
 
-### On the wings menus:
+### On the nav bar:
+
+The strip below the core has Traits, Ancestry (Community inside), Inventory, Class (Subclass inside), Loadout (Vault inside), and Features. Click a name to open its panel (opens up or down depending on screen room).
 
 - Clicking on a _icon_ **executes the roll**, if there is anything to roll
 - In the _title_ will **open the description** for the item, if there is any

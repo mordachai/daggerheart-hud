@@ -39,40 +39,59 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud { color: var(--dh-text); }
 .dhud--layout {
   position: relative;
-  display: grid;
-  grid-template-columns: auto auto auto;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: .75rem;
+  gap: .35rem;
 }
 
-/* ===== Wings ===== */
-.dhud-wing { position: relative; display: flex; gap: .5rem; align-items: center; }
-.dhud-wing--left  { justify-content: flex-end; }
-.dhud-wing--right { justify-content: flex-start; }
+/* ===== Nav bar (tabs strip below the core) ===== */
+.dhud-navbar {
+  position: relative;      /* anchor for the absolutely-positioned panels */
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  margin-top: .15rem;
+}
+
+.dhud-navbar-tabs {
+  display: flex;
+  align-items: stretch;
+  border: 2px solid var(--dh-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--dh-surface);
+  box-shadow: 0 6px 18px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.06);
+}
 
 .dhud-tab {
   position: relative;
-  padding: .38rem .9rem;
+  padding: .32rem .72rem;
   font-weight: 800;
-  letter-spacing: .06em;
-  border: 2px solid var(--dh-border);
-  border-radius: 6px;
-  background: var(--dh-surface);
-  box-shadow: inset 0 -1px 0 rgba(255,255,255,.06);
+  font-size: .72rem;
+  letter-spacing: .05em;
+  border-right: 1px solid var(--dh-border);
+  background: transparent;
+  color: var(--dh-text);
   cursor: pointer;
   user-select: none;
   text-transform: uppercase;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
 }
+.dhud-tab:last-child { border-right: 0; }
 .dhud-tab:hover,
-.dhud-tab:active,
-.dhud-tab:focus { border-color: var(--dh-accent); }
+.dhud-tab:focus { background: var(--dh-panel); color: var(--dh-accent); outline: none; }
+.dhud-tab[aria-expanded="true"] { background: var(--dh-accent); color: var(--dh-surface); }
 
-/* Panels (popover above tab) */
+/* Panels (popover anchored to the nav bar) */
 .dhud-tabwrap { position: relative; }
 .dhud-panel {
   --panel-w: 320px;
   position: absolute;
-  left: 0; right: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
   bottom: calc(100% + .5rem);
   width: var(--panel-w);
   background: var(--dh-panel);
@@ -85,7 +104,6 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   display: none;
   z-index: 500;                /* sobre o app */
 }
-.dhud-tabwrap--right .dhud-panel { left: auto; right: 0; }
 
 .dhud-panel header {
   font-weight: 900;
@@ -276,6 +294,60 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 
 .dhud-qty-input:hover {
   border: 2px solid var(--dh-pip-border);
+}
+
+/* Inventory money strip: themed divider + one row of denominations, never scrolls */
+.dhud-money-divider {
+  border: 0;
+  border-top: 1px solid var(--dh-accent);
+  margin: 10px 0 6px;
+}
+
+.dhud-money {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  min-width: 0;
+  margin-bottom: 6px;
+}
+
+.dhud-money-slot {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+}
+
+.dhud-money-slot > i {
+  flex: 0 0 auto;
+  color: var(--dh-accent);
+  font-size: .95em;
+}
+
+.dhud-money-input {
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  border: 2px solid var(--dh-border);
+  border-radius: 5px;
+  background: none;
+  color: var(--dh-text);
+  padding: 1px 2px;
+  -moz-appearance: textfield;
+}
+
+.dhud-money-input::-webkit-outer-spin-button,
+.dhud-money-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.dhud-money-input:hover,
+.dhud-money-input:focus {
+  border: 2px solid var(--dh-pip-border);
+  outline: none;
 }
 
 .dhud-inline-roll,
@@ -498,8 +570,17 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   transition: border-color 0.2s ease;
 }
 
-.dhud-action-roll:hover { 
-  border-color: var(--dh-accent); 
+.dhud-action-roll:hover {
+  border-color: var(--dh-accent);
+}
+
+/* Trait roll — Daggerheart duality die glyph */
+.dhud-acc summary img.dhud-trait-dice {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 1px rgba(0,0,0,.65));
 }
 
 /* Reaction button chip */
@@ -827,38 +908,12 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   background: var(--dh-surface);
 }
 
-/* ---- Wings open/close animation ---- */
-.dhud--layout {
-  --wing-shift: 28px;                       /* slide distance */
-  --wing-duration: 220ms;
-  --wing-ease: cubic-bezier(.2,.8,.2,1);
-}
-
-/* transition for both wings */
-.dhud-wing {
-  transition:
-    transform var(--wing-duration) var(--wing-ease),
-    opacity   var(--wing-duration) var(--wing-ease);
-  will-change: transform, opacity;
-}
-
-/* Hide any open panel while wings are retracted */
-.dhud--layout[data-wings="closed"] .dhud-panel {
-  display: none !important;
-}
-
-/* Default state = CLOSED (you'll set it via JS on first render) */
-.dhud--layout[data-wings="closed"] { grid-template-columns: 0 auto 0; }
-.dhud--layout[data-wings="closed"] .dhud-wing--left  { opacity:0; transform:translateX(-28px); pointer-events:none; }
-.dhud--layout[data-wings="closed"] .dhud-wing--right { opacity:0; transform:translateX( 28px); pointer-events:none; }
-.dhud--layout[data-wings="open"] .dhud-wing { opacity:1; transform:none; pointer-events:auto; }
-
-/* Make sure stacking order is: wings > core */
+/* Stacking order: panels > nav bar > core */
 .dhud--layout { position: relative; }
 
-.dhud-core  { position: relative; z-index: 10; }
-.dhud-wing  { position: relative; z-index: 30; }  /* wings above core */
-.dhud-panel { position: absolute; z-index: 40; }  /* panels above everything in the HUD */
+.dhud-core   { position: relative; z-index: 10; }
+.dhud-navbar { position: relative; z-index: 30; }
+.dhud-panel  { position: absolute; z-index: 40; }
 
 .capitalize { text-transform: capitalize; }
 
@@ -1027,36 +1082,6 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dh-hudrings-footer button:hover {
   background-color: var(--dh-accent, #f2c24b);
   color: var(--dh-surface, #15161a);
-}
-
-.dhud {
-  /* Ensure wings are closed by default */
-}
-
-.dhud:not([data-wings="open"]) .dhud-wing--left,
-.dhud:not([data-wings="open"]) .dhud-wing--right {
-  /* Force wings to be hidden when not explicitly open */
-  display: none;
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.8);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.dhud[data-wings="open"] .dhud-wing--left,
-.dhud[data-wings="open"] .dhud-wing--right {
-  /* Wings visible when open */
-  display: flex;
-  opacity: 1;
-  pointer-events: auto;
-  transform: scale(1);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-/* Alternatively, if you want them completely hidden: */
-.dhud[data-wings="closed"] .dhud-wing--left,
-.dhud[data-wings="closed"] .dhud-wing--right {
-  display: none;
 }
 
 /* ===== STATUS CONTEXT MENU & GRID ===== */
