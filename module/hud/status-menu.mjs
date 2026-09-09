@@ -58,14 +58,24 @@ export function showStatusContextMenu(app, x, y) {
     menuX = 10 - coreRect.left;
   }
 
-  // Adjust vertical position if it goes off viewport
-  if (menuViewportY + menuHeight > viewportHeight) {
+  // The menu must not spill past the nav-bar strip below the core; treat the
+  // nav bar's top (or the viewport edge, whichever is higher) as the hard floor.
+  const navBar = app.element?.querySelector('.dhud-navbar');
+  const navTop = navBar ? navBar.getBoundingClientRect().top : viewportHeight;
+  const floorViewportY = Math.min(viewportHeight - 10, navTop - 6);
+
+  // Adjust vertical position if it goes off viewport / past the nav bar
+  if (menuViewportY + menuHeight > floorViewportY) {
     // Try positioning above the portrait
     menuY = portraitCenterY - (portraitRect.height / 2) - menuHeight - 10;
 
-    // If still off-screen, clamp to top
+    // If still off-screen above, clamp to the top …
     if (coreRect.top + menuY < 10) {
       menuY = 10 - coreRect.top;
+    }
+    // … then pull the bottom back up to the floor if it still overlaps.
+    if (coreRect.top + menuY + menuHeight > floorViewportY) {
+      menuY = floorViewportY - menuHeight - coreRect.top;
     }
   }
 

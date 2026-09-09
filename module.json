@@ -2,7 +2,7 @@
   "id": "daggerheart-hud",
   "title": "Daggerheart HUD",
   "description": "Daggerheart HUD module for the Daggerheart system in Foundry VTT.",
-  "version": "1.14.1",
+  "version": "1.15.0",
   "compatibility": { "minimum": "13", "verified": "14" },
   "authors": [{ "name": "Gus" }],
   "esmodules": ["module/daggerheart-hud.mjs"],

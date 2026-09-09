@@ -7,6 +7,7 @@ import { captureLayout, restoreLayout, requestRender } from "./hud/layout.mjs";
 import { announceButtonRegistration } from "./hud/custom-buttons.mjs";
 import { dhudActorChangeRelevant } from "./hud/refresh.mjs";
 import { applyAppearance, previewAppearance } from "./hud/appearance.mjs";
+import "./hud/portrait-menu-extras.mjs"; // self-contained: portrait context-menu items for 3rd-party sheet buttons
 
 // Re-exported so existing importers keep working (single source: constants.mjs).
 export { DHUD };
