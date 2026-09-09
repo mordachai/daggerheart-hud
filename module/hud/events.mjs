@@ -7,7 +7,7 @@
 
 import { setWingsState, setPanelOpenDirection } from "./wings.mjs";
 import { getCustomButton } from "./custom-buttons.mjs";
-import { useWeapon, useItemAction, sendToChat, moveDomainCard } from "../system/items.mjs";
+import { useWeapon, useItemAction, sendToChat, moveDomainCard, toggleEquip } from "../system/items.mjs";
 import { rollTrait } from "../system/actor.mjs";
 
 /** Wire the delegated HUD interactions. Guarded once per app (`app._delegatedBound`). */
@@ -146,6 +146,15 @@ export function attachHudEvents(app) {
       stop(ev);
       const item = actor.items.get(execBtn.dataset.itemId);
       if (item) await useItemAction(item, execBtn.dataset.actionId || "", ev);
+      return;
+    }
+
+    // Equip / unequip a weapon or armor from the Inventory tab
+    const equipBtn = ev.target.closest("[data-action='toggle-equip']");
+    if (equipBtn) {
+      stop(ev);
+      const item = actor.items.get(equipBtn.dataset.itemId);
+      if (item) await toggleEquip(actor, item);
       return;
     }
 

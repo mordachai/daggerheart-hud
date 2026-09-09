@@ -1,9 +1,15 @@
 // module/hud/context/weapons.mjs
 // Primary / secondary weapon resolution (equipped non-secondary first, two-handed
 // fills both slots, else Unarmed). Extracted verbatim from _prepareContext, step 4.
+// A feature effect (`system.rules.burden.ignore`, e.g. Combat Training) lets a
+// two-handed weapon count as one-handed — the off-hand slot then stays free for a
+// second equipped weapon instead of mirroring the two-hander.
+
+import { ignoresBurden } from "../../system/items.mjs";
 
 export function collectWeapons(app) {
   const sys = app.actor?.system ?? {};
+  const ignoreBurden = ignoresBurden(app.actor);
 
   // === PRIMARY WEAPON (only equipped & NOT secondary); else Unarmed ===
   let primaryWeapon = null;
@@ -49,9 +55,9 @@ export function collectWeapons(app) {
 
     const primaryId = primaryWeapon?.isUnarmed ? null : primaryWeapon?.id ?? null;
 
-    // Check if primary weapon is two-handed
+    // Check if primary weapon is two-handed (unless a feature makes us ignore burden)
     const primaryWeaponItem = primaryId ? items.find(w => w.id === primaryId) : null;
-    const isTwoHanded = primaryWeaponItem?.system?.burden === "twoHanded";
+    const isTwoHanded = primaryWeaponItem?.system?.burden === "twoHanded" && !ignoreBurden;
 
     let pick = null;
 

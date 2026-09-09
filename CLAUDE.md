@@ -10,7 +10,7 @@ A Foundry VTT module (`id: daggerheart-hud`) that draws a floating action HUD fo
 
 - **No build step, no bundler, no dependencies, no tests.** Source is plain ES modules loaded directly by Foundry (`module.json` → `esmodules`).
 - **CSS is not compiled here** — `styles/dh-hud.css` and `styles/dhud-themes.css` are the shipped files. Per project convention the CSS is built automatically elsewhere; do not hand-edit or re-read it to verify unrelated work.
-- **Release is automated.** `.github/workflows/release.yml` triggers on a push to `main`/`master` that changes `module.json`. It reads `.version`, and if tag `v<version>` does not exist, zips the repo (excluding dotfiles, `*.md`, `LICENSE`, `node_modules`) and publishes a GitHub release with `module.zip` + `module.json`. **To cut a release: bump `version` in `module.json` and push to main.** Recent commits (`v1.12.3`, …) are these version bumps.
+- **Release is automated.** `.github/workflows/release.yml` triggers on a push to `main`/`master` that changes `module.json`. It reads `.version`, and if tag `v<version>` does not exist, zips the repo (excluding dotfiles, `*.md`, `LICENSE`, `node_modules`) and publishes a GitHub release with `module.zip` + `module.json`. **To cut a release: bump `version` in `module.json` and push to main.** Recent commits (`v1.14.0`, …) are these version bumps.
 
 ## Runtime dependencies on the Daggerheart system
 
@@ -19,11 +19,11 @@ The HUD is a thin shell over system APIs and data. **Everything Daggerheart-spec
 - Actor data paths: `system.resources.{hitPoints,stress,hope,armor}`, `system.availableExtraResources` (homebrew + feature-granted resource keys), `system.traits.*`, `system.evasion`, `system.proficiency`, `system.armorScore`, `system.damageThresholds`, `system.resistance`, `system.experiences`, `system.domains`, `system.attack` (unarmed).
 - Items by `type`: `weapon` (`system.equipped`, `system.secondary`, `system.burden === "twoHanded"`, `system.attack.use(event)`), `armor` (`system.armor.current`), `domainCard` (`system.inVault`, `system.toggleVault(event, toVault, isRecall)`), `feature` (`system.granter.type` ∈ ancestry/community/class/subclass, else Features tab; `system.granter.identifier` = foundation/specialization/mastery for subclass gating — legacy `system.originItemType`/`system.identifier` read as a one-line fallback), `consumable`, `loot`, `subclass` (`system.featureState` 1/2/3).
 - System APIs: `game.system.api.applications.dialogs.Downtime` (rests), `.DeathMove`; `CONFIG.DH.GENERAL.conditions()` (a **function**) — but the real status enumeration is `CONFIG.statusEffects` split on `systemEffect`; `CONFIG.DH.ACTOR.abilities` (trait labels + `verbs[]` i18n keys); `CONFIG.DH.DOMAIN.allDomains()` (a **function** — core + homebrew domains, `{ label, description, src, color }`); `actor.toggleStatusEffect(id, { active })`; `actor.rollTrait(key, { actionType })`; `item.system.getEnrichedDescription({ gmNotes, type })`; `item.toChat(item.uuid)`; `game.settings.get('daggerheart','Appearance').showGenericStatusEffects`; `game.settings.get('daggerheart','Homebrew')` (custom domains / extra resources / maxHope / maxLoadout / currency / rest moves — HUD re-renders on its `updateSetting`).
-- Rolls / chat / vault moves / conditions / descriptions are **always delegated to the system** through a `module/system/*` wrapper — never re-implemented. See `docs/daggerheart-system-api.md` (companion reference) and `docs/refactor-plan.md` (the 11-step split that produced this layout).
+- Rolls / chat / vault moves / conditions / descriptions are **always delegated to the system** through a `module/system/*` wrapper — never re-implemented. See `docs/daggerheart-system-api.md` (companion reference) and `docs/daggerheart-active-effect-paths.md` (every actor path the system's Active Effect Path Viewer lists — resources, traits, `system.rules.*`, `system.bonuses.*` — with labels + hints; consult when touching resource/trait/bonus data paths).
 
 ## Architecture
 
-The old ~2,100-line `dh-actor-hud.mjs` was split into single-purpose modules (refactor steps 1–11). The class is now a ~220-line ApplicationV2 shell; free functions take `app` explicitly.
+The HUD is a ~220-line ApplicationV2 shell (`module/apps/dh-actor-hud.mjs`); everything else is single-purpose modules and free functions that take `app` explicitly. One file = one concern (no file over ~250 lines). `module/system/*` is the only place that knows Daggerheart internals; `module/hud/*` is presentation/interaction with no system knowledge.
 
 ```text
 module/
@@ -68,7 +68,7 @@ module/
                           feature-granted); domains.mjs labels via system/config domainMeta
   helpers/
     handlebars-helpers.mjs  registerDHUDHelpers() + getResourceInfo
-    i18n.mjs                L, Ltry only (Lpath/Ltrait removed — see system/config.mjs)
+    i18n.mjs                L, Ltry only
 ```
 
 ### Entry point — `module/daggerheart-hud.mjs`
@@ -105,12 +105,16 @@ Registers settings + Handlebars helpers on `init`, preloads `DHUD.templates` and
 
 ### Helpers — `module/helpers/`
 
-- `i18n.mjs` — `L`, `Ltry` only. The module ships **no lang files**; these read `DAGGERHEART.*` keys from the system's translations. Trait names/verbs come from `system/config.mjs` `traits()` (`Lpath`/`Ltrait` were removed in the refactor — they walked `game.i18n.translations` for a `.verb` object the system no longer has).
+- `i18n.mjs` — `L`, `Ltry` only. The module ships **no lang files**; these read `DAGGERHEART.*` keys from the system's translations. Trait names/verbs come from `system/config.mjs` `traits()`.
 - `handlebars-helpers.mjs` — `registerDHUDHelpers()` registers comparison/logic/string helpers, `l` (localize), and **`getResourceInfo`**, the single source of truth for how an inventory/feature item's resource counter is displayed and whether it is HUD-editable (quantity, item `uses`, action `uses`, `resource`, `diceValue`).
 
-Description enrichment and `[[/r]]`/`[[/dr]]` → HUD chip rewriting moved to `system/descriptions.mjs`; send-to-chat moved to `system/items.mjs` (`sendToChat`). The old `helpers/inline-rolls.mjs`, `helpers/chat-utils.mjs`, and `module/ui/dh-hud-toggle.mjs` were deleted.
+Description enrichment and `[[/r]]`/`[[/dr]]` → HUD chip rewriting live in `system/descriptions.mjs`; send-to-chat is `system/items.mjs` `sendToChat`.
 
 ## Conventions (from global user instructions)
 
 - Use `foundry.applications.handlebars.loadTemplates()`, not the deprecated global `loadTemplates()`.
 - Scene control tools (`getSceneControlButtons`, v13/v14): the click handler is `onChange`, not `onClick` — for both `toggle` and `button` tools. Toggle gets `onChange(event, active)`.
+
+## History (archived)
+
+This layout came from an 11-step split of the original ~2,100-line `dh-actor-hud.mjs`. That work is done; the plan and handoff notes are kept for reference only and do **not** describe the current code: `docs/refactor-plan.md`, `docs/refactor-handoff.md`.

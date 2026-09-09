@@ -365,7 +365,87 @@
           {{/each}}
         </ul>
 
-        {{!-- Weapons, Armors come later (order note: after Loot) --}}
+        {{!-- WEAPONS (equip / unequip) --}}
+        <header>{{l "TYPES.Item.weapon"}}</header>
+        <ul class="dhud-acc">
+          {{#each invWeapons}}
+          <li class="acc{{#if equipped}} is-equipped{{/if}}">
+            <details>
+              <summary>
+               <img class="icon{{#if hasActions}} clickable{{/if}}"
+                    src="{{img}}"
+                    alt=""
+                    role="button"
+                    tabindex="0"
+                    data-action="item-exec"
+                    data-item-id="{{id}}"
+                    data-action-id="{{actionId}}"
+                    title="{{name}}">
+                <span class="title">{{name}}</span>
+                <span class="qty dhud-wpn-meta">
+                  {{#if range}}<span class="dhud-wpn-range" title="{{rangeLabel}}">{{range}}</span>{{/if}}
+                  {{#if damage}}<span class="dhud-wpn-dmg" title="{{damageLabel}}">{{damage}}</span>{{/if}}
+                  {{#each damageIcons}}<i class="fa-solid {{icon}}" title="{{label}}"></i>{{/each}}
+                  {{#if burdenLabel}}<span class="dhud-wpn-burden">{{burdenLabel}}</span>{{/if}}
+                </span>
+                <i class="fa-solid {{#if equipped}}fa-toggle-on{{else}}fa-toggle-off{{/if}} move dhud-equip{{#if equipped}} is-equipped{{/if}}"
+                  role="button"
+                  tabindex="0"
+                  data-action="toggle-equip"
+                  data-item-id="{{id}}"
+                  title="{{#if equipped}}{{l 'DAGGERHEART.UI.Tooltip.unequip'}}{{else}}{{l 'DAGGERHEART.UI.Tooltip.equip'}}{{/if}}"></i>
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+              </summary>
+              {{#if description}}
+              <div class="acc-body">{{{descriptionHTML}}}</div>
+              {{/if}}
+            </details>
+          </li>
+          {{else}}
+          <li class="acc">Empty</li>
+          {{/each}}
+        </ul>
+
+        {{!-- ARMOR (equip / unequip) --}}
+        <header>{{l "TYPES.Item.armor"}}</header>
+        <ul class="dhud-acc">
+          {{#each invArmor}}
+          <li class="acc{{#if equipped}} is-equipped{{/if}}">
+            <details>
+              <summary>
+               <img class="icon"
+                    src="{{img}}"
+                    alt=""
+                    title="{{name}}">
+                <span class="title">{{name}}</span>
+                {{#if armorScore}}<span class="qty" title="{{armorScoreLabel}}">AS {{armorScore}}</span>{{/if}}
+                <i class="fa-solid {{#if equipped}}fa-toggle-on{{else}}fa-toggle-off{{/if}} move dhud-equip{{#if equipped}} is-equipped{{/if}}"
+                  role="button"
+                  tabindex="0"
+                  data-action="toggle-equip"
+                  data-item-id="{{id}}"
+                  title="{{#if equipped}}{{l 'DAGGERHEART.UI.Tooltip.unequip'}}{{else}}{{l 'DAGGERHEART.UI.Tooltip.equip'}}{{/if}}"></i>
+                <i class="far fa-comment chat"
+                  role="button"
+                  tabindex="0"
+                  data-action="to-chat"
+                  data-item-id="{{id}}"
+                  title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+              </summary>
+              {{#if description}}
+              <div class="acc-body">{{{descriptionHTML}}}</div>
+              {{/if}}
+            </details>
+          </li>
+          {{else}}
+          <li class="acc">Empty</li>
+          {{/each}}
+        </ul>
       </div>
     </div>
 
