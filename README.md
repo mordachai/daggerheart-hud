@@ -4,7 +4,7 @@
 
 # Daggerheart HUD
 
-<img width="1220" height="706" alt="image" src="https://github.com/user-attachments/assets/9c685e9b-39bb-4d2e-a282-ea7ff6af866f" />
+<img width="950" alt="image" src="https://github.com/user-attachments/assets/3467de17-da5a-42fb-b0a3-b92b6d0ec7db" />
 
 ## HUD Mouse Controls:
 
