@@ -12,6 +12,7 @@ import { collectFeatures } from "./features.mjs";
 import { collectDomains } from "./domains.mjs";
 import { collectInventory } from "./inventory.mjs";
 import { collectConditions } from "./conditions.mjs";
+import { collectEffects } from "./effects.mjs";
 
 export async function buildContext(app) {
   const identity   = collectIdentity(app);
@@ -22,6 +23,7 @@ export async function buildContext(app) {
   const domains    = await collectDomains(app);
   const inventory  = await collectInventory(app);
   const conditions = collectConditions(app);
+  const activeEffects = collectEffects(app);
 
   const customButtons = {
     traits: collectCustomButtons("traits", app.actor),
@@ -55,6 +57,7 @@ export async function buildContext(app) {
 
     //features
     miscFeatures: features.miscFeatures,
+    effectsList: activeEffects.effectsList,
 
     // traits & resistances
     traits: traits.traits,

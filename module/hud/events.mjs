@@ -10,6 +10,7 @@ import { getCustomButton } from "./custom-buttons.mjs";
 import { useWeapon, useItemAction, sendToChat, moveDomainCard, toggleEquip } from "../system/items.mjs";
 import { setActorCurrency } from "../system/resources.mjs";
 import { rollTrait } from "../system/actor.mjs";
+import { toggleActiveEffect } from "../system/effects.mjs";
 
 /** Wire the delegated HUD interactions. Guarded once per app (`app._delegatedBound`). */
 export function attachHudEvents(app) {
@@ -142,6 +143,14 @@ export function attachHudEvents(app) {
       stop(ev);
       const item = actor.items.get(equipBtn.dataset.itemId);
       if (item) await toggleEquip(actor, item);
+      return;
+    }
+
+    // Toggle a granted ActiveEffect on/off (Features tab, Effects section)
+    const effectBtn = ev.target.closest("[data-action='toggle-effect']");
+    if (effectBtn) {
+      stop(ev);
+      await toggleActiveEffect(effectBtn.dataset.effectUuid);
       return;
     }
 

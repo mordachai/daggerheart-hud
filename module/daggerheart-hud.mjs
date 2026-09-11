@@ -282,12 +282,17 @@ Hooks.on("deleteItem", (item) => {
 
 // Effects can modify derived values (e.g., evasion/resistances) indirectly.
 // Cheap approach: refresh if an effect on our actor is added/removed/updated.
+// effect.parent is the Item for a transfer effect (feature/domain-card grants),
+// not the Actor — fall back to the Item's owning actor so those re-render too.
+function dhudEffectActorId(effect) {
+  return effect?.parent?.actor?.id ?? effect?.parent?.id;
+}
 Hooks.on("createActiveEffect", (effect) => {
-  if (effect?.parent?.id === _hudApp?.actor?.id) dhudRequestRender();
+  if (dhudEffectActorId(effect) === _hudApp?.actor?.id) dhudRequestRender();
 });
 Hooks.on("deleteActiveEffect", (effect) => {
-  if (effect?.parent?.id === _hudApp?.actor?.id) dhudRequestRender();
+  if (dhudEffectActorId(effect) === _hudApp?.actor?.id) dhudRequestRender();
 });
 Hooks.on("updateActiveEffect", (effect, _changes) => {
-  if (effect?.parent?.id === _hudApp?.actor?.id) dhudRequestRender();
+  if (dhudEffectActorId(effect) === _hudApp?.actor?.id) dhudRequestRender();
 });

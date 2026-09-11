@@ -930,6 +930,26 @@
         <li class="acc">Empty</li>
         {{/each}}
       </ul>
+
+      <header>{{l "DAGGERHEART.GENERAL.activeEffects"}}</header>
+      <ul class="dhud-acc">
+        {{#each effectsList}}
+        <li class="acc dhud-effect-row{{#if disabled}} is-disabled{{/if}}">
+          <img class="icon" src="{{img}}" alt="" title="{{name}}">
+          <span class="title">{{name}}</span>
+          {{#if toggleable}}
+          <i class="fa-solid {{#if disabled}}fa-toggle-off{{else}}fa-toggle-on{{/if}} move dhud-effect-toggle"
+             role="button"
+             tabindex="0"
+             data-action="toggle-effect"
+             data-effect-uuid="{{uuid}}"
+             title="{{#if disabled}}{{l 'DAGGERHEART.UI.Tooltip.enableEffect'}}{{else}}{{l 'DAGGERHEART.UI.Tooltip.disableEffect'}}{{/if}}"></i>
+          {{/if}}
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
     </div>
 
   </div>
