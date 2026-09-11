@@ -5,21 +5,26 @@
 import { MODULE_ID, FLAGS } from "../constants.mjs";
 import { setPanelOpenDirection } from "./wings.mjs";
 
-/** Anchor the HUD element to the bottom-centre of the viewport. */
-export function placeAtBottom(appEl, offsetPx = 110) {
+/** Anchor the HUD element to the bottom-centre of the viewport (optionally shifted along X). */
+export function placeAtBottom(appEl, offsetPx = 110, xOffsetPx = 0) {
   if (!appEl?.getBoundingClientRect) return;
   appEl.style.position = "absolute";
   appEl.style.bottom = `${offsetPx}px`;
   appEl.style.top = "auto";
   appEl.style.right = "auto";
   const rect = appEl.getBoundingClientRect();
-  const left = Math.max(0, (window.innerWidth - rect.width) / 2);
+  const left = Math.max(0, (window.innerWidth - rect.width) / 2 + xOffsetPx);
   appEl.style.left = `${left}px`;
 }
 
-/** Read the user's saved global HUD position, or null. */
-export function getSavedGlobalPosition() {
-  return game.user.getFlag(MODULE_ID, FLAGS.user.globalPosition);
+/** Which per-user flag key holds the saved position for this HUD kind. */
+function positionFlagKey(kind) {
+  return kind === "companion" ? FLAGS.user.globalPositionCompanion : FLAGS.user.globalPosition;
+}
+
+/** Read the user's saved global HUD position for the given kind ("character" | "companion"), or null. */
+export function getSavedGlobalPosition(kind = "character") {
+  return game.user.getFlag(MODULE_ID, positionFlagKey(kind));
 }
 
 /**
@@ -49,7 +54,7 @@ export async function setPositionLocked(appEl, locked) {
 }
 
 /** Make the HUD draggable by its `.dhud-ring` handle; persists the drop position. */
-export function enableDragByRing(appEl, appInstance) {
+export function enableDragByRing(appEl, appInstance, kind = "character") {
   const handle = appEl.querySelector(".dhud-ring");
   if (!handle) return;
 
@@ -84,7 +89,7 @@ export function enableDragByRing(appEl, appInstance) {
         // Clamp to viewport a bit so we don't persist negative coords
         const left = Math.max(0, Math.round(rect.left));
         const top  = Math.max(0, Math.round(rect.top));
-        await game.user.setFlag(MODULE_ID, FLAGS.user.globalPosition, { left, top });
+        await game.user.setFlag(MODULE_ID, positionFlagKey(kind), { left, top });
       } catch (err) {
         console.warn("[DHUD] Failed to persist HUD position", err);
       }

@@ -37,7 +37,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     if (root) {
       this._dragHooked = false;
       requestAnimationFrame(() => {
-        enableDragByRing(root, this);
+        enableDragByRing(root, this, "character");
         this._dragHooked = true;
       });
     }
@@ -70,7 +70,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
       root.classList.remove("dhud--dying");
     }
 
-    // Hide initially if we're going to restore a layout
+    // Hide initially if we're going to restore a layout (an outer setTimeout will
+    // reveal it after restoreLayout runs — see createOrUpdateHUDSlot).
+    const pendingExternalReveal = !!this._initiallyHidden;
     if (this._initiallyHidden) {
       root.style.visibility = 'hidden';
       this._initiallyHidden = false;
@@ -96,9 +98,13 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
 
     // First boot: placement and resize behavior
     if (!this._booted) {
+      // No outer reveal pending (true first-ever render for this slot) — hide
+      // until placement is computed so we never flash the default center spot.
+      if (!pendingExternalReveal) root.style.visibility = 'hidden';
+
       const applyPlacement = () => {
         // Check if user has a saved global position
-        const userGlobalPos = getSavedGlobalPosition();
+        const userGlobalPos = getSavedGlobalPosition("character");
 
         if (userGlobalPos) {
           // Use the user's saved position, clamped to the current viewport —
@@ -124,6 +130,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
           applyPlacement();
           root.classList.remove("is-booting");
           this._booted = true;
+          if (!pendingExternalReveal) root.style.visibility = 'visible';
         });
       });
 
@@ -154,10 +161,10 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     if (!this._dragHooked) {
       // Use requestAnimationFrame to ensure DOM is fully rendered
       requestAnimationFrame(() => {
-        enableDragByRing(root, this);
+        enableDragByRing(root, this, "character");
       });
       this._dragHooked = true;
-    }    
+    }
 
     // Delegated HUD interactions (ring, traits, weapons, exec, chat, move) +
     // portrait context menu / condition grid. Guards live in the modules.

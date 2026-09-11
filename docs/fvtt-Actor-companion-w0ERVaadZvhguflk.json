@@ -1,0 +1,303 @@
+{
+  "name": "Companion",
+  "type": "companion",
+  "img": "systems/daggerheart/assets/icons/documents/actors/capybara.svg",
+  "system": {
+    "resistance": {
+      "physical": {
+        "resistance": false,
+        "immunity": false,
+        "reduction": 0
+      },
+      "magical": {
+        "resistance": false,
+        "immunity": false,
+        "reduction": 0
+      }
+    },
+    "resources": {
+      "stress": {
+        "value": 0,
+        "max": 3
+      }
+    },
+    "advantageSources": [],
+    "disadvantageSources": [],
+    "partner": "Actor.ONyF4W49aA31b1hG",
+    "evasion": 10,
+    "experiences": {
+      "experience1": {
+        "value": 2,
+        "core": true,
+        "name": "Exp 1",
+        "description": "ghfghf hfghfg fgh fg"
+      },
+      "experience2": {
+        "value": 2,
+        "core": true,
+        "name": "Exp 2",
+        "description": "fghfh yyjty ryh r66y 65 u 65"
+      }
+    },
+    "attack": {
+      "name": "Attack",
+      "img": "icons/creatures/claws/claw-bear-paw-swipe-brown.webp",
+      "_id": "Vo3Sc4a2u1xMigVC",
+      "systemPath": "attack",
+      "chatDisplay": false,
+      "type": "attack",
+      "range": "melee",
+      "target": {
+        "type": "any",
+        "amount": 3
+      },
+      "roll": {
+        "type": "attack",
+        "bonus": 0,
+        "trait": null,
+        "difficulty": null,
+        "advState": "neutral",
+        "diceRolling": {
+          "multiplier": "prof",
+          "flatMultiplier": 1,
+          "dice": "d6",
+          "compare": null,
+          "treshold": null
+        },
+        "useDefault": false
+      },
+      "damage": {
+        "main": {
+          "type": [
+            "physical"
+          ],
+          "applyTo": "hitPoints",
+          "value": {
+            "dice": "d6",
+            "multiplier": "prof",
+            "flatMultiplier": 1,
+            "bonus": null,
+            "custom": {
+              "enabled": false,
+              "formula": ""
+            }
+          },
+          "base": false,
+          "itemId": null,
+          "resultBased": false,
+          "fullRestore": false,
+          "valueAlt": {
+            "multiplier": "flat",
+            "flatMultiplier": 1,
+            "dice": "d6",
+            "bonus": null,
+            "custom": {
+              "enabled": false,
+              "formula": ""
+            }
+          },
+          "includeBase": false,
+          "direct": false
+        },
+        "resources": {}
+      },
+      "baseAction": false,
+      "description": "",
+      "originItem": {
+        "type": "itemCollection"
+      },
+      "actionType": "action",
+      "triggers": [],
+      "areas": [],
+      "cost": [],
+      "uses": {
+        "value": null,
+        "max": null,
+        "recovery": null,
+        "consumeOnSuccess": false
+      },
+      "effects": [],
+      "save": {
+        "trait": null,
+        "difficulty": null,
+        "damageMod": "none"
+      }
+    },
+    "levelData": {
+      "level": {
+        "current": 1,
+        "changed": 1,
+        "bonuses": {}
+      },
+      "levelups": {}
+    }
+  },
+  "prototypeToken": {
+    "name": "Companion",
+    "displayName": 0,
+    "actorLink": true,
+    "width": 1,
+    "height": 1,
+    "depth": 1,
+    "texture": {
+      "src": "systems/daggerheart/assets/icons/documents/actors/capybara.svg",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": 1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "resources.hitPoints"
+    },
+    "bar2": {
+      "attribute": "resources.stress"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": true,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false
+  },
+  "items": [],
+  "effects": [
+    {
+      "name": "Base",
+      "type": "base",
+      "system": {
+        "changes": [],
+        "duration": {
+          "description": "",
+          "type": ""
+        },
+        "rangeDependence": null,
+        "stacking": null,
+        "targetDispositions": []
+      },
+      "_id": "c8TDuJLocTi7yR4s",
+      "img": "icons/magic/life/heart-cross-blue.webp",
+      "disabled": false,
+      "start": {
+        "time": 0,
+        "combat": null,
+        "combatant": null,
+        "initiative": null,
+        "round": null,
+        "turn": null
+      },
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": false,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.367",
+        "systemId": "daggerheart",
+        "systemVersion": "2.9.3",
+        "createdTime": 1789153003779,
+        "modifiedTime": 1789153006862,
+        "lastModifiedBy": "yvzZB6IIpInx4qO5",
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      }
+    }
+  ],
+  "folder": null,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.367",
+    "systemId": "daggerheart",
+    "systemVersion": "2.9.3",
+    "createdTime": 1788955444397,
+    "modifiedTime": 1789152370541,
+    "lastModifiedBy": "yvzZB6IIpInx4qO5",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": {
+      "worldId": "daggerhearth",
+      "uuid": "Actor.w0ERVaadZvhguflk",
+      "coreVersion": "14.367",
+      "systemId": "daggerheart",
+      "systemVersion": "2.9.3"
+    }
+  }
+}

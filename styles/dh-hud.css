@@ -138,6 +138,10 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud[data-open="loadout"]   #panel-loadout,
 .dhud[data-open="features"]   #panel-features { display: block; }
 
+/* Companion HUD (GH #19) — same open-state pattern, its own panel ids */
+.dhud[data-open="details"]  #panel-details,
+.dhud[data-open="effects"]  #panel-effects { display: block; }
+
 /* ===== Accordion (itens dos painéis) ===== */
 .dhud-acc { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem;  }
 

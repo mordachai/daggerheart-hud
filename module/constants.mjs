@@ -7,7 +7,8 @@ export const MODULE_ID = "daggerheart-hud";
 
 /** Handlebars templates preloaded on ready. */
 export const TEMPLATE_PATHS = [
-  `modules/${MODULE_ID}/templates/actor/hud-character.hbs`
+  `modules/${MODULE_ID}/templates/actor/hud-character.hbs`,
+  `modules/${MODULE_ID}/templates/actor/hud-companion.hbs`
 ];
 
 /** Flag keys, grouped by the document they live on. */
@@ -15,6 +16,7 @@ export const FLAGS = {
   // game.user flags
   user: {
     globalPosition: "globalPosition",
+    globalPositionCompanion: "globalPositionCompanion",
     positionLocked: "positionLocked"
   },
   // ActiveEffect flags

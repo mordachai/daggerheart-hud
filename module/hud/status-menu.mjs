@@ -5,6 +5,7 @@
 
 import { isActive, toggle } from "../system/conditions.mjs";
 import { openPartySheet, openCompanionSheet } from "../system/actor.mjs";
+import { openPartnerSheet } from "../system/companion.mjs";
 import { isPositionLocked, setPositionLocked } from "./position.mjs";
 
 const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
@@ -242,6 +243,8 @@ export function attachStatusMenu(app) {
       if (action === 'open-party') openPartySheet(app.actor);
 
       if (action === 'open-companion') openCompanionSheet(app.actor);
+
+      if (action === 'open-partner') openPartnerSheet(app.actor);
 
       if (action === 'toggle-lock') {
         await setPositionLocked(rootEl, !isPositionLocked());

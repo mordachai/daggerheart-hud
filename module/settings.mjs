@@ -9,7 +9,8 @@ export const S = {
   hideHotbar: "hideHotbar",
   alwaysVisible: "alwaysVisible",
   showTargetNotifications: "showTargetNotifications",
-  hudTheme: "hudTheme"
+  hudTheme: "hudTheme",
+  autoShowLinkedHud: "autoShowLinkedHud"
 };
 
 export function getSetting(key) {
@@ -89,6 +90,19 @@ export function registerSettings() {
     default: true,
     onChange: (value) => {
       Hooks.callAll("daggerheart-hud:setting-changed", { key: S.alwaysVisible, value });
+    }
+  });
+
+  // Per-user: show a character's linked companion HUD alongside it (and vice versa)
+  game.settings.register(MOD, S.autoShowLinkedHud, {
+    name: "Show Linked Companion/Character Together",
+    hint: "When you select a character or its linked companion, also show the other one's HUD.",
+    scope: scopeClient,
+    config: true,
+    type: Boolean,
+    default: true,
+    onChange: (value) => {
+      Hooks.callAll("daggerheart-hud:setting-changed", { key: S.autoShowLinkedHud, value });
     }
   });
 

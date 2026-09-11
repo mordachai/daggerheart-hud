@@ -1,0 +1,209 @@
+<section class="dhud dhud--layout dhud--companion" data-open="">
+
+  {{!-- =============== CORE (center ring) =============== --}}
+  <div class="dhud-core">
+    <div class="dhud-core__leftcircle">
+      <div class="dhud-circle dhud-roll{{#unless partner.hasPartner}} disabled{{/unless}}"
+          role="button"
+          tabindex="0"
+          data-action="companion-action-roll"
+          title="{{#if partner.hasPartner}}{{l 'DAGGERHEART.GENERAL.Roll.action'}}{{else}}{{l 'DAGGERHEART.UI.Notifications.partnerRequired'}}{{/if}}">
+        {{#if partner.hasPartner}}
+          <img class="item-icon" src="{{partner.img}}" alt="{{partner.name}}">
+        {{else}}
+          <img class="item-icon" src="icons/svg/mystery-man.svg" alt="No partner">
+        {{/if}}
+      </div>
+    </div>
+
+    <div class="dhud-core__center">
+
+      <div class="dhud-ring">
+        <div class="dhud-portrait">
+          <img class="dhud-portrait-img" src="{{portrait}}" alt="{{actorName}}">
+        </div>
+
+        <div class="dhud-ring-overlay"></div>
+
+        <div class="dhud-pips" aria-label="{{l 'DAGGERHEART.GENERAL.stress'}}" title="{{l 'DAGGERHEART.GENERAL.stress'}}: {{stress.value}}/{{stress.max}}">
+          {{#each stressPips}}
+            <i class="{{#if this.filled}}fa-solid{{else}}fa-light{{/if}} fa-bolt dhud-stress-pip"
+               data-index="{{@index}}"
+               style="cursor:pointer; font-size:var(--pip, 16px); transition:color .15s, opacity .15s; color:{{#if this.filled}}var(--dh-accent){{else}}var(--dh-pip-border){{/if}}; opacity:{{#if this.filled}}1{{else}}.7{{/if}};"></i>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+
+    <div class="dhud-core__rightcircle">
+      <div class="dhud-circle dhud-roll"
+          role="button"
+          tabindex="0"
+          data-action="companion-attack"
+          title="{{#if attack}}{{attack.name}}{{else}}Attack{{/if}}">
+        {{#if attack}}
+          <img class="item-icon" src="{{attack.img}}" alt="{{attack.name}}">
+        {{else}}
+          <img class="item-icon" src="icons/svg/sword.svg" alt="No attack">
+        {{/if}}
+      </div>
+    </div>
+
+    <div class="dhud-badge dhud-badge--left" title="{{l 'DAGGERHEART.GENERAL.evasion'}}">{{evasion}}</div>
+  </div>
+
+  {{!-- =============== NAV BAR (tabs) + PANELS =============== --}}
+  <div class="dhud-navbar dhud-tabwrap">
+    <div class="dhud-navbar-tabs" role="tablist">
+      <div class="dhud-tab" role="button" tabindex="0"
+          data-tab="details" aria-controls="panel-details" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.details"}}</div>
+      <div class="dhud-tab" role="button" tabindex="0"
+          data-tab="effects" aria-controls="panel-effects" aria-expanded="false">{{l "DAGGERHEART.GENERAL.Tabs.effects"}}</div>
+    </div>
+
+    {{!-- DETAILS --}}
+    <div id="panel-details" class="dhud-panel dhud-panel--details" data-panel="details" role="dialog" aria-label="Details">
+      <header>{{l "DAGGERHEART.GENERAL.partner"}}</header>
+      <ul class="dhud-acc">
+        {{#if partner.hasPartner}}
+        <li class="acc">
+          <details>
+            <summary>
+              <img class="icon" src="{{partner.img}}" alt="{{partner.name}}" title="{{partner.name}}">
+              <span class="title">{{partner.name}}</span>
+              <i class="fas fa-arrow-up-right-from-square move"
+                 role="button"
+                 tabindex="0"
+                 data-action="open-partner"
+                 title="Open Partner Sheet"></i>
+            </summary>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">{{l "DAGGERHEART.ACTORS.Companion.noPartner"}}</li>
+        {{/if}}
+      </ul>
+
+      <header>{{l "DAGGERHEART.GENERAL.experience.plural"}}</header>
+      <ul class="dhud-acc">
+        {{#each experiences}}
+        <li class="acc">
+          <details>
+            <summary>
+              <i class="far fa-comment icon"
+                role="button"
+                tabindex="0"
+                data-action="send-exp"
+                data-experience-id="{{id}}"
+                title="{{l 'DAGGERHEART.UI.Tooltip.sendToChat'}}"></i>
+              <span class="title">{{name}}</span>
+              <span class="value">+{{value}}</span>
+            </summary>
+            {{#if description}}
+            <div class="acc-body">{{description}}</div>
+            {{/if}}
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">No experiences found</li>
+        {{/each}}
+      </ul>
+    </div>
+
+    {{!-- EFFECTS --}}
+    <div id="panel-effects" class="dhud-panel dhud-panel--effects" data-panel="effects" role="dialog" aria-label="Effects">
+      <header>{{l "DAGGERHEART.GENERAL.Tabs.effects"}}</header>
+      <ul class="dhud-acc">
+        {{#each effectsList}}
+        <li class="acc dhud-effect-row{{#if disabled}} is-disabled{{/if}}">
+          <details>
+            <summary>
+              <img class="icon" src="{{img}}" alt="" title="{{name}}">
+              <span class="title">{{name}}</span>
+              {{#if toggleable}}
+              <i class="fa-solid {{#if disabled}}fa-toggle-off{{else}}fa-toggle-on{{/if}} move dhud-effect-toggle"
+                 role="button"
+                 tabindex="0"
+                 data-action="toggle-effect"
+                 data-effect-uuid="{{uuid}}"
+                 title="{{#if disabled}}{{l 'DAGGERHEART.UI.Tooltip.enableEffect'}}{{else}}{{l 'DAGGERHEART.UI.Tooltip.disableEffect'}}{{/if}}"></i>
+              {{/if}}
+            </summary>
+          </details>
+        </li>
+        {{else}}
+        <li class="acc">Empty</li>
+        {{/each}}
+      </ul>
+    </div>
+
+  </div>
+
+{{!-- =============== CONTEXT MENU & STATUS GRID =============== --}}
+
+  {{!-- Context Menu --}}
+  <div class="dhud-context-menu" id="dhud-context-menu">
+    <div class="dhud-context-item" data-action="apply-status">
+      <i class="fas fa-magic"></i>
+      Toggle Conditions
+    </div>
+    {{#if partner.hasPartner}}
+    <div class="dhud-context-item" data-action="open-partner">
+      <i class="fas fa-user"></i>
+      Open Partner Sheet
+    </div>
+    {{/if}}
+    <div class="dhud-context-item" data-action="toggle-lock" id="dhud-context-lock">
+      <i class="fas fa-lock-open"></i>
+      <span>Lock Position</span>
+    </div>
+  </div>
+
+  {{!-- Status Effects Grid --}}
+  <div class="dhud-status-grid" id="dhud-status-grid">
+    <div class="dhud-status-header">
+      <i class="fas fa-magic"></i>
+      Apply Status Effect
+    </div>
+
+    {{#if availableConditions}}
+      <div class="dhud-status-section">
+        <div class="dhud-status-section-title">Daggerheart Conditions</div>
+        <div class="dhud-status-icons" data-section="daggerheart">
+          {{#each availableConditions}}
+            {{#if (eq source "daggerheart")}}
+              <div class="dhud-status-icon {{#if isActive}}active{{/if}}"
+                   data-condition-id="{{id}}"
+                   data-condition-name="{{l name}}"
+                   title="{{l name}}">
+                <img src="{{img}}" alt="{{l name}}">
+              </div>
+            {{/if}}
+          {{/each}}
+        </div>
+      </div>
+
+      {{#if showGenericStatusSection}}
+      <div class="dhud-status-section">
+        <div class="dhud-status-section-title">Generic Conditions</div>
+        <div class="dhud-status-icons" data-section="generic">
+          {{#each availableConditions}}
+            {{#if (eq source "foundry")}}
+              <div class="dhud-status-icon {{#if isActive}}active{{/if}}"
+                  data-condition-id="{{id}}"
+                  data-condition-name="{{l name}}"
+                  title="{{l name}}">
+                <img src="{{img}}" alt="{{l name}}">
+              </div>
+            {{/if}}
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+    {{/if}}
+  </div>
+
+  {{!-- Tooltip --}}
+  <div class="dhud-tooltip" id="dhud-tooltip"></div>
+
+</section>
