@@ -923,6 +923,28 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   color: var(--dh-accent);
 }
 
+/* Theme carousel row: "< Theme: Default >" */
+.dhud-context-theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px;
+}
+
+.dhud-theme-arrow {
+  padding: 6px 10px;
+  font-size: 12px;
+  justify-content: center;
+}
+
+.dhud-theme-label {
+  flex: 1;
+  text-align: center;
+  color: var(--dh-text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 /* Status Effects Grid */
 .dhud-status-grid {
   position: absolute;

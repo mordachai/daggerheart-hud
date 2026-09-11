@@ -79,7 +79,7 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     }
 
     // --- Theme + ring frame (per-player "hudTheme" setting; see hud/appearance.mjs)
-    applyAppearance(root);
+    applyAppearance(root, "character");
 
     // --- Position lock (per-user; see hud/position.mjs and portrait context menu)
     root.classList.toggle("dhud-position-locked", isPositionLocked());

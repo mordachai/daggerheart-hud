@@ -977,18 +977,27 @@
     {{#if hasParty}}
     <div class="dhud-context-item" data-action="open-party">
       <i class="fas fa-users"></i>
-      Open Party Sheet
+      Party Sheet
     </div>
     {{/if}}
     {{#if hasCompanion}}
     <div class="dhud-context-item" data-action="open-companion">
       <i class="fas fa-paw"></i>
-      Open Companion Sheet
+      Companion Sheet
     </div>
     {{/if}}
     <div class="dhud-context-item" data-action="toggle-lock" id="dhud-context-lock">
       <i class="fas fa-lock-open"></i>
       <span>Lock Position</span>
+    </div>
+    <div class="dhud-context-theme" id="dhud-context-theme">
+      <div class="dhud-context-item dhud-theme-arrow" role="button" tabindex="0" data-action="theme-prev" aria-label="Previous theme">
+        <i class="fas fa-chevron-left"></i>
+      </div>
+      <span class="dhud-theme-label">Theme: Default</span>
+      <div class="dhud-context-item dhud-theme-arrow" role="button" tabindex="0" data-action="theme-next" aria-label="Next theme">
+        <i class="fas fa-chevron-right"></i>
+      </div>
     </div>
   </div>
 

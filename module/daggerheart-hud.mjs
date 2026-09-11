@@ -7,7 +7,7 @@ import { DHUD } from "./constants.mjs";
 import { captureLayout, restoreLayout, requestRender } from "./hud/layout.mjs";
 import { announceButtonRegistration } from "./hud/custom-buttons.mjs";
 import { dhudActorChangeRelevant } from "./hud/refresh.mjs";
-import { applyAppearance, previewAppearance } from "./hud/appearance.mjs";
+import { applyAppearance } from "./hud/appearance.mjs";
 import { getCompanion } from "./system/actor.mjs";
 import { getPartner } from "./system/companion.mjs";
 import "./hud/portrait-menu-extras.mjs"; // self-contained: portrait context-menu items for 3rd-party sheet buttons
@@ -209,8 +209,11 @@ Hooks.on("daggerheart-hud:setting-changed", ({ key, value }) => {
     }
   } else if (key === S.autoShowLinkedHud) {
     syncHudsFromSelection();
-  } else if (key === S.hudTheme) {
-    dhudRequestRender();
+  } else if (key === S.hudTheme || key === S.hudThemeCompanion) {
+    // Cosmetic-only: reapply classes/vars, no need to rebuild the template
+    // (a full render would also blow away an open context menu mid-carousel).
+    const kind = key === S.hudThemeCompanion ? "companion" : "character";
+    forEachHudApp((app, appKind) => { if (appKind === kind && app.element) applyAppearance(app.element, kind); });
   } else if (key === S.disableForMe) {
     if (value) {
       // HUD disabled - close both slots
@@ -223,19 +226,6 @@ Hooks.on("daggerheart-hud:setting-changed", ({ key, value }) => {
   }
 });
 
-// Live theme preview: react to the settings dropdown before "Save Changes".
-Hooks.on("renderSettingsConfig", (_app, html) => {
-  const root = html instanceof HTMLElement ? html : html?.[0];
-  const sel = root?.querySelector('[name="daggerheart-hud.hudTheme"]');
-  if (!sel) return;
-  sel.addEventListener("change", () => {
-    forEachHudApp((app) => { if (app.element) previewAppearance(app.element, sel.value); });
-  });
-});
-// On close, snap back to the actually-saved theme (no-op if it was saved).
-Hooks.on("closeSettingsConfig", () => {
-  forEachHudApp((app) => { if (app.element) applyAppearance(app.element); });
-});
 
 Hooks.on("deleteToken", (tokenDoc) => {
   const t = canvas.tokens?.controlled[0];

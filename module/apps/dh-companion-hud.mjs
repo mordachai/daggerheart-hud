@@ -62,7 +62,7 @@ export class DaggerheartCompanionHUD extends HandlebarsApplicationMixin(Applicat
       this._initiallyHidden = false;
     }
 
-    applyAppearance(root);
+    applyAppearance(root, "companion");
     root.classList.toggle("dhud-position-locked", isPositionLocked());
 
     root.querySelectorAll(".dhud-roll").forEach(el => {

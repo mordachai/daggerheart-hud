@@ -1,5 +1,6 @@
 // module/hud/appearance.mjs
-// Theme + ring-frame resolution. Theme is a per-player client setting ("hudTheme");
+// Theme + ring-frame resolution. Theme is a per-player client setting, one for
+// the character HUD ("hudTheme") and one for the companion HUD ("hudThemeCompanion");
 // the ring frame is derived from the theme via THEME_RINGS. No per-actor config.
 
 import { MODULE_ID } from "../constants.mjs";
@@ -36,10 +37,34 @@ const THEME_RINGS = {
   mysticvoid: "dgm-shadowveil-frame.webp", // purple / void
 };
 
-/** Resolve the current player's theme, validated against THEMES. */
-export function getPlayerTheme() {
-  const v = game.settings.get(MODULE_ID, "hudTheme");
+const THEME_KEYS = Object.keys(THEMES);
+
+/** HUD kind ("character" | "companion") -> its own theme setting key. */
+const THEME_SETTING = {
+  character: "hudTheme",
+  companion: "hudThemeCompanion",
+};
+
+/** Resolve the given HUD kind's theme, validated against THEMES. */
+export function getPlayerTheme(kind = "character") {
+  const key = THEME_SETTING[kind] || THEME_SETTING.character;
+  const v = game.settings.get(MODULE_ID, key);
   return (v && THEMES[v]) ? v : "default";
+}
+
+/** Persist a theme choice for the given HUD kind. */
+export async function setPlayerTheme(kind, theme) {
+  const key = THEME_SETTING[kind] || THEME_SETTING.character;
+  theme = THEMES[theme] ? theme : "default";
+  await game.settings.set(MODULE_ID, key, theme);
+  return theme;
+}
+
+/** Next/previous theme name from `theme`, wrapping infinitely both ways. */
+export function adjacentTheme(theme, dir) {
+  const i = THEME_KEYS.indexOf(theme);
+  const n = THEME_KEYS.length;
+  return THEME_KEYS[(((i < 0 ? 0 : i) + (dir < 0 ? -1 : 1)) % n + n) % n];
 }
 
 function ringURL(theme) {
@@ -49,7 +74,8 @@ function ringURL(theme) {
 
 /**
  * Apply a specific theme name (class + fallback-to-default check + ring CSS vars)
- * to `root`. Does NOT persist — use for live preview from the settings dropdown.
+ * to `root`. Does NOT persist — used for instant carousel feedback before the
+ * setting write resolves.
  */
 export function previewAppearance(root, theme) {
   if (!root) return;
@@ -74,7 +100,7 @@ export function previewAppearance(root, theme) {
   root.style.setProperty("--dhud-ring-weapon", url);
 }
 
-/** Apply the player's saved `hudTheme` setting to `root`. */
-export function applyAppearance(root) {
-  previewAppearance(root, getPlayerTheme());
+/** Apply the player's saved theme setting for the given HUD kind to `root`. */
+export function applyAppearance(root, kind = "character") {
+  previewAppearance(root, getPlayerTheme(kind));
 }

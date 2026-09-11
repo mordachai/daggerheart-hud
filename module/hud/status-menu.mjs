@@ -7,8 +7,20 @@ import { isActive, toggle } from "../system/conditions.mjs";
 import { openPartySheet, openCompanionSheet } from "../system/actor.mjs";
 import { openPartnerSheet } from "../system/companion.mjs";
 import { isPositionLocked, setPositionLocked } from "./position.mjs";
+import { THEMES, getPlayerTheme, setPlayerTheme, adjacentTheme, previewAppearance } from "./appearance.mjs";
 
 const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+
+/** Character HUD and companion HUD keep independent theme settings. */
+const hudKind = (app) => app.actor?.type === "companion" ? "companion" : "character";
+
+/** Reflect the current theme on the context menu's carousel label. */
+function syncThemeMenuItem(app) {
+  const label = app.element?.querySelector("#dhud-context-theme .dhud-theme-label");
+  if (!label) return;
+  const theme = getPlayerTheme(hudKind(app));
+  label.textContent = `Theme: ${THEMES[theme] || THEMES.default}`;
+}
 
 /** Reflect the current lock state on the context menu's toggle-lock item. */
 function syncLockMenuItem(app) {
@@ -24,6 +36,7 @@ function syncLockMenuItem(app) {
 export function showStatusContextMenu(app, x, y) {
   hideStatusGrid(app);
   syncLockMenuItem(app);
+  syncThemeMenuItem(app);
   const menu = app.element.querySelector('#dhud-context-menu');
   const portrait = app.element.querySelector('.dhud-portrait');
   const core = app.element.querySelector('.dhud-core');
@@ -229,6 +242,15 @@ export function attachStatusMenu(app) {
     if (contextItem) {
       stop(ev);
       const action = contextItem.dataset.action;
+
+      if (action === 'theme-prev' || action === 'theme-next') {
+        const kind = hudKind(app);
+        const next = adjacentTheme(getPlayerTheme(kind), action === 'theme-next' ? 1 : -1);
+        previewAppearance(app.element, next); // instant feedback
+        await setPlayerTheme(kind, next);
+        syncThemeMenuItem(app);
+        return; // keep the menu open for further browsing
+      }
 
       if (action === 'apply-status') {
         const menu = rootEl.querySelector('#dhud-context-menu');

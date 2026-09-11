@@ -10,6 +10,7 @@ export const S = {
   alwaysVisible: "alwaysVisible",
   showTargetNotifications: "showTargetNotifications",
   hudTheme: "hudTheme",
+  hudThemeCompanion: "hudThemeCompanion",
   autoShowLinkedHud: "autoShowLinkedHud"
 };
 
@@ -30,17 +31,32 @@ function applyHotbarVisibility() {
 export function registerSettings() {
   const scopeClient = "client"; // per-user
 
-  // Per-user: HUD color theme (+ ring frame derived from it in hud/appearance.mjs)
+  // Per-user: HUD color theme (+ ring frame derived from it in hud/appearance.mjs).
+  // One for the character HUD, one for the companion HUD — set independently via
+  // the carousel in each HUD's portrait context menu (hud/status-menu.mjs).
   game.settings.register(MOD, S.hudTheme, {
-    name: "HUD Theme",
-    hint: "Color scheme and ring frame for your HUD.",
+    name: "HUD Theme (Character)",
+    hint: "Color scheme and ring frame for your character HUD. Also settable via the portrait context menu.",
     scope: scopeClient,
-    config: true,
+    config: false,
     type: String,
     choices: THEMES,
     default: "default",
     onChange: (value) => {
       Hooks.callAll("daggerheart-hud:setting-changed", { key: S.hudTheme, value });
+    }
+  });
+
+  game.settings.register(MOD, S.hudThemeCompanion, {
+    name: "HUD Theme (Companion)",
+    hint: "Color scheme and ring frame for your companion HUD. Also settable via the portrait context menu.",
+    scope: scopeClient,
+    config: false,
+    type: String,
+    choices: THEMES,
+    default: "default",
+    onChange: (value) => {
+      Hooks.callAll("daggerheart-hud:setting-changed", { key: S.hudThemeCompanion, value });
     }
   });
 
