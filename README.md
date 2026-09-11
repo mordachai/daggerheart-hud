@@ -14,7 +14,7 @@
 
 - **Double click:** opens the character sheet
 - **Click n' drag:** moves HUD around
-- **Right click:** opens context menu with _Toggle Conditions_, _Long Rest_ and _Short Rest_ options
+- **Right click:** opens context menu with _Toggle Conditions_, _Long Rest_, _Short Rest_, **Lock/Unlock Position**, a **Theme carousel** (cycle color themes without opening settings), and any **Module Actions** other modules registered (see below)
 
 **Primary and Secondary Weapons** are always visible and at hand. Remember to select a target _BEFORE_ you click.
 
@@ -31,22 +31,40 @@ The strip below the core has Traits, Ancestry (Community inside), Inventory, Cla
 - In the _title_ will **open the description** for the item, if there is any
 - Other options are _Send to Chat_, _Send to Vault_, and _Send to Loadout_
 
+## Companion HUD
+
+Selecting a **companion** actor (or a character with a linked companion) shows its own dedicated HUD side-by-side with the character HUD — stress, attack, experiences and the companion's features, each independently draggable and independently themed. Turn this pairing on/off with the "Show Linked Companion/Character Together" setting (on by default).
+
+## Lock Position
+
+Right-click the portrait → **Lock/Unlock Position** to freeze the HUD in place and stop accidental drags. Locked state is remembered per user.
+
+## Module Actions
+
+Buttons other installed modules add to the character sheet (header controls, or modules that specifically hook into the HUD) are picked up automatically and show up in the portrait context menu too, alongside the built-in options above.
+
+## Active Effects (Features tab)
+
+The Features panel lists every applicable Active Effect on the actor (the actor's own effects plus item-granted ones from features/domain cards). Click one to enable/disable it, same as the system sheet's Effects tab. Beastform effects are shown but not toggleable — the system manages those automatically.
+
 ## Features
 
-- **Central Portrait Ring**: Character portrait with hope pips and customizable ring frames
+- **Central Portrait Ring**: Character (and companion) portrait with hope pips and customizable ring frames
 - **Weapon Actions**: Click left/right circles for primary/secondary weapon attacks
 - **Resource Tracking**: HP, Stress, Evasion, Armor, and damage thresholds
 - **Expandable Panels**: Access traits, features, inventory, and domain cards
 - **Domain Management**: Move cards between loadout and vault
-- **Customizable**: Color themes (each with its own ring frame) and positioning
+- **Active Effects**: Enable/disable feature and domain-card effects straight from the HUD
+- **Companion HUD**: Dedicated HUD for companion actors, auto-paired with their character
+- **Customizable**: Color themes (each with its own ring frame, switchable from the portrait context menu) and positioning
 
 ## Settings
 
 ### HUD Theme:
-A single per-player dropdown. Pick a color theme and the HUD picks up the matching ring frame. Each player chooses their own — no GM setup.
+Set per-player from the portrait's right-click context menu (a theme carousel) — separately for the character HUD and the companion HUD. Picking a theme picks up its matching ring frame. Each player chooses their own — no GM setup.
 
 ### Other settings:
-You can hide Foundry's macro hotbar, change the vertical position at which the HUD appears, or entirely disable it, while the other players can keep theirs (GMs: tell the players where to disable it)
+You can hide Foundry's macro hotbar, change the vertical position at which the HUD appears, toggle character/companion auto-pairing, or entirely disable it, while the other players can keep theirs (GMs: tell the players where to disable it)
 
 <img width="789" height="690" alt="image" src="https://github.com/user-attachments/assets/e13ea1d6-726b-4cf4-9b3a-1c73011bfed0" />
 
