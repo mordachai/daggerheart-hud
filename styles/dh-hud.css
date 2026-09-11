@@ -784,6 +784,11 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   font-weight: 900;
   letter-spacing: .04em;
   text-transform: uppercase;
+  /* Longer non-Latin translations (e.g. Chinese) must not wrap the chip to
+     two lines and squash the row — see issue #12. Chips are flex items, so
+     without this they shrink below their content's natural width first. */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .dhud-thresholds .val {
   padding: .1rem .45rem;
@@ -794,6 +799,8 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   font-weight: 800;
   min-width: 2.2ch;
   text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Badges  */
