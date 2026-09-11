@@ -6,9 +6,7 @@
 
 <img width="950" alt="image" src="https://github.com/user-attachments/assets/3467de17-da5a-42fb-b0a3-b92b6d0ec7db" />
 
-## HUD Mouse Controls:
-
-### On the Core:
+## HUD Controls:
 
 ##### Over the portrait:
 
@@ -49,7 +47,6 @@ The Features panel lists every applicable Active Effect on the actor (the actor'
 
 ## Features
 
-- **Central Portrait Ring**: Character (and companion) portrait with hope pips and customizable ring frames
 - **Weapon Actions**: Click left/right circles for primary/secondary weapon attacks
 - **Resource Tracking**: HP, Stress, Evasion, Armor, and damage thresholds
 - **Expandable Panels**: Access traits, features, inventory, and domain cards
@@ -61,7 +58,7 @@ The Features panel lists every applicable Active Effect on the actor (the actor'
 ## Settings
 
 ### HUD Theme:
-Set per-player from the portrait's right-click context menu (a theme carousel) — separately for the character HUD and the companion HUD. Picking a theme picks up its matching ring frame. Each player chooses their own — no GM setup.
+Set per-player from the portrait's right-click context menu (a theme carousel) — separately for the character HUD and the companion HUD. Picking a theme picks up its matching ring frame. Each player chooses their own.
 
 ### Other settings:
 You can hide Foundry's macro hotbar, change the vertical position at which the HUD appears, toggle character/companion auto-pairing, or entirely disable it, while the other players can keep theirs (GMs: tell the players where to disable it)
