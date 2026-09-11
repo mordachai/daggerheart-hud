@@ -14,7 +14,8 @@ export const TEMPLATE_PATHS = [
 export const FLAGS = {
   // game.user flags
   user: {
-    globalPosition: "globalPosition"
+    globalPosition: "globalPosition",
+    positionLocked: "positionLocked"
   },
   // ActiveEffect flags
   effect: {

@@ -5,12 +5,24 @@
 
 import { isActive, toggle } from "../system/conditions.mjs";
 import { openPartySheet, openCompanionSheet } from "../system/actor.mjs";
+import { isPositionLocked, setPositionLocked } from "./position.mjs";
 
 const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+
+/** Reflect the current lock state on the context menu's toggle-lock item. */
+function syncLockMenuItem(app) {
+  const item = app.element?.querySelector("#dhud-context-lock");
+  if (!item) return;
+  const locked = isPositionLocked();
+  item.querySelector("i")?.setAttribute("class", locked ? "fas fa-lock" : "fas fa-lock-open");
+  const label = item.querySelector("span");
+  if (label) label.textContent = locked ? "Unlock Position" : "Lock Position";
+}
 
 /** Position + show the portrait context menu. */
 export function showStatusContextMenu(app, x, y) {
   hideStatusGrid(app);
+  syncLockMenuItem(app);
   const menu = app.element.querySelector('#dhud-context-menu');
   const portrait = app.element.querySelector('.dhud-portrait');
   const core = app.element.querySelector('.dhud-core');
@@ -230,6 +242,10 @@ export function attachStatusMenu(app) {
       if (action === 'open-party') openPartySheet(app.actor);
 
       if (action === 'open-companion') openCompanionSheet(app.actor);
+
+      if (action === 'toggle-lock') {
+        await setPositionLocked(rootEl, !isPositionLocked());
+      }
 
       if (action === 'short-rest' || action === 'long-rest') {
         try {

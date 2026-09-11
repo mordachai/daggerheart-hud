@@ -22,6 +22,32 @@ export function getSavedGlobalPosition() {
   return game.user.getFlag(MODULE_ID, FLAGS.user.globalPosition);
 }
 
+/**
+ * Clamp a left/top pair so the (width x height) box stays fully inside the
+ * current viewport. The saved position can predate a viewport shrink (e.g.
+ * exiting fullscreen drops the browser chrome back in) and land off-screen
+ * with no way to drag it back — see issue #11.
+ */
+export function clampToViewport(left, top, width, height) {
+  const maxLeft = Math.max(0, window.innerWidth  - width);
+  const maxTop  = Math.max(0, window.innerHeight - height);
+  return {
+    left: Math.min(Math.max(0, left), maxLeft),
+    top:  Math.min(Math.max(0, top),  maxTop)
+  };
+}
+
+/** Whether the user has locked the HUD in place (drag-by-ring disabled). */
+export function isPositionLocked() {
+  return !!game.user.getFlag(MODULE_ID, FLAGS.user.positionLocked);
+}
+
+/** Persist the lock state and reflect it immediately on the given HUD element. */
+export async function setPositionLocked(appEl, locked) {
+  await game.user.setFlag(MODULE_ID, FLAGS.user.positionLocked, !!locked);
+  if (appEl) appEl.classList.toggle("dhud-position-locked", !!locked);
+}
+
 /** Make the HUD draggable by its `.dhud-ring` handle; persists the drop position. */
 export function enableDragByRing(appEl, appInstance) {
   const handle = appEl.querySelector(".dhud-ring");
@@ -87,6 +113,7 @@ export function enableDragByRing(appEl, appInstance) {
 
   const onDown = (ev) => {
     if (ev.button !== 0) return;
+    if (isPositionLocked()) return;
     ev.preventDefault();
     handle.style.cursor = "grabbing";
 

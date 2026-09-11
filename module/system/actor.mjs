@@ -50,3 +50,23 @@ export function openCompanionSheet(actor) {
   }
   companion.sheet?.render(true, { focus: true });
 }
+
+/**
+ * Mark or clear one armor slot. Delegates to the system's own
+ * `actor.system.updateArmorValue`, which distributes the mark across whichever
+ * armor sources are active — an equipped item, or an Active-Effect-granted score
+ * with no item (e.g. the Valor "Bare Bones" ability, issue #17). Reimplementing
+ * that distribution here (as the HUD used to, by writing straight to the
+ * equipped armor item) would duplicate system logic and break for sourceless grants.
+ */
+export async function applyArmorMark(actor, delta) {
+  const { value = 0, max = 0 } = actor?.system?.armorScore ?? {};
+  if (delta > 0 && value >= max) return;
+  if (delta < 0 && value <= 0) return;
+  try {
+    await actor.system.updateArmorValue({ value: delta });
+  } catch (err) {
+    console.error("[DHUD] Failed to update armor", err);
+    ui.notifications?.error("Failed to update armor");
+  }
+}

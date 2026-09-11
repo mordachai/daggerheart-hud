@@ -1,7 +1,7 @@
 // module/apps/dh-actor-hud.mjs
 
 import { getSetting, S } from "../settings.mjs";
-import { placeAtBottom, enableDragByRing, getSavedGlobalPosition } from "../hud/position.mjs";
+import { placeAtBottom, enableDragByRing, getSavedGlobalPosition, isPositionLocked, clampToViewport } from "../hud/position.mjs";
 import { setPanelOpenDirection, attachDHUDToggles } from "../hud/wings.mjs";
 import { applyAppearance } from "../hud/appearance.mjs";
 import { registerCustomButton as registerCustomButtonImpl } from "../hud/custom-buttons.mjs";
@@ -79,6 +79,9 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
     // --- Theme + ring frame (per-player "hudTheme" setting; see hud/appearance.mjs)
     applyAppearance(root);
 
+    // --- Position lock (per-user; see hud/position.mjs and portrait context menu)
+    root.classList.toggle("dhud-position-locked", isPositionLocked());
+
     // Cosmetic pointer cursor for roll targets
     root.querySelectorAll(".dhud-roll").forEach(el => {
       el.style.cursor = "pointer";
@@ -98,11 +101,15 @@ export class DaggerheartActorHUD extends HandlebarsApplicationMixin(ApplicationV
         const userGlobalPos = getSavedGlobalPosition();
 
         if (userGlobalPos) {
-          // Use the user's saved position
+          // Use the user's saved position, clamped to the current viewport —
+          // a position saved in fullscreen can land off-screen once the
+          // browser chrome comes back (issue #11).
           root.style.position = "absolute";
-          root.style.left = `${userGlobalPos.left}px`;
-          root.style.top = `${userGlobalPos.top}px`;
           root.style.bottom = "auto";
+          const rect = root.getBoundingClientRect();
+          const { left, top } = clampToViewport(userGlobalPos.left, userGlobalPos.top, rect.width, rect.height);
+          root.style.left = `${left}px`;
+          root.style.top = `${top}px`;
         } else {
           // Use default bottom positioning for first time
           const rawOffset = getSetting(S.bottomOffset);

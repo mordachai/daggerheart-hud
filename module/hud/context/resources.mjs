@@ -41,42 +41,27 @@ export function collectResources(app) {
   const proficiency = sys.proficiency ?? 0;
   const evasion     = sys.evasion     ?? 0;
 
-  // === ARMOR (marks live on the equipped item; MAX comes from ACTOR (post-effects)) ===
+  // === ARMOR ===
+  // actor.system.armorScore is the post-effects source of truth for both the
+  // score (max) and current marks (value) — it accounts for Active Effects that
+  // grant armor without an equipped item (e.g. the Valor "Bare Bones" ability),
+  // not just the equipped armor item's own fields. See issue #17.
   const equippedArmor = (app.actor?.items ?? []).find(item =>
     item.type === "armor" && item.system?.equipped === true
   );
+  const actorScore = app.actor?.system?.armorScore;
+  const effectiveMax = Math.max(0, Number(actorScore?.max ?? 0));
+  const marks = Math.max(0, Math.min(effectiveMax, Number(actorScore?.value ?? 0)));
 
-  let armor;
-  if (equippedArmor) {
-    const armorSys    = equippedArmor.system;
-    const baseScore   = Number(armorSys.armor?.max ?? armorSys.baseScore ?? 0);
-    const actorScore  = app.actor?.system?.armorScore;
-    const effectiveMax= Math.max(0, Number(
-      (actorScore && typeof actorScore === 'object' ? actorScore.max : actorScore) ?? baseScore
-    ));
-    const rawMarks    = Number(armorSys.armor?.current ?? armorSys.marks?.value ?? 0);
-    const marks       = Math.max(0, Math.min(effectiveMax, rawMarks));
-
-    armor = {
-      max:   effectiveMax,      // Total armor slots (post-effects)
-      value: marks,             // We keep the inverted UX: value === DAMAGE MARKS
-      marks: marks,             // Damage marks taken
-      isReversed: false,        // Armor doesn't use isReversed like HP/Stress
-      name: equippedArmor.name,
-      itemId: equippedArmor.id,
-      hasArmor: true
-    };
-  } else {
-    armor = {
-      max: 0,
-      value: 0,
-      marks: 0,
-      isReversed: false,
-      name: "",
-      itemId: null,
-      hasArmor: false
-    };
-  }
+  const armor = {
+    max:   effectiveMax,      // Total armor slots (post-effects)
+    value: marks,             // We keep the inverted UX: value === DAMAGE MARKS
+    marks: marks,             // Damage marks taken
+    isReversed: false,        // Armor doesn't use isReversed like HP/Stress
+    name: equippedArmor?.name ?? "",
+    itemId: equippedArmor?.id ?? null,
+    hasArmor: !!equippedArmor
+  };
 
   // === DAMAGE THRESHOLDS ===
   // Massive tier (severe * 2) only when the GM enabled the "Massive Damage"

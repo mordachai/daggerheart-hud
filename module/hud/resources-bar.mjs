@@ -6,6 +6,7 @@
 // Step 12: same left/right pattern extended to homebrew / feature "extra" resources.
 
 import { setActorResource, bumpActorResource } from "../system/resources.mjs";
+import { applyArmorMark } from "../system/actor.mjs";
 
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
@@ -86,33 +87,7 @@ export function bindResourceAdjusters(app) {
     if (armorEl) {
       ev.preventDefault();
       ev.stopPropagation();
-
-      const equippedArmor = (app.actor?.items ?? []).find(
-        (item) => item.type === "armor" && item.system?.equipped === true
-      );
-
-      if (!equippedArmor) {
-        ui.notifications?.warn("No equipped armor found");
-        return;
-      }
-
-      const armorData = equippedArmor.system?.armor ?? {};
-      const current = Math.max(0, Number(armorData.current ?? equippedArmor.system?.marks?.value ?? 0));
-      const actorScore = app.actor?.system?.armorScore;
-      const maxMarks = Math.max(0, Number(
-        (actorScore && typeof actorScore === 'object' ? actorScore.max : actorScore) ??
-          armorData.max ?? equippedArmor.system?.baseScore ?? 0
-      ));
-
-      const next = Math.min(maxMarks, current + 1);
-      if (next !== current) {
-        try {
-          await equippedArmor.update({ "system.armor.current": next });
-        } catch (err) {
-          console.error("[DHUD] Failed to update armor", err);
-          ui.notifications?.error("Failed to update armor");
-        }
-      }
+      await applyArmorMark(actor, +1);
       return;
     }
 
@@ -178,27 +153,7 @@ export function bindResourceAdjusters(app) {
     if (armorEl) {
       ev.preventDefault();
       ev.stopPropagation();
-
-      const equippedArmor = (app.actor?.items ?? []).find(
-        (item) => item.type === "armor" && item.system?.equipped === true
-      );
-
-      if (!equippedArmor) {
-        ui.notifications?.warn("No equipped armor found");
-        return;
-      }
-
-      const current = Math.max(0, Number(equippedArmor.system?.armor?.current ?? equippedArmor.system?.marks?.value ?? 0));
-      const next = Math.max(0, current - 1);
-
-      if (next !== current) {
-        try {
-          await equippedArmor.update({ "system.armor.current": next });
-        } catch (err) {
-          console.error("[DHUD] Failed to update armor", err);
-          ui.notifications?.error("Failed to update armor");
-        }
-      }
+      await applyArmorMark(actor, -1);
       return;
     }
 
