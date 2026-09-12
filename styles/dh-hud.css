@@ -44,7 +44,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  padding: 1.2rem .5rem .6rem;
+  padding: 1.4rem .5rem .6rem;
   border-radius: 16px;
   background: color-mix(in srgb, var(--dh-surface) calc(var(--dhud-bg-opacity, 1) * 100%), transparent);
   border: 1px solid color-mix(in srgb, var(--dh-border) calc(var(--dhud-bg-opacity, 1) * 100%), transparent);
@@ -484,10 +484,10 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   --badge-inset: 8px; 
 
   /* offsets de HP/Stress (ajuste só aqui) */
-  --hp-top: -6px;
-  --hp-left: 45px;
-  --stress-top: -6px;
-  --stress-right: 43px;
+  --hp-top: -10px;
+  --hp-left: 15px;
+  --stress-top: -10px;
+  --stress-right: 15px;
 
   display: grid;
   grid-template-columns: var(--side-d) var(--circle-d) var(--side-d);
@@ -693,7 +693,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 /* Hope pips */
 .dhud-pips {
   position: absolute;
-  top: -14px;
+  top: -18px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -749,7 +749,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   white-space: nowrap;
   text-align: center;
   pointer-events: auto;
-  font-size: 16px ;
+  font-size: 1.1rem ;
 }
 .dhud-count--hp {
   top: var(--hp-top);
@@ -767,14 +767,19 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 .dhud-count--stress i {
   color: var(--dh-accent);
 }
-.dhud-count--hp:hover .value,
-.dhud-count--stress:hover .value{
-  font-weight: 700;
-  text-shadow: 0px 0px 3px var(--dh-pip-border);
-}
 .dhud-count--hp i,
 .dhud-count--stress i {
   filter: drop-shadow(0px 0px 2px var(--dh-accent));
+}
+
+.dhud-count--hp:hover .value,
+.dhud-count--stress:hover .value,
+.dhud-count--hp:hover i,
+.dhud-count--stress:hover i{
+  font-weight: 800;
+  color: var(--dh-muted);
+  text-shadow: 0 0 3px var(--dh-accent);
+  filter: brightness(1.1);
 }
 
 /* Thresholds:  */
@@ -1180,7 +1185,7 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   position: absolute;
   /* Hope's pips already float to top:-14px above the ring, sticking out above
      the core box; clear that row, not just the core's own top edge. */
-  bottom: calc(100% + 5px + var(--pip) + 4px);
+  bottom: calc(100% + 8px + var(--pip) + 4px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 3;
