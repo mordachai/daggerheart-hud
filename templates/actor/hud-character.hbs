@@ -104,20 +104,26 @@
              data-res-key="{{key}}"
              {{#if max}}data-max="{{max}}"{{/if}}
              title="{{label}}{{#if max}} ({{value}}/{{max}}){{/if}}">
-          <span class="dhud-extra-res__icon">
-            {{#if images.full.isIcon}}
-              <i class="{{images.full.value}}" aria-hidden="true"></i>
-            {{else}}
-              <img src="{{images.full.value}}" alt="{{label}}">
-            {{/if}}
-          </span>
           {{#if hasPips}}
             <span class="dhud-extra-res__pips">
               {{#each pips}}
-                <span class="pip {{#if filled}}filled{{/if}}" data-index="{{index}}"></span>
+                <span class="pip {{#if filled}}filled{{/if}}" data-index="{{index}}">
+                  {{#if icon.isIcon}}
+                    <i class="{{icon.value}}" style="opacity:{{icon.opacity}}" aria-hidden="true"></i>
+                  {{else}}
+                    <img src="{{icon.value}}" alt="" style="opacity:{{icon.opacity}}">
+                  {{/if}}
+                </span>
               {{/each}}
             </span>
           {{else}}
+            <span class="dhud-extra-res__icon">
+              {{#if images.full.isIcon}}
+                <i class="{{images.full.value}}" aria-hidden="true"></i>
+              {{else}}
+                <img src="{{images.full.value}}" alt="{{label}}">
+              {{/if}}
+            </span>
             <span class="dhud-extra-res__value">{{value}}{{#if max}}/{{max}}{{/if}}</span>
           {{/if}}
         </div>

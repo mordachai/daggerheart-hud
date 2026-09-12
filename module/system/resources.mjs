@@ -60,33 +60,47 @@ function imageSlot(slot, fallbackIcon) {
  * Ordered list of the actor's extra resources, shaped for the template:
  *   { key, label, value, max (number|null), isReversed, hasPips, pips[], images:{full,empty}, editable }
  * `pips` is only populated when a small numeric max makes a pip row sensible.
+ *
+ * `actor.system.resources[key]` (the ResourcesField) only ever stores
+ * `{ value, max }` — label / images / the definition's default max all live on
+ * `actor.system.availableExtraResources[key]` (homebrew config, merged with
+ * feature-granted definitions). Reading label/images off `resources[key]`
+ * (as this used to) always misses and falls back to the generic circle icon.
  */
 export function listActorResources(actor) {
   const res = actor?.system?.resources ?? {};
+  const defs = actor?.system?.availableExtraResources ?? {};
   const out = [];
 
   for (const key of extraResourceKeys(actor)) {
     const r = res[key];
     if (!r || typeof r !== "object") continue;
+    const def = defs[key] ?? {};
 
-    const rawMax = (typeof r.max === "number" && r.max > 0) ? r.max : null;
+    const rawMax = (typeof r.max === "number" && r.max > 0)
+      ? r.max
+      : ((typeof def.max === "number" && def.max > 0) ? def.max : null);
     const value = Math.max(0, Number(r.value ?? 0));
     const images = {
-      full: imageSlot(r.images?.full, "fa-solid fa-circle"),
-      empty: imageSlot(r.images?.empty, "fa-regular fa-circle")
+      full: imageSlot(def.images?.full, "fa-solid fa-circle"),
+      empty: imageSlot(def.images?.empty, "fa-regular fa-circle")
     };
 
     const hasPips = rawMax !== null && rawMax <= 12;
     const pips = hasPips
-      ? Array.from({ length: rawMax }, (_, i) => ({ index: i, filled: i < value }))
+      ? Array.from({ length: rawMax }, (_, i) => ({
+          index: i,
+          filled: i < value,
+          icon: i < value ? images.full : images.empty
+        }))
       : [];
 
     out.push({
       key,
-      label: loc(r.label, key.charAt(0).toUpperCase() + key.slice(1)),
+      label: loc(def.label, key.charAt(0).toUpperCase() + key.slice(1)),
       value,
       max: rawMax,
-      isReversed: !!r.isReversed,
+      isReversed: !!def.reverse,
       hasPips,
       pips,
       images,
@@ -97,11 +111,20 @@ export function listActorResources(actor) {
   return out;
 }
 
+/** Resolved max for one extra resource: per-actor override, else the definition's default. */
+function resourceMax(actor, key) {
+  const r = actor?.system?.resources?.[key];
+  if (typeof r?.max === "number" && r.max > 0) return r.max;
+  const def = actor?.system?.availableExtraResources?.[key];
+  if (typeof def?.max === "number" && def.max > 0) return def.max;
+  return Number.MAX_SAFE_INTEGER;
+}
+
 /** Clamp + write one extra resource value. */
 export async function setActorResource(actor, key, value) {
   if (!actor || !key) return;
   const r = actor.system?.resources?.[key];
-  const max = (typeof r?.max === "number" && r.max > 0) ? r.max : Number.MAX_SAFE_INTEGER;
+  const max = resourceMax(actor, key);
   const next = clamp(Math.round(Number(value ?? 0)), 0, max);
   const curr = Math.max(0, Number(r?.value ?? 0));
   if (next === curr) return;

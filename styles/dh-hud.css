@@ -1170,7 +1170,9 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
    interactive bit; left/right-click adjust (see hud/resources-bar.mjs). */
 .dhud-extra-resources {
   position: absolute;
-  bottom: calc(100% + 4px);   /* above the core — screen bottom is the hard edge */
+  /* Hope's pips already float to top:-14px above the ring, sticking out above
+     the core box; clear that row, not just the core's own top edge. */
+  bottom: calc(100% + 5px + var(--pip) + 4px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 3;
@@ -1229,26 +1231,31 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   align-items: center;
   gap: 3px;
 }
+/* Each pip renders the resource's own configured icon (filled vs. empty),
+   same as the system's resource-management tooltip — not a generic shape. */
 .dhud-extra-res__pips .pip {
-  width: calc(var(--pip) - 2px);
-  height: calc(var(--pip) - 2px);
-  border: 2px solid var(--dh-pip-border);
-  background: transparent;
-  border-radius: 999px;
-  transition: background .15s, border-color .15s, transform .15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--pip);
+  height: var(--pip);
+  transition: transform .15s;
 }
 .dhud-extra-res__pips .pip:hover { transform: scale(1.15); }
-.dhud-extra-res__pips .pip.filled {
-  background: var(--dh-accent);
-  border-radius: 2px;
-  transform: rotate(45deg);
-  width: calc(var(--pip) - 5px);
-  height: calc(var(--pip) - 5px);
+.dhud-extra-res__pips .pip i {
+  font-size: var(--pip);
+  line-height: 1;
+  color: var(--dh-accent);
+}
+.dhud-extra-res__pips .pip img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* Reversed tracks (value counts UP toward a cap) read in a warning tint. */
 .dhud-extra-res.is-reversed .dhud-extra-res__icon { color: var(--dh-warn, #e0603a); }
-.dhud-extra-res.is-reversed .dhud-extra-res__pips .pip.filled { background: var(--dh-warn, #e0603a); }
+.dhud-extra-res.is-reversed .dhud-extra-res__pips .pip i { color: var(--dh-warn, #e0603a); }
 
 
 /* ===== Responsivo ===== */
