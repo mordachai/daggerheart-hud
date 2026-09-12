@@ -320,18 +320,32 @@ export function attachStatusMenu(app) {
     }
   });
 
-  // Close menus on outside clicks
+  // Close menus on outside clicks — only clicks landing on the menu/grid itself
+  // (or the status icon that opens the grid) keep it open. No HUD-wide exemption.
   document.addEventListener('click', (ev) => {
     const clickedElement = ev.target;
     const statusIcon = clickedElement.closest('.dhud-status-icon');
     const contextMenu = clickedElement.closest('#dhud-context-menu, .dhud-context-menu');
     const statusGrid = clickedElement.closest('#dhud-status-grid, .dhud-status-grid');
-    const withinHUD = rootEl && rootEl.contains(clickedElement);
-    if (!statusIcon && !contextMenu && !statusGrid && !withinHUD) {
+    if (!statusIcon && !contextMenu && !statusGrid) {
       hideStatusContextMenu(app);
       hideStatusGrid(app);
     }
   }, { capture: true });
+
+  // Auto-close shortly after the mouse leaves the menu/grid, so browsing
+  // (theme prev/next, toggles) can stay open while hovering inside.
+  const armAutoClose = (el, hide) => {
+    if (!el) return;
+    el.addEventListener('mouseleave', () => {
+      app._statusMenuCloseTimer = setTimeout(() => hide(app), 400);
+    });
+    el.addEventListener('mouseenter', () => {
+      clearTimeout(app._statusMenuCloseTimer);
+    });
+  };
+  armAutoClose(rootEl.querySelector('#dhud-context-menu'), hideStatusContextMenu);
+  armAutoClose(rootEl.querySelector('#dhud-status-grid'), hideStatusGrid);
 
   // Close menus on Escape
   rootEl.addEventListener('keydown', (ev) => {

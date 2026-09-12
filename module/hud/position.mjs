@@ -50,13 +50,25 @@ export function isPositionLocked() {
 /** Persist the lock state and reflect it immediately on the given HUD element. */
 export async function setPositionLocked(appEl, locked) {
   await game.user.setFlag(MODULE_ID, FLAGS.user.positionLocked, !!locked);
-  if (appEl) appEl.classList.toggle("dhud-position-locked", !!locked);
+  if (appEl) {
+    appEl.classList.toggle("dhud-position-locked", !!locked);
+    appEl.style.cursor = locked ? "" : "grab";
+  }
 }
 
-/** Make the HUD draggable by its `.dhud-ring` handle; persists the drop position. */
+// Descendants that must keep their own click/contextmenu behaviour — a
+// pointerdown here never starts a container drag.
+const DRAG_EXCLUDE_SELECTOR = [
+  "input", "button", "a", "select", "textarea", "[contenteditable]",
+  "[data-action]", "[data-condition-id]", "[role=\"button\"]",
+  ".dhud-count--hp", ".dhud-count--stress", ".dhud-pips .pip",
+  "[data-bind=\"extra\"]", ".dhud-badge--right"
+].join(", ");
+
+/** Make the HUD draggable by grabbing anywhere on its container (excluding interactive elements); persists the drop position. */
 export function enableDragByRing(appEl, appInstance, kind = "character") {
-  const handle = appEl.querySelector(".dhud-ring");
-  if (!handle) return;
+  const handle = appEl.querySelector(".dhud-ring") || appEl;
+  if (!isPositionLocked()) appEl.style.cursor = "grab";
 
   let startX, startY, startLeft, startTop, didMove = false;
 
@@ -77,6 +89,7 @@ export function enableDragByRing(appEl, appInstance, kind = "character") {
 
   const onUp = async () => {
     handle.style.cursor = "grab";
+    appEl.style.cursor = "grab";
     window.removeEventListener("pointermove", onMove, true);
     window.removeEventListener("pointerup", onUp, true);
 
@@ -119,8 +132,10 @@ export function enableDragByRing(appEl, appInstance, kind = "character") {
   const onDown = (ev) => {
     if (ev.button !== 0) return;
     if (isPositionLocked()) return;
+    if (ev.target.closest(DRAG_EXCLUDE_SELECTOR)) return;
     ev.preventDefault();
     handle.style.cursor = "grabbing";
+    appEl.style.cursor = "grabbing";
 
     const r = appEl.getBoundingClientRect();
     // NÃO mexe em bottom/top aqui; só quando começar a mover
@@ -131,5 +146,5 @@ export function enableDragByRing(appEl, appInstance, kind = "character") {
     window.addEventListener("pointerup", onUp, true);
   };
 
-  handle.addEventListener("pointerdown", onDown);
+  appEl.addEventListener("pointerdown", onDown);
 }

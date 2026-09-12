@@ -10,6 +10,7 @@
   --dh-accent-ink: #2b220a;
   --dhud-ring-main: none;
   --dhud-ring-weapon: none;
+  --dhud-bg-opacity: 0.35;
 }
 
 /* Toggled by settings: document.body.classList.toggle('dhud-hide-hotbar', ...) */
@@ -42,7 +43,14 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .35rem;
+  gap: 1px;
+  padding: 1.2rem .5rem .6rem;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--dh-surface) calc(var(--dhud-bg-opacity, 1) * 100%), transparent);
+  border: 1px solid color-mix(in srgb, var(--dh-border) calc(var(--dhud-bg-opacity, 1) * 100%), transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, black calc(var(--dhud-bg-opacity, 1) * 50%), transparent),
+    0 4px 16px color-mix(in srgb, black calc(var(--dhud-bg-opacity, 1) * 85%), transparent);
 }
 
 /* ===== Nav bar (tabs strip below the core) ===== */
@@ -66,10 +74,10 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
 
 .dhud-tab {
   position: relative;
-  padding: .32rem .72rem;
+  padding: .32rem .45rem;
   font-weight: 800;
   font-size: .72rem;
-  letter-spacing: .05em;
+  letter-spacing: .02em;
   border-right: 1px solid var(--dh-border);
   background: transparent;
   color: var(--dh-text);
@@ -776,17 +784,17 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: .5rem;
+  gap: .3rem;
   margin-top: .25rem;
   pointer-events: none;
 }
 .dhud-thresholds .chip {
   background: var(--dh-surface);
   color: var(--dh-accent);
-  padding: .14rem .6rem;
+  padding: .14rem .4rem;
   border-radius: 8px;
   font-weight: 900;
-  letter-spacing: .04em;
+  letter-spacing: .02em;
   text-transform: uppercase;
   /* Longer non-Latin translations (e.g. Chinese) must not wrap the chip to
      two lines and squash the row — see issue #12. Chips are flex items, so
@@ -795,13 +803,13 @@ body.dhud-hide-hotbar #hotbar { display: none !important; }
   flex-shrink: 0;
 }
 .dhud-thresholds .val {
-  padding: .1rem .45rem;
+  padding: .1rem .3rem;
   border: 1px solid var(--dh-border);
   border-radius: 8px;
   background: var(--dh-surface);
   color: var(--dh-text);
   font-weight: 800;
-  min-width: 2.2ch;
+  min-width: 1.8ch;
   text-align: center;
   white-space: nowrap;
   flex-shrink: 0;

@@ -11,7 +11,8 @@ export const S = {
   showTargetNotifications: "showTargetNotifications",
   hudTheme: "hudTheme",
   hudThemeCompanion: "hudThemeCompanion",
-  autoShowLinkedHud: "autoShowLinkedHud"
+  autoShowLinkedHud: "autoShowLinkedHud",
+  hudBgOpacity: "hudBgOpacity"
 };
 
 export function getSetting(key) {
@@ -26,6 +27,10 @@ function applyHotbarVisibility() {
   const el = ui?.hotbar?.element?.[0] ?? ui?.hotbar?.element ?? null;
   if (el) el.style.display = hide ? "none" : "";
   document.body.classList.toggle("dhud-hide-hotbar", !!hide);
+}
+
+function applyHudBgOpacity() {
+  document.documentElement.style.setProperty("--dhud-bg-opacity", getSetting(S.hudBgOpacity));
 }
 
 export function registerSettings() {
@@ -122,6 +127,18 @@ export function registerSettings() {
     }
   });
 
+  // Per-user: HUD background opacity
+  game.settings.register(MOD, S.hudBgOpacity, {
+    name: "HUD Background Opacity",
+    hint: "Opacity of the HUD panel background, from transparent (0) to fully opaque (1).",
+    scope: scopeClient,
+    config: true,
+    type: Number,
+    range: { min: 0, max: 1, step: 0.05 },
+    default: 0.35,
+    onChange: applyHudBgOpacity
+  });
+
   // Per-user: disable this HUD for me
   game.settings.register(MOD, S.disableForMe, {
     name: "Disable this HUD for me",
@@ -138,5 +155,6 @@ export function registerSettings() {
   // Apply client-affecting settings on ready
   Hooks.once("ready", () => {
     applyHotbarVisibility();
+    applyHudBgOpacity();
   });
 }
