@@ -51,6 +51,9 @@ module/
     dh-actor-hud.mjs      the ApplicationV2 class SHELL: _prepareContext (delegates to
                           buildContext), _onRender, close, static registerCustomButton
   hud/                    presentation / interaction — no system knowledge
+    eligibility.mjs       isPlayerCharacterActor/Token — gate for who gets a HUD (character/
+                          companion, not an Item Pile; for non-GM players also tied to a
+                          user via user.character or explicit OWNER — GM is unfiltered); entry point filters selection + deleteToken with it
     position.mjs          placeAtBottom, enableDragByRing, global-position flag
     layout.mjs            captureLayout / restoreLayout / requestRender
     wings.mjs             setPanelOpenDirection, attachDHUDToggles (nav-bar tabs)

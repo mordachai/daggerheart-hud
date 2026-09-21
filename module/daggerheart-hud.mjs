@@ -8,6 +8,7 @@ import { captureLayout, restoreLayout, requestRender } from "./hud/layout.mjs";
 import { announceButtonRegistration } from "./hud/custom-buttons.mjs";
 import { dhudActorChangeRelevant } from "./hud/refresh.mjs";
 import { applyAppearance } from "./hud/appearance.mjs";
+import { isPlayerCharacterActor, isPlayerCharacterToken } from "./hud/eligibility.mjs";
 import { getCompanion } from "./system/actor.mjs";
 import { getPartner } from "./system/companion.mjs";
 import "./hud/portrait-menu-extras.mjs"; // self-contained: portrait context-menu items for 3rd-party sheet buttons
@@ -31,10 +32,8 @@ Hooks.once("ready", async () => {
 let _characterHudApp = null;
 let _companionHudApp = null;
 
-const isDaggerheartActor = (token) => {
-  const a = token?.actor;
-  return a && ["character", "companion"].includes(a.type) && game.system?.id === "daggerheart";
-};
+// Token eligibility: real player characters/companions only (no puzzle tokens, item piles).
+const isDaggerheartActor = isPlayerCharacterToken;
 
 const slotFor = (type) => (type === "companion" ? "companion" : "character");
 
@@ -57,6 +56,7 @@ function getPlayerCharacter() {
   // Find the character the player owns
   const ownedCharacters = game.actors.filter(actor =>
     actor.type === "character" &&
+    isPlayerCharacterActor(actor) &&
     actor.testUserPermission(game.user, "OWNER")
   );
 
@@ -228,8 +228,10 @@ Hooks.on("daggerheart-hud:setting-changed", ({ key, value }) => {
 
 
 Hooks.on("deleteToken", (tokenDoc) => {
+  // Ignore unrelated tokens (puzzle pieces, Item Piles containers deleted/emptied by the GM).
+  const shown = [_characterHudApp, _companionHudApp].some((app) => app?.token?.id === tokenDoc.id);
   const t = canvas.tokens?.controlled[0];
-  if (!t || t.id === tokenDoc.id) {
+  if (shown || t?.id === tokenDoc.id) {
     if (game.user.isGM) {
       // GM: close both HUDs when the token is deleted
       closeSlot("character");
